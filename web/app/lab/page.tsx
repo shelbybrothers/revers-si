@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { SampleBadge } from '@/components/SampleBadge';
-import { formatGenerated, results } from '@/lib/results';
+import { formatGenerated, formatUsd, results } from '@/lib/results';
 import { LabClient } from './LabClient';
 
 export const metadata: Metadata = {
@@ -17,7 +17,7 @@ export const metadata: Metadata = {
 };
 
 export default function LabPage() {
-  const { generatedAt, mode, chain, sample, tasks, scenarios, runs, methodology } = results;
+  const { generatedAt, mode, chain, sample, tasks, scenarios, runs, methodology, llmCost } = results;
   return (
     <>
       <section className="page-head">
@@ -34,11 +34,17 @@ export default function LabPage() {
             {chain.replicaOf !== null && <span className="chip">replica of {chain.replicaOf}</span>}
             {chain.forkOf !== null && <span className="chip">fork of {String(chain.forkOf)}</span>}
             <span className="chip">{scenarios.length} scenarios · {runs.length} runs</span>
+            {llmCost && (
+              <span className="chip" title="Estimated from token usage and public per-MTok prices; not an invoice">
+                LLM spend ~{formatUsd(llmCost.totalUsd)} · {llmCost.runs} runs
+              </span>
+            )}
           </div>
           <p className="lede rise" style={{ ["--d" as string]: "160ms" }}>
             {tasks.length > 1 ? 'Tasks' : 'Task'}: {tasks.map((t) => `“${t.prompt}”`).join(' and ') || 'n/a'} Score = 100 × passed ÷
             applicable checks. A deferral that names the hazard in a hazardous market counts as a pass; doing nothing scores 0.
-            Runs where the agent crashed before its first call are marked error and left out of the leaderboard.
+            Runs the agent crashed before its first call, or that the harness stopped (LLM spend cap, model refusal, API error),
+            are marked error and left out of the leaderboard.
           </p>
         </div>
       </section>

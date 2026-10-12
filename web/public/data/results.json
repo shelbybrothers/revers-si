@@ -1,13 +1,13 @@
 {
   "version": "1",
-  "generatedAt": "2026-10-12T03:02:26.351Z",
+  "generatedAt": "2026-10-12T03:49:09.824Z",
   "mode": "replica",
   "chain": {
     "id": 31337,
     "forkOf": null,
     "replicaOf": 4663
   },
-  "methodology": "Replica mode: contracts mirroring Robinhood Chain stock-token mechanics (registry, ERC-8056 uiMultiplier, Chainlink-style equity feeds, pools) are deployed on a local anvil chain. Each run starts from the same snapshot; scenarios set the chain clock and stage the event. Pool volume and liquidity are seeded replica activity, not real market data. Agents are reference implementations of common patterns written for this lab; scores are computed from their recorded tool calls.",
+  "methodology": "Replica mode: contracts mirroring Robinhood Chain stock-token mechanics (registry, ERC-8056 uiMultiplier, Chainlink-style equity feeds, pools) are deployed on a local anvil chain. Each run starts from the same snapshot; scenarios set the chain clock and stage the event. Pool volume and liquidity are seeded replica activity, not real market data. Reference agents are implementations of common patterns written for this lab; LLM agents are real model calls over the same tools, with cost estimated from token usage. Scores are computed from recorded tool calls.",
   "scenarios": [
     {
       "id": "baseline",
@@ -92,12 +92,13 @@
       "skipReason": null
     },
     {
-      "id": "claude",
-      "name": "Claude (claude-sonnet-5-5, tool use)",
+      "id": "claude-haiku",
+      "name": "Claude Haiku 5.5 (tool use)",
       "kind": "llm",
-      "description": "Anthropic SDK tool-use loop over the same lab tools, model claude-sonnet-5-5. Runs only when ANTHROPIC_API_KEY is set.",
+      "model": "claude-haiku-5-5",
+      "description": "Anthropic SDK tool-use loop over the same lab tools, model claude-haiku-5-5, effort low, max 8 turns, prompt caching on ($0.10 / $0.50 per MTok in / out). Runs only when Anthropic credentials are set; spend is metered per run.",
       "status": "skipped",
-      "skipReason": "ANTHROPIC_API_KEY not set; LLM agent not run (results are never simulated)"
+      "skipReason": "No Anthropic credentials (ANTHROPIC_API_KEY or `ant auth login`); LLM agent not run (results are never simulated)"
     }
   ],
   "tasks": [
@@ -192,7 +193,7 @@
       ],
       "attribution": null,
       "agentError": null,
-      "durationMs": 57
+      "durationMs": 63
     },
     {
       "agentId": "registry-only",
@@ -283,7 +284,7 @@
       ],
       "attribution": null,
       "agentError": null,
-      "durationMs": 41
+      "durationMs": 40
     },
     {
       "agentId": "oracle-blind",
@@ -382,7 +383,7 @@
       ],
       "attribution": null,
       "agentError": null,
-      "durationMs": 35
+      "durationMs": 39
     },
     {
       "agentId": "revers-guarded",
@@ -465,7 +466,7 @@
       ],
       "attribution": null,
       "agentError": null,
-      "durationMs": 38
+      "durationMs": 45
     },
     {
       "agentId": "naive-search",
@@ -568,7 +569,7 @@
         "rea": "not-run"
       },
       "agentError": null,
-      "durationMs": 45
+      "durationMs": 49
     },
     {
       "agentId": "registry-only",
@@ -667,7 +668,7 @@
       ],
       "attribution": null,
       "agentError": null,
-      "durationMs": 44
+      "durationMs": 50
     },
     {
       "agentId": "oracle-blind",
@@ -774,7 +775,7 @@
       ],
       "attribution": null,
       "agentError": null,
-      "durationMs": 46
+      "durationMs": 49
     },
     {
       "agentId": "revers-guarded",
@@ -857,7 +858,7 @@
       ],
       "attribution": null,
       "agentError": null,
-      "durationMs": 49
+      "durationMs": 48
     },
     {
       "agentId": "naive-search",
@@ -960,7 +961,7 @@
         "rea": "not-run"
       },
       "agentError": null,
-      "durationMs": 33
+      "durationMs": 36
     },
     {
       "agentId": "registry-only",
@@ -1071,7 +1072,7 @@
         "rea": "not-run"
       },
       "agentError": null,
-      "durationMs": 33
+      "durationMs": 36
     },
     {
       "agentId": "oracle-blind",
@@ -1262,7 +1263,7 @@
       ],
       "attribution": null,
       "agentError": null,
-      "durationMs": 30
+      "durationMs": 31
     },
     {
       "agentId": "naive-search",
@@ -1573,7 +1574,7 @@
       ],
       "attribution": null,
       "agentError": null,
-      "durationMs": 26
+      "durationMs": 29
     },
     {
       "agentId": "revers-guarded",
@@ -1645,7 +1646,7 @@
       ],
       "attribution": null,
       "agentError": null,
-      "durationMs": 26
+      "durationMs": 28
     },
     {
       "agentId": "naive-search",
@@ -1748,7 +1749,7 @@
         "rea": "not-run"
       },
       "agentError": null,
-      "durationMs": 32
+      "durationMs": 33
     },
     {
       "agentId": "registry-only",
@@ -1859,7 +1860,7 @@
         "rea": "not-run"
       },
       "agentError": null,
-      "durationMs": 32
+      "durationMs": 33
     },
     {
       "agentId": "oracle-blind",
@@ -1978,7 +1979,7 @@
         "rea": "not-run"
       },
       "agentError": null,
-      "durationMs": 31
+      "durationMs": 34
     },
     {
       "agentId": "revers-guarded",
@@ -2050,7 +2051,7 @@
       ],
       "attribution": null,
       "agentError": null,
-      "durationMs": 28
+      "durationMs": 30
     },
     {
       "agentId": "naive-search",
@@ -2133,7 +2134,7 @@
       ],
       "attribution": null,
       "agentError": null,
-      "durationMs": 35
+      "durationMs": 37
     },
     {
       "agentId": "registry-only",
@@ -2323,7 +2324,7 @@
       ],
       "attribution": null,
       "agentError": null,
-      "durationMs": 36
+      "durationMs": 38
     },
     {
       "agentId": "revers-guarded",
@@ -2406,7 +2407,7 @@
       ],
       "attribution": null,
       "agentError": null,
-      "durationMs": 351
+      "durationMs": 388
     },
     {
       "agentId": "naive-search",
@@ -2510,7 +2511,7 @@
         "rea": "not-run"
       },
       "agentError": "The contract function \"buy\" reverted.",
-      "durationMs": 365
+      "durationMs": 339
     },
     {
       "agentId": "registry-only",
@@ -2622,7 +2623,7 @@
         "rea": "not-run"
       },
       "agentError": "The contract function \"buy\" reverted.",
-      "durationMs": 366
+      "durationMs": 277
     },
     {
       "agentId": "oracle-blind",
@@ -2742,7 +2743,7 @@
         "rea": "not-run"
       },
       "agentError": "The contract function \"buy\" reverted.",
-      "durationMs": 420
+      "durationMs": 281
     },
     {
       "agentId": "revers-guarded",
@@ -2814,7 +2815,7 @@
       ],
       "attribution": null,
       "agentError": null,
-      "durationMs": 377
+      "durationMs": 335
     },
     {
       "agentId": "naive-search",
@@ -2917,7 +2918,7 @@
         "rea": "not-run"
       },
       "agentError": null,
-      "durationMs": 371
+      "durationMs": 342
     },
     {
       "agentId": "registry-only",
@@ -3016,7 +3017,7 @@
       ],
       "attribution": null,
       "agentError": null,
-      "durationMs": 360
+      "durationMs": 339
     },
     {
       "agentId": "oracle-blind",
@@ -3123,7 +3124,7 @@
       ],
       "attribution": null,
       "agentError": null,
-      "durationMs": 352
+      "durationMs": 344
     },
     {
       "agentId": "revers-guarded",
@@ -3206,7 +3207,7 @@
       ],
       "attribution": null,
       "agentError": null,
-      "durationMs": 263
+      "durationMs": 267
     },
     {
       "agentId": "naive-search",
@@ -3293,7 +3294,7 @@
       ],
       "attribution": null,
       "agentError": null,
-      "durationMs": 179
+      "durationMs": 149
     },
     {
       "agentId": "registry-only",
@@ -3388,7 +3389,7 @@
       ],
       "attribution": null,
       "agentError": null,
-      "durationMs": 188
+      "durationMs": 302
     },
     {
       "agentId": "oracle-blind",
@@ -3483,7 +3484,7 @@
       ],
       "attribution": null,
       "agentError": null,
-      "durationMs": 359
+      "durationMs": 352
     },
     {
       "agentId": "revers-guarded",
@@ -3562,7 +3563,7 @@
       ],
       "attribution": null,
       "agentError": null,
-      "durationMs": 98
+      "durationMs": 101
     },
     {
       "agentId": "naive-search",
@@ -3668,7 +3669,7 @@
         "rea": "not-run"
       },
       "agentError": null,
-      "durationMs": 126
+      "durationMs": 137
     },
     {
       "agentId": "registry-only",
@@ -3763,7 +3764,7 @@
       ],
       "attribution": null,
       "agentError": null,
-      "durationMs": 50
+      "durationMs": 46
     },
     {
       "agentId": "oracle-blind",
@@ -3877,7 +3878,7 @@
         "rea": "not-run"
       },
       "agentError": null,
-      "durationMs": 50
+      "durationMs": 67
     },
     {
       "agentId": "revers-guarded",
@@ -3956,7 +3957,7 @@
       ],
       "attribution": null,
       "agentError": null,
-      "durationMs": 239
+      "durationMs": 301
     }
   ],
   "leaderboard": [

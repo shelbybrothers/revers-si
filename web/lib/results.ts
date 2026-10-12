@@ -5,17 +5,19 @@ export type CheckStatus = 'pass' | 'fail' | 'n/a';
 export type Verdict = 'pass' | 'fail' | 'deferred' | 'error';
 
 export interface Scenario { id: string; title: string; summary: string; category: Category }
-export interface Agent { id: string; name: string; kind: string; description: string; status: 'ran' | 'skipped'; skipReason: string | null }
+export interface Agent { id: string; name: string; kind: string; model: string | null; description: string; status: 'ran' | 'skipped'; skipReason: string | null }
 export interface Task { id: string; prompt: string }
 export interface Check { id: string; label: string; status: CheckStatus; detail: string }
 export interface Action { tool: string; args: Record<string, unknown>; ok: boolean; summary: string }
 export interface SnippetLine { n: number | null; hit: boolean; code: string }
 export interface Attribution { evidenceId: string; file: string; line: number | null; snippet: string; lines: SnippetLine[]; rea: string }
+export interface LlmUsage { model: string; turns: number; inputTokens: number; outputTokens: number; cacheReadTokens: number; cacheWriteTokens: number; costUsd: number }
 export interface Run {
   agentId: string; scenarioId: string; taskId: string; score: number; verdict: Verdict;
   checks: Check[]; actions: Action[]; attribution: Attribution | null; durationMs: number | null; agentError: string | null;
+  llmUsage: LlmUsage | null;
 }
-export interface LeaderRow { agentId: string; avgScore: number; passRate: number; failures: number }
+export interface LeaderRow { agentId: string; avgScore: number; passRate: number; failures: number; avgCostUsd: number | null }
 export interface LendingRow {
   marketId: string; scenarioId: string; groundTruthHealth: number | null; observedHealth: number | null;
   finding: string; detail: string;
@@ -24,6 +26,7 @@ export interface Results {
   version: string; generatedAt: string | null; sample: boolean; mode: string; methodology: string | null;
   chain: { id: number | null; forkOf: string | number | null; replicaOf: number | null };
   scenarios: Scenario[]; agents: Agent[]; tasks: Task[]; runs: Run[]; leaderboard: LeaderRow[]; lending: LendingRow[];
+  llmCost: { totalUsd: number; runs: number } | null;
 }
 
 type Obj = Record<string, unknown>;
@@ -100,7 +103,32 @@ function normRun(v: unknown): Run | null {
     attribution: normAttribution(v.attribution),
     durationMs: num(v.durationMs),
     agentError: typeof v.agentError === 'string' ? v.agentError : null,
+    llmUsage: normUsage(v.llmUsage),
   };
+}
+
+function normUsage(v: unknown): LlmUsage | null {
+  if (!isObj(v)) return null;
+  const n = (k: string) => num(v[k]) ?? 0;
+  return {
+    model: str(v.model, 'llm'),
+    turns: n('turns'),
+    inputTokens: n('inputTokens'),
+    outputTokens: n('outputTokens'),
+    cacheReadTokens: n('cacheReadTokens'),
+    cacheWriteTokens: n('cacheWriteTokens'),
+    costUsd: n('costUsd'),
+  };
+}
+
+const USD_SIG2 = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumSignificantDigits: 2 });
+
+/** "$0.00042" style: two significant digits, so sub-cent LLM runs stay meaningful. */
+export function formatUsd(v: number): string {
+  if (!Number.isFinite(v) || v <= 0) return '$0';
+  if (v >= 1) return `$${v.toFixed(2)}`;
+  if (v < 1e-6) return '<$0.000001';
+  return USD_SIG2.format(v);
 }
 
 export function normalize(input: unknown): Results {
@@ -120,16 +148,17 @@ export function normalize(input: unknown): Results {
       id: str(a.id),
       name: str(a.name, str(a.id)),
       kind: str(a.kind, 'reference'),
+      model: typeof a.model === 'string' && a.model ? a.model : null,
       description: str(a.description),
       status: (str(a.status) === 'skipped' ? 'skipped' : 'ran') as Agent['status'],
       skipReason: typeof a.skipReason === 'string' ? a.skipReason : null,
     }))
     .filter((a) => a.id);
-  for (const run of runs) if (!agents.some((a) => a.id === run.agentId)) agents.push({ id: run.agentId, name: run.agentId, kind: 'reference', description: '', status: 'ran', skipReason: null });
+  for (const run of runs) if (!agents.some((a) => a.id === run.agentId)) agents.push({ id: run.agentId, name: run.agentId, kind: 'reference', model: null, description: '', status: 'ran', skipReason: null });
 
   let leaderboard: LeaderRow[] = arr(r.leaderboard)
     .filter(isObj)
-    .map((l) => ({ agentId: str(l.agentId), avgScore: num(l.avgScore) ?? 0, passRate: num(l.passRate) ?? 0, failures: num(l.failures) ?? 0 }))
+    .map((l) => ({ agentId: str(l.agentId), avgScore: num(l.avgScore) ?? 0, passRate: num(l.passRate) ?? 0, failures: num(l.failures) ?? 0, avgCostUsd: num(l.avgCostUsd) }))
     .filter((l) => l.agentId);
   if (!leaderboard.length && runs.length) {
     leaderboard = agents
@@ -137,7 +166,7 @@ export function normalize(input: unknown): Results {
       .map((a) => {
         const rs = runs.filter((x) => x.agentId === a.id && x.verdict !== 'error');
         const ok = rs.filter((x) => x.verdict !== 'fail').length;
-        return { agentId: a.id, avgScore: Math.round((rs.reduce((s, x) => s + x.score, 0) / rs.length) * 10) / 10, passRate: ok / rs.length, failures: rs.length - ok };
+        return { agentId: a.id, avgScore: Math.round((rs.reduce((s, x) => s + x.score, 0) / rs.length) * 10) / 10, passRate: ok / rs.length, failures: rs.length - ok, avgCostUsd: null };
       });
   }
   leaderboard.sort((a, b) => b.avgScore - a.avgScore);
@@ -172,6 +201,10 @@ export function normalize(input: unknown): Results {
     runs,
     leaderboard,
     lending,
+    llmCost:
+      isObj(r.llmCost) && num(r.llmCost.totalUsd) !== null
+        ? { totalUsd: num(r.llmCost.totalUsd)!, runs: num(r.llmCost.runs) ?? 0 }
+        : null,
   };
 }
 

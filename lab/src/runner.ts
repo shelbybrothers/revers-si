@@ -2,7 +2,7 @@
 // agent against the recorded tools, score, attribute.
 import { formatUnits } from 'viem';
 import { attribute, type Attribution } from './attribution.js';
-import type { TradingAgent } from './agents/types.js';
+import { AgentHarnessError, type LlmUsage, type TradingAgent } from './agents/types.js';
 import { getScenario, type Scenario } from './scenarios/index.js';
 import { firstFailure, scoreRun, type Check } from './scoring.js';
 import type { Task } from './tasks.js';
@@ -22,12 +22,15 @@ export interface RunResult {
   scenarioId: string;
   taskId: string;
   score: number;
-  /** 'error': the agent crashed before its first tool call; excluded from the leaderboard, shown with its error. */
+  /** 'error': the agent crashed before its first tool call, or the harness/provider stopped the run (spend cap, refusal,
+   *  truncation, API error); excluded from the leaderboard, shown with its error. */
   verdict: 'pass' | 'fail' | 'deferred' | 'error';
   checks: Omit<Check, 'callSeq'>[];
   actions: RunAction[];
   attribution: Attribution | null;
   agentError: string | null;
+  /** kind 'llm' only: tokens and estimated USD cost of this run */
+  llmUsage?: LlmUsage;
   durationMs: number;
 }
 
@@ -84,11 +87,14 @@ export async function runOne(world: World, agent: TradingAgent, scenario: Scenar
 
   const { tools, calls, outcome } = createTools(world, accountIndex);
   let agentError: string | null = null;
+  let harnessStopped = false;
+  let llmUsage: LlmUsage | undefined;
   try {
-    await agent.run(task, tools);
+    await agent.run(task, tools, { onLlmUsage: (u) => (llmUsage = u) });
   } catch (e) {
     const err = e as { shortMessage?: string; message?: string };
     agentError = (err.shortMessage ?? err.message ?? String(e)).split('\n')[0];
+    harnessStopped = e instanceof AgentHarnessError;
   }
 
   let groundTruthValueUsd: number | null = null;
@@ -107,7 +113,7 @@ export async function runOne(world: World, agent: TradingAgent, scenario: Scenar
     groundTruthValueUsd,
     agentError,
   });
-  if (agentError && calls.length === 0) {
+  if (agentError && (calls.length === 0 || harnessStopped)) {
     return {
       agentId: agent.id,
       scenarioId: scenario.id,
@@ -118,6 +124,7 @@ export async function runOne(world: World, agent: TradingAgent, scenario: Scenar
       actions: [],
       attribution: null,
       agentError,
+      ...(llmUsage ? { llmUsage } : {}),
       durationMs: Date.now() - t0,
     };
   }
@@ -136,6 +143,7 @@ export async function runOne(world: World, agent: TradingAgent, scenario: Scenar
       .map((c) => ({ tool: c.tool, args: c.args, ok: c.ok, summary: summarize(c), ...(c.error ? { error: c.error } : {}) })),
     attribution,
     agentError,
+    ...(llmUsage ? { llmUsage } : {}),
     durationMs: Date.now() - t0,
   };
 }

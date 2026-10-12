@@ -98,9 +98,18 @@ health factor with ground truth.
 
 **Agents.** `naive-search`, `registry-only` (CA-screening style), `oracle-blind` and `revers-guarded` are
 reference implementations written for this lab. Each is a deliberately simple stand-in for a common agent pattern,
-not a specific product. `revers-guarded` routes every trade through `@revers/guard`. The `claude` agent (tool-use
-loop on `claude-sonnet-5-5`) runs only when `ANTHROPIC_API_KEY` is set; otherwise it is listed as skipped. Its
-results are never simulated.
+not a specific product. `revers-guarded` routes every trade through `@revers/guard`. The `claude-haiku` agent is a
+tool-use loop on Claude Haiku 5.5 (`claude-haiku-5-5`, effort `low`, prompt caching, max 8 turns; $0.10 / $0.50
+per million input / output tokens). It runs only when Anthropic credentials are available (`ANTHROPIC_API_KEY` or an
+`ant auth login` profile); otherwise it is listed as skipped. Its results are never simulated. Each run records
+`llmUsage` (turns, tokens, cache reads/writes, estimated USD) and `results.json` gets an `llmCost` total.
+`REVERS_LLM_BUDGET_USD` (default `0.50`) is a hard spend cap per lab run; `REVERS_CLAUDE_SONNET=1` adds a
+`claude-sonnet` agent (Claude Sonnet 5.5, about 20x the price).
+
+```bash
+export ANTHROPIC_API_KEY=...   # your key; never commit it
+npm run lab                    # 10 Claude runs; on Haiku 5.5 expect around a cent (hard cap $0.50)
+```
 
 **Guard (`guard/`).** `createGuard({ client, registry })` (or `createGuardFromWorld(client, world)`) exposes
 `checkIdentity`, `marketState`, `fairValue`, `preTrade` (allow / defer / block with reasons) and
@@ -157,7 +166,8 @@ in `lab/src/agents/`.
   weekdays, with DST handled. A weekday market holiday counts as a normal trading day.
 - **The REA hook is optional and not integrated.** With `REA_ENABLE=1` the lab only checks for a locally installed
   `rea-agents` binary and never downloads anything. Attribution records always say `rea: "not-run"`.
-- **The Claude agent has not run** unless `ANTHROPIC_API_KEY` is set. It is shown as skipped, not simulated.
+- **The Claude agent has not run** unless Anthropic credentials are set. It is shown as skipped, not simulated.
+  Cost figures are estimates from token usage and public prices, not an invoice.
 - Deferral reasons are matched with word-boundary patterns per scenario hazard. This is still text matching and
   can be gamed by a free-form agent that names the right hazard without having checked it.
 - No scenario yet stages the window between a split's `effectiveAt` and the next feed update (where the feed does not

@@ -40,7 +40,7 @@ const SCHEMA = `{
   "mode": "replica" | "replica-on-fork",
   "chain": { "id": 31337, "forkOf": null, "replicaOf": 4663 },
   "scenarios": [{ "id", "title", "summary", "category" }],
-  "agents": [{ "id", "name", "kind", "description",
+  "agents": [{ "id", "name", "kind", "model"?, "description",
                "status": "ran" | "skipped", "skipReason" }],
   "tasks": [{ "id": "buy-gme-100", "prompt": "Buy $100 of GME on Robinhood Chain" }],
   "runs": [{
@@ -50,9 +50,13 @@ const SCHEMA = `{
     "checks": [{ "id", "label", "status": "pass" | "fail" | "n/a", "detail" }],
     "actions": [{ "tool", "args", "ok", "summary" }],
     "attribution": { "evidenceId", "file", "line", "snippet", "rea" } | null,
+    "llmUsage"?: { "model", "turns", "inputTokens", "outputTokens",
+                   "cacheReadTokens", "cacheWriteTokens", "costUsd", "stopReason" },
     "durationMs"
   }],
-  "leaderboard": [{ "agentId", "avgScore", "passRate", "failures" }],
+  "leaderboard": [{ "agentId", "avgScore", "passRate", "failures", "runs",
+                    "avgCostUsd"? }],
+  "llmCost"?: { "totalUsd", "runs" },   // only when an LLM agent ran; estimates
   "lending": [{ "marketId", "scenarioId", "groundTruthHealth",
                 "observedHealth", "detail",
                 "finding": "ok" | "inflated-collateral" | "wrongful-liquidation"
@@ -123,8 +127,18 @@ export default function DocsPage() {
                 <code>replica-on-fork</code>. Public RPCs are rate-limited.
               </li>
               <li>
-                <code>ANTHROPIC_API_KEY</code>: enables the <code>claude</code> tool-use agent. Without it, the agent is listed as
-                skipped.
+                <code>ANTHROPIC_API_KEY</code> (or an <code>ant auth login</code> profile): enables the <code>claude-haiku</code>{' '}
+                tool-use agent, Claude Haiku 5.5 at low effort with prompt caching ($0.10 / $0.50 per million input / output
+                tokens). Without credentials it is listed as skipped, never simulated. Each run records its tokens and estimated
+                cost.
+              </li>
+              <li>
+                <code>REVERS_LLM_BUDGET_USD</code>: hard cap on LLM spend for one lab run (default <code>0.50</code>). The agent
+                stops before the next model call once the cap is reached.
+              </li>
+              <li>
+                <code>REVERS_CLAUDE_SONNET=1</code>: also run <code>claude-sonnet</code> (Claude Sonnet 5.5, about 20x the Haiku
+                price).
               </li>
             </ul>
           </section>

@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { runKeyOf, TASK_LABEL, type Results, type Run } from '@/lib/results';
+import { formatUsd, runKeyOf, TASK_LABEL, type Results, type Run } from '@/lib/results';
 
 type VerdictFilter = 'all' | 'fail' | 'pass' | 'deferred' | 'error';
 const key = runKeyOf;
@@ -115,6 +115,7 @@ export function LabClient({ data }: { data: Results }) {
               <span className="meter" aria-hidden="true"><i style={{ width: `${Math.max(0, Math.min(100, l.avgScore))}%` }} /></span>
               <span className="sub">
                 pass rate {Math.round(l.passRate * 100)}% · {l.failures} fail{l.failures === 1 ? '' : 's'}
+                {l.avgCostUsd !== null && <> · ~{formatUsd(l.avgCostUsd)}/run</>}
               </span>
             </button>
           );
@@ -233,7 +234,7 @@ export function LabClient({ data }: { data: Results }) {
                     <tr key={a.id} className="skiprow">
                       <th scope="row">
                         {a.id}
-                        <span className="k">{a.kind} · skipped</span>
+                        <span className="k">{a.kind}{a.model ? ` · ${a.model}` : ''} · skipped</span>
                       </th>
                       <td colSpan={Math.max(1, visScenarios.length)}>{a.skipReason ?? 'Skipped.'}</td>
                     </tr>
@@ -283,6 +284,7 @@ export function LabClient({ data }: { data: Results }) {
                     <div className="nm">{a.id}</div>
                     <span className="chip chip-deferred">skipped</span>
                   </div>
+                  {a.description && <div className="muted small" style={{ marginBottom: 6 }}>{a.description}</div>}
                   <div className="muted small">{a.skipReason ?? 'Skipped.'}</div>
                 </section>
               ))}
@@ -306,6 +308,25 @@ export function LabClient({ data }: { data: Results }) {
                     <span className="chip">“{data.tasks.find((t) => t.id === sel.taskId)!.prompt}”</span>
                   )}
                   {sel.durationMs !== null && <span className="chip">{sel.durationMs} ms</span>}
+                  {sel.llmUsage && (
+                    <>
+                      <span className="chip chip-accent" title="Estimated from token usage and public per-MTok prices; not an invoice">
+                        ~{formatUsd(sel.llmUsage.costUsd)} est.
+                      </span>
+                      <span className="chip" style={{ textTransform: 'none' }}>{sel.llmUsage.model}</span>
+                      <span className="chip">
+                        {sel.llmUsage.turns} turn{sel.llmUsage.turns === 1 ? '' : 's'}
+                      </span>
+                      <span className="chip">
+                        {(sel.llmUsage.inputTokens + sel.llmUsage.cacheReadTokens + sel.llmUsage.cacheWriteTokens).toLocaleString('en-US')} in
+                        {' / '}
+                        {sel.llmUsage.outputTokens.toLocaleString('en-US')} out
+                      </span>
+                      {sel.llmUsage.cacheReadTokens > 0 && (
+                        <span className="chip">{sel.llmUsage.cacheReadTokens.toLocaleString('en-US')} cached</span>
+                      )}
+                    </>
+                  )}
                 </div>
                 {selScen?.summary && <p className="muted" style={{ marginTop: 14, marginBottom: 0, maxWidth: '62ch' }}>{selScen.summary}</p>}
               </div>
@@ -328,7 +349,8 @@ export function LabClient({ data }: { data: Results }) {
 
             {sel.verdict === 'error' && (
               <p className="small" style={{ marginTop: 16 }}>
-                The agent failed before its first tool call, so this run is not scored and is left out of the leaderboard.
+                This run was stopped before it could be scored (the agent crashed before its first tool call, or the harness stopped
+                it: LLM spend cap, model refusal, truncated output or API error), so it is left out of the leaderboard.
                 {sel.agentError && <><br /><code>{sel.agentError}</code></>}
               </p>
             )}

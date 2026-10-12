@@ -16,11 +16,19 @@ export interface ResultsJson {
   chain: { id: number; forkOf: number | null; replicaOf: number };
   methodology: string;
   scenarios: { id: string; title: string; summary: string; category: string }[];
-  agents: { id: string; name: string; kind: string; description: string; status: 'ran' | 'skipped'; skipReason: string | null }[];
+  agents: { id: string; name: string; kind: string; model?: string; description: string; status: 'ran' | 'skipped'; skipReason: string | null }[];
   tasks: { id: string; prompt: string }[];
   runs: RunResult[];
-  leaderboard: { agentId: string; avgScore: number; passRate: number; failures: number; runs: number }[];
+  leaderboard: { agentId: string; avgScore: number; passRate: number; failures: number; runs: number; avgCostUsd?: number }[];
+  /** present when any LLM agent ran: estimated spend from token usage and public per-MTok prices */
+  llmCost?: { totalUsd: number; runs: number };
   lending: LendingResult[];
+}
+
+/** Average estimated LLM cost per run over ALL of an agent's runs (errored runs spent tokens too). */
+function avgCost(all: RunResult[]): { avgCostUsd?: number } {
+  if (!all.some((r) => r.llmUsage)) return {};
+  return { avgCostUsd: Math.round((all.reduce((s, r) => s + (r.llmUsage?.costUsd ?? 0), 0) / all.length) * 1e8) / 1e8 };
 }
 
 export function leaderboard(runs: RunResult[]): ResultsJson['leaderboard'] {
@@ -34,8 +42,15 @@ export function leaderboard(runs: RunResult[]): ResultsJson['leaderboard'] {
       passRate: Math.round((rs.filter((r) => r.verdict !== 'fail').length / rs.length) * 1000) / 1000,
       failures: rs.filter((r) => r.verdict === 'fail').length,
       runs: rs.length,
+      ...avgCost(runs.filter((r) => r.agentId === agentId)),
     }))
     .sort((a, b) => b.avgScore - a.avgScore || a.failures - b.failures);
+}
+
+function llmCost(runs: RunResult[]): Pick<ResultsJson, 'llmCost'> {
+  const llm = runs.filter((r) => r.llmUsage);
+  if (!llm.length) return {};
+  return { llmCost: { totalUsd: Math.round(llm.reduce((s, r) => s + r.llmUsage!.costUsd, 0) * 1e8) / 1e8, runs: llm.length } };
 }
 
 export function buildResults(args: {
@@ -54,12 +69,13 @@ export function buildResults(args: {
     chain: { id: args.chainId, forkOf: args.forkOf, replicaOf: 4663 },
     methodology:
       (args.forkOf ? 'Replica-on-fork mode: the replica contracts below were deployed on top of a fork; agents traded the replica, not the real chain tokens or feeds. ' : '') +
-      'Replica mode: contracts mirroring Robinhood Chain stock-token mechanics (registry, ERC-8056 uiMultiplier, Chainlink-style equity feeds, pools) are deployed on a local anvil chain. Each run starts from the same snapshot; scenarios set the chain clock and stage the event. Pool volume and liquidity are seeded replica activity, not real market data. Agents are reference implementations of common patterns written for this lab; scores are computed from their recorded tool calls.',
+      'Replica mode: contracts mirroring Robinhood Chain stock-token mechanics (registry, ERC-8056 uiMultiplier, Chainlink-style equity feeds, pools) are deployed on a local anvil chain. Each run starts from the same snapshot; scenarios set the chain clock and stage the event. Pool volume and liquidity are seeded replica activity, not real market data. Reference agents are implementations of common patterns written for this lab; LLM agents are real model calls over the same tools, with cost estimated from token usage. Scores are computed from recorded tool calls.',
     scenarios: args.scenarios.map(({ id, title, summary, category }) => ({ id, title, summary, category })),
     agents: args.agents.map(({ agent, skipReason }) => ({
       id: agent.id,
       name: agent.name,
       kind: agent.kind,
+      ...(agent.model ? { model: agent.model } : {}),
       description: agent.description,
       status: skipReason ? 'skipped' : 'ran',
       skipReason,
@@ -67,6 +83,7 @@ export function buildResults(args: {
     tasks: args.tasks.map(({ id, prompt }) => ({ id, prompt })),
     runs: args.runs,
     leaderboard: leaderboard(args.runs),
+    ...llmCost(args.runs),
     lending: args.lending,
   };
 }
@@ -120,6 +137,14 @@ export function validateResults(r: unknown): string[] {
       if (at !== null && (typeof at !== 'object' || !/^ev_[0-9a-f]+$/.test(String(at.evidenceId)) || typeof at.file !== 'string' || typeof at.line !== 'number' || typeof at.snippet !== 'string'))
         errs.push(`run ${id} attribution invalid`);
       if (run.verdict === 'fail' && at === null) errs.push(`run ${id} failed without attribution`);
+      const u = run.llmUsage as Record<string, unknown> | null | undefined;
+      if (
+        u != null &&
+        (typeof u !== 'object' ||
+          typeof u.model !== 'string' ||
+          !['turns', 'inputTokens', 'outputTokens', 'cacheReadTokens', 'cacheWriteTokens', 'costUsd'].every((k) => typeof u[k] === 'number' && (u[k] as number) >= 0))
+      )
+        errs.push(`run ${id} llmUsage invalid`);
     }
   if (isArr('leaderboard'))
     for (const l of o.leaderboard as Record<string, unknown>[]) if (typeof l.avgScore !== 'number' || typeof l.passRate !== 'number' || typeof l.failures !== 'number') errs.push(`leaderboard ${String(l.agentId)} invalid`);

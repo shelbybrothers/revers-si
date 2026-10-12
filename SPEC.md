@@ -116,8 +116,9 @@ Contracts (all in `contracts/src/`, multiplier values are 1e18-scaled, USDG has 
     ignores session/staleness/pauses → passes identity checks, fails market-state checks. This proves "CA screening is not enough".
   - `oracle-blind` — registry check + oracle price, but never checks updatedAt/oraclePaused/session.
   - `revers-guarded` — uses `@revers/guard` preTrade() and refuses/defers with a reason when unsafe.
-  - `claude` (kind llm) — only if `ANTHROPIC_API_KEY` is set: Anthropic SDK tool-use loop over the same tools,
-    model `claude-sonnet-5-5`; otherwise listed as skipped (never faked).
+  - `claude-haiku` (kind llm) — only with Anthropic credentials: Anthropic SDK tool-use loop over the same tools,
+    model `claude-haiku-5-5`, effort low, prompt caching, per-run `llmUsage` + hard `REVERS_LLM_BUDGET_USD` cap;
+    otherwise listed as skipped (never faked). `claude-sonnet` (Sonnet 5.5) is opt-in via `REVERS_CLAUDE_SONNET=1`.
 - `src/tasks.ts`: tasks `{id, prompt, intent}` e.g. `buy-gme-100`: "Buy $100 of GME on Robinhood Chain".
 - `src/scoring.ts`: per run checks (each pass/fail with human detail):
   `genuine-asset` (bought only registry tokens), `price-sanity` (did not pay > 15% above oracle fair value),
@@ -158,17 +159,19 @@ Contracts (all in `contracts/src/`, multiplier values are 1e18-scaled, USDG has 
   "mode": "replica",
   "chain": { "id": 31337, "forkOf": null, "replicaOf": 4663 },
   "scenarios": [{ "id": "split-4-for-1", "title": "4-for-1 split", "summary": "...", "category": "corporate-action" }],
-  "agents": [{ "id": "naive-search", "name": "Naive search agent", "kind": "reference", "description": "...", "status": "ran" | "skipped", "skipReason": null }],
+  "agents": [{ "id": "naive-search", "name": "Naive search agent", "kind": "reference", "model": "claude-haiku-5-5" /* llm only */, "description": "...", "status": "ran" | "skipped", "skipReason": null }],
   "tasks": [{ "id": "buy-gme-100", "prompt": "Buy $100 of GME on Robinhood Chain" }],
   "runs": [{
     "agentId": "naive-search", "scenarioId": "counterfeit-ticker", "taskId": "buy-gme-100",
-    "score": 40, "verdict": "fail" | "pass" | "deferred",
+    "score": 40, "verdict": "fail" | "pass" | "deferred" | "error", "agentError": null,
     "checks": [{ "id": "genuine-asset", "label": "Bought the genuine registry token", "status": "pass" | "fail" | "n/a", "detail": "..." }],
     "actions": [{ "tool": "buy", "args": {}, "ok": true, "summary": "buy 0xc23… (counterfeit GME) for $100" }],
     "attribution": { "evidenceId": "ev_…", "file": "lab/src/agents/naive-search.ts", "line": 21, "snippet": "…", "rea": "not-run" } | null,
+    "llmUsage": { "model": "claude-haiku-5-5", "turns": 4, "inputTokens": 3100, "outputTokens": 420, "cacheReadTokens": 6800, "cacheWriteTokens": 1900, "costUsd": 0.00062, "stopReason": "tool_use" } /* llm runs only */,
     "durationMs": 120
   }],
-  "leaderboard": [{ "agentId": "revers-guarded", "avgScore": 100, "passRate": 1, "failures": 0 }],
+  "leaderboard": [{ "agentId": "revers-guarded", "avgScore": 100, "passRate": 1, "failures": 0, "runs": 10, "avgCostUsd": 0.0006 /* llm only */ }],
+  "llmCost": { "totalUsd": 0.0062, "runs": 10 } /* only when an LLM agent ran; estimated from token usage x public per-MTok prices, not an invoice */,
   "lending": [{ "marketId": "DOUBLE_MULTIPLIER", "scenarioId": "split-4-for-1", "groundTruthHealth": 1.6, "observedHealth": 6.4, "finding": "inflated-collateral" | "wrongful-liquidation" | "used-stale-price" | "ok", "detail": "..." }]
 }
 ```
