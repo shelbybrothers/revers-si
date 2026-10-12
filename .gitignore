@@ -23,3 +23,5 @@ contracts/deployments/world.test.json
 # OS / editor
 .DS_Store
 *.log
+.vercel
+.env*

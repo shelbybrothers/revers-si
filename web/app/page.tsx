@@ -412,7 +412,10 @@ export default function Home() {
               <ul className="list-check">
                 <li>Library for TypeScript agents (viem).</li>
                 <li>MCP server over stdio for any MCP-capable agent.</li>
-                <li>Source available on request. DM {SITE.xHandle} on X.</li>
+                <li>
+                  Open source on{' '}
+                  <a href={SITE.source} target="_blank" rel="noopener noreferrer">GitHub</a>.
+                </li>
               </ul>
             </div>
             <div className="reveal" style={{ ['--d' as string]: '100ms', minWidth: 0 }}>

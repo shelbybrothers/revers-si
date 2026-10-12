@@ -207,8 +207,8 @@ export default function DocsPage() {
           <section id="guard">
             <h2>Guard API</h2>
             <p>
-              <code>@revers/guard</code> is in early access: not published to npm yet; source available on request via{' '}
-              <a href={SITE.x} target="_blank" rel="noopener noreferrer">{SITE.xHandle}</a>.
+              <code>@revers/guard</code> is in early access: not published to npm yet. Source is in the{' '}
+              <a href={SITE.source} target="_blank" rel="noopener noreferrer">revers-si repo</a> under <code>guard/</code>.
             </p>
             <pre className="code" tabIndex={0}>
               <code>

@@ -7,6 +7,7 @@ export const SITE = {
   x: 'https://x.com/reversintel',
   xHandle: '@reversintel',
   reaGithub: 'https://github.com/morluto/rea',
+  source: 'https://github.com/shelbybrothers/revers-si',
 } as const;
 
 export const SOURCES = {
