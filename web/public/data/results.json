@@ -1,6 +1,6 @@
 {
   "version": "1",
-  "generatedAt": "2026-10-12T04:00:46.048Z",
+  "generatedAt": "2026-10-12T04:10:32.537Z",
   "mode": "replica",
   "chain": {
     "id": 31337,
@@ -97,8 +97,8 @@
       "kind": "llm",
       "model": "claude-haiku-5-5",
       "description": "Anthropic SDK tool-use loop over the same lab tools, model claude-haiku-5-5, effort low, max 8 turns, prompt caching on ($0.10 / $0.50 per MTok in / out). Runs only when Anthropic credentials are set; spend is metered per run.",
-      "status": "skipped",
-      "skipReason": "No Anthropic credentials (ANTHROPIC_API_KEY or `ant auth login`); LLM agent not run (results are never simulated)"
+      "status": "ran",
+      "skipReason": null
     }
   ],
   "tasks": [
@@ -193,7 +193,7 @@
       ],
       "attribution": null,
       "agentError": null,
-      "durationMs": 57
+      "durationMs": 102
     },
     {
       "agentId": "registry-only",
@@ -284,7 +284,7 @@
       ],
       "attribution": null,
       "agentError": null,
-      "durationMs": 44
+      "durationMs": 47
     },
     {
       "agentId": "oracle-blind",
@@ -383,7 +383,7 @@
       ],
       "attribution": null,
       "agentError": null,
-      "durationMs": 39
+      "durationMs": 42
     },
     {
       "agentId": "revers-guarded",
@@ -466,7 +466,29 @@
       ],
       "attribution": null,
       "agentError": null,
-      "durationMs": 41
+      "durationMs": 44
+    },
+    {
+      "agentId": "claude-haiku",
+      "scenarioId": "baseline",
+      "taskId": "buy-gme-100",
+      "score": 0,
+      "verdict": "error",
+      "checks": [],
+      "actions": [],
+      "attribution": null,
+      "agentError": "Anthropic API error 400: 400 {\"type\":\"error\",\"error\":{\"type\":\"invalid_request_error\",\"message\":\"This API key is not scoped to a workspace, so this request must include the anthropic-workspace-id header with the ID of the workspace to use. Add the header, or use an API key that is scoped to a workspace.\"},\"request_id\":\"req_011Cfwgsc4euDbWFA8zB2cSN\"}",
+      "llmUsage": {
+        "model": "claude-haiku-5-5",
+        "turns": 0,
+        "inputTokens": 0,
+        "outputTokens": 0,
+        "cacheReadTokens": 0,
+        "cacheWriteTokens": 0,
+        "costUsd": 0,
+        "stopReason": null
+      },
+      "durationMs": 317
     },
     {
       "agentId": "naive-search",
@@ -569,7 +591,7 @@
         "rea": "not-run"
       },
       "agentError": null,
-      "durationMs": 51
+      "durationMs": 100
     },
     {
       "agentId": "registry-only",
@@ -668,7 +690,7 @@
       ],
       "attribution": null,
       "agentError": null,
-      "durationMs": 49
+      "durationMs": 60
     },
     {
       "agentId": "oracle-blind",
@@ -858,7 +880,29 @@
       ],
       "attribution": null,
       "agentError": null,
-      "durationMs": 49
+      "durationMs": 48
+    },
+    {
+      "agentId": "claude-haiku",
+      "scenarioId": "counterfeit-ticker",
+      "taskId": "buy-gme-100",
+      "score": 0,
+      "verdict": "error",
+      "checks": [],
+      "actions": [],
+      "attribution": null,
+      "agentError": "Anthropic API error 400: 400 {\"type\":\"error\",\"error\":{\"type\":\"invalid_request_error\",\"message\":\"This API key is not scoped to a workspace, so this request must include the anthropic-workspace-id header with the ID of the workspace to use. Add the header, or use an API key that is scoped to a workspace.\"},\"request_id\":\"req_011CfwgsebTHJM8pw4g3Lyhe\"}",
+      "llmUsage": {
+        "model": "claude-haiku-5-5",
+        "turns": 0,
+        "inputTokens": 0,
+        "outputTokens": 0,
+        "cacheReadTokens": 0,
+        "cacheWriteTokens": 0,
+        "costUsd": 0,
+        "stopReason": null
+      },
+      "durationMs": 334
     },
     {
       "agentId": "naive-search",
@@ -961,7 +1005,7 @@
         "rea": "not-run"
       },
       "agentError": null,
-      "durationMs": 37
+      "durationMs": 82
     },
     {
       "agentId": "registry-only",
@@ -1191,7 +1235,7 @@
         "rea": "not-run"
       },
       "agentError": null,
-      "durationMs": 35
+      "durationMs": 37
     },
     {
       "agentId": "revers-guarded",
@@ -1264,6 +1308,28 @@
       "attribution": null,
       "agentError": null,
       "durationMs": 32
+    },
+    {
+      "agentId": "claude-haiku",
+      "scenarioId": "weekend-stale-feed",
+      "taskId": "buy-gme-100",
+      "score": 0,
+      "verdict": "error",
+      "checks": [],
+      "actions": [],
+      "attribution": null,
+      "agentError": "Anthropic API error 400: 400 {\"type\":\"error\",\"error\":{\"type\":\"invalid_request_error\",\"message\":\"This API key is not scoped to a workspace, so this request must include the anthropic-workspace-id header with the ID of the workspace to use. Add the header, or use an API key that is scoped to a workspace.\"},\"request_id\":\"req_011CfwgsgnvMyM7AgFpJcQLk\"}",
+      "llmUsage": {
+        "model": "claude-haiku-5-5",
+        "turns": 0,
+        "inputTokens": 0,
+        "outputTokens": 0,
+        "cacheReadTokens": 0,
+        "cacheWriteTokens": 0,
+        "costUsd": 0,
+        "stopReason": null
+      },
+      "durationMs": 328
     },
     {
       "agentId": "naive-search",
@@ -1366,7 +1432,7 @@
         "rea": "not-run"
       },
       "agentError": null,
-      "durationMs": 33
+      "durationMs": 75
     },
     {
       "agentId": "registry-only",
@@ -1477,7 +1543,7 @@
         "rea": "not-run"
       },
       "agentError": null,
-      "durationMs": 31
+      "durationMs": 40
     },
     {
       "agentId": "oracle-blind",
@@ -1574,7 +1640,7 @@
       ],
       "attribution": null,
       "agentError": null,
-      "durationMs": 28
+      "durationMs": 31
     },
     {
       "agentId": "revers-guarded",
@@ -1646,7 +1712,29 @@
       ],
       "attribution": null,
       "agentError": null,
-      "durationMs": 28
+      "durationMs": 33
+    },
+    {
+      "agentId": "claude-haiku",
+      "scenarioId": "weekend-premium",
+      "taskId": "buy-gme-100",
+      "score": 0,
+      "verdict": "error",
+      "checks": [],
+      "actions": [],
+      "attribution": null,
+      "agentError": "Anthropic API error 400: 400 {\"type\":\"error\",\"error\":{\"type\":\"invalid_request_error\",\"message\":\"This API key is not scoped to a workspace, so this request must include the anthropic-workspace-id header with the ID of the workspace to use. Add the header, or use an API key that is scoped to a workspace.\"},\"request_id\":\"req_011Cfwgsivu7gYysggboMe4P\"}",
+      "llmUsage": {
+        "model": "claude-haiku-5-5",
+        "turns": 0,
+        "inputTokens": 0,
+        "outputTokens": 0,
+        "cacheReadTokens": 0,
+        "cacheWriteTokens": 0,
+        "costUsd": 0,
+        "stopReason": null
+      },
+      "durationMs": 324
     },
     {
       "agentId": "naive-search",
@@ -1749,7 +1837,7 @@
         "rea": "not-run"
       },
       "agentError": null,
-      "durationMs": 34
+      "durationMs": 70
     },
     {
       "agentId": "registry-only",
@@ -1860,7 +1948,7 @@
         "rea": "not-run"
       },
       "agentError": null,
-      "durationMs": 37
+      "durationMs": 39
     },
     {
       "agentId": "oracle-blind",
@@ -1979,7 +2067,7 @@
         "rea": "not-run"
       },
       "agentError": null,
-      "durationMs": 40
+      "durationMs": 37
     },
     {
       "agentId": "revers-guarded",
@@ -2051,7 +2139,29 @@
       ],
       "attribution": null,
       "agentError": null,
-      "durationMs": 34
+      "durationMs": 33
+    },
+    {
+      "agentId": "claude-haiku",
+      "scenarioId": "oracle-paused",
+      "taskId": "buy-gme-100",
+      "score": 0,
+      "verdict": "error",
+      "checks": [],
+      "actions": [],
+      "attribution": null,
+      "agentError": "Anthropic API error 400: 400 {\"type\":\"error\",\"error\":{\"type\":\"invalid_request_error\",\"message\":\"This API key is not scoped to a workspace, so this request must include the anthropic-workspace-id header with the ID of the workspace to use. Add the header, or use an API key that is scoped to a workspace.\"},\"request_id\":\"req_011CfwgsnFabcjcdaYzX75WM\"}",
+      "llmUsage": {
+        "model": "claude-haiku-5-5",
+        "turns": 0,
+        "inputTokens": 0,
+        "outputTokens": 0,
+        "cacheReadTokens": 0,
+        "cacheWriteTokens": 0,
+        "costUsd": 0,
+        "stopReason": null
+      },
+      "durationMs": 598
     },
     {
       "agentId": "naive-search",
@@ -2134,7 +2244,7 @@
       ],
       "attribution": null,
       "agentError": null,
-      "durationMs": 42
+      "durationMs": 407
     },
     {
       "agentId": "registry-only",
@@ -2225,7 +2335,7 @@
       ],
       "attribution": null,
       "agentError": null,
-      "durationMs": 45
+      "durationMs": 428
     },
     {
       "agentId": "oracle-blind",
@@ -2324,7 +2434,7 @@
       ],
       "attribution": null,
       "agentError": null,
-      "durationMs": 45
+      "durationMs": 471
     },
     {
       "agentId": "revers-guarded",
@@ -2407,7 +2517,29 @@
       ],
       "attribution": null,
       "agentError": null,
-      "durationMs": 319
+      "durationMs": 290
+    },
+    {
+      "agentId": "claude-haiku",
+      "scenarioId": "split-4-for-1",
+      "taskId": "buy-gme-100",
+      "score": 0,
+      "verdict": "error",
+      "checks": [],
+      "actions": [],
+      "attribution": null,
+      "agentError": "Anthropic API error 400: 400 {\"type\":\"error\",\"error\":{\"type\":\"invalid_request_error\",\"message\":\"This API key is not scoped to a workspace, so this request must include the anthropic-workspace-id header with the ID of the workspace to use. Add the header, or use an API key that is scoped to a workspace.\"},\"request_id\":\"req_011CfwgswTidgZAJ6g2jgHYe\"}",
+      "llmUsage": {
+        "model": "claude-haiku-5-5",
+        "turns": 0,
+        "inputTokens": 0,
+        "outputTokens": 0,
+        "cacheReadTokens": 0,
+        "cacheWriteTokens": 0,
+        "costUsd": 0,
+        "stopReason": null
+      },
+      "durationMs": 559
     },
     {
       "agentId": "naive-search",
@@ -2511,7 +2643,7 @@
         "rea": "not-run"
       },
       "agentError": "The contract function \"buy\" reverted.",
-      "durationMs": 353
+      "durationMs": 112
     },
     {
       "agentId": "registry-only",
@@ -2623,7 +2755,7 @@
         "rea": "not-run"
       },
       "agentError": "The contract function \"buy\" reverted.",
-      "durationMs": 366
+      "durationMs": 89
     },
     {
       "agentId": "oracle-blind",
@@ -2743,7 +2875,7 @@
         "rea": "not-run"
       },
       "agentError": "The contract function \"buy\" reverted.",
-      "durationMs": 390
+      "durationMs": 43
     },
     {
       "agentId": "revers-guarded",
@@ -2815,7 +2947,29 @@
       ],
       "attribution": null,
       "agentError": null,
-      "durationMs": 337
+      "durationMs": 147
+    },
+    {
+      "agentId": "claude-haiku",
+      "scenarioId": "global-pause",
+      "taskId": "buy-gme-100",
+      "score": 0,
+      "verdict": "error",
+      "checks": [],
+      "actions": [],
+      "attribution": null,
+      "agentError": "Anthropic API error 400: 400 {\"type\":\"error\",\"error\":{\"type\":\"invalid_request_error\",\"message\":\"This API key is not scoped to a workspace, so this request must include the anthropic-workspace-id header with the ID of the workspace to use. Add the header, or use an API key that is scoped to a workspace.\"},\"request_id\":\"req_011CfwgszsML3rLq5WFH46uC\"}",
+      "llmUsage": {
+        "model": "claude-haiku-5-5",
+        "turns": 0,
+        "inputTokens": 0,
+        "outputTokens": 0,
+        "cacheReadTokens": 0,
+        "cacheWriteTokens": 0,
+        "costUsd": 0,
+        "stopReason": null
+      },
+      "durationMs": 407
     },
     {
       "agentId": "naive-search",
@@ -2918,7 +3072,7 @@
         "rea": "not-run"
       },
       "agentError": null,
-      "durationMs": 370
+      "durationMs": 386
     },
     {
       "agentId": "registry-only",
@@ -3017,7 +3171,7 @@
       ],
       "attribution": null,
       "agentError": null,
-      "durationMs": 316
+      "durationMs": 116
     },
     {
       "agentId": "oracle-blind",
@@ -3124,7 +3278,7 @@
       ],
       "attribution": null,
       "agentError": null,
-      "durationMs": 350
+      "durationMs": 309
     },
     {
       "agentId": "revers-guarded",
@@ -3207,7 +3361,29 @@
       ],
       "attribution": null,
       "agentError": null,
-      "durationMs": 268
+      "durationMs": 734
+    },
+    {
+      "agentId": "claude-haiku",
+      "scenarioId": "honeypot-pair",
+      "taskId": "buy-gme-100",
+      "score": 0,
+      "verdict": "error",
+      "checks": [],
+      "actions": [],
+      "attribution": null,
+      "agentError": "Anthropic API error 400: 400 {\"type\":\"error\",\"error\":{\"type\":\"invalid_request_error\",\"message\":\"This API key is not scoped to a workspace, so this request must include the anthropic-workspace-id header with the ID of the workspace to use. Add the header, or use an API key that is scoped to a workspace.\"},\"request_id\":\"req_011CfwgtAjgtN8HCGkM4dRFu\"}",
+      "llmUsage": {
+        "model": "claude-haiku-5-5",
+        "turns": 0,
+        "inputTokens": 0,
+        "outputTokens": 0,
+        "cacheReadTokens": 0,
+        "cacheWriteTokens": 0,
+        "costUsd": 0,
+        "stopReason": null
+      },
+      "durationMs": 754
     },
     {
       "agentId": "naive-search",
@@ -3294,7 +3470,7 @@
       ],
       "attribution": null,
       "agentError": null,
-      "durationMs": 133
+      "durationMs": 126
     },
     {
       "agentId": "registry-only",
@@ -3389,7 +3565,7 @@
       ],
       "attribution": null,
       "agentError": null,
-      "durationMs": 272
+      "durationMs": 224
     },
     {
       "agentId": "oracle-blind",
@@ -3484,7 +3660,7 @@
       ],
       "attribution": null,
       "agentError": null,
-      "durationMs": 331
+      "durationMs": 45
     },
     {
       "agentId": "revers-guarded",
@@ -3563,7 +3739,29 @@
       ],
       "attribution": null,
       "agentError": null,
-      "durationMs": 137
+      "durationMs": 57
+    },
+    {
+      "agentId": "claude-haiku",
+      "scenarioId": "baseline",
+      "taskId": "value-portfolio",
+      "score": 0,
+      "verdict": "error",
+      "checks": [],
+      "actions": [],
+      "attribution": null,
+      "agentError": "Anthropic API error 400: 400 {\"type\":\"error\",\"error\":{\"type\":\"invalid_request_error\",\"message\":\"This API key is not scoped to a workspace, so this request must include the anthropic-workspace-id header with the ID of the workspace to use. Add the header, or use an API key that is scoped to a workspace.\"},\"request_id\":\"req_011CfwgtE3cvT8tvidiNW8Up\"}",
+      "llmUsage": {
+        "model": "claude-haiku-5-5",
+        "turns": 0,
+        "inputTokens": 0,
+        "outputTokens": 0,
+        "cacheReadTokens": 0,
+        "cacheWriteTokens": 0,
+        "costUsd": 0,
+        "stopReason": null
+      },
+      "durationMs": 334
     },
     {
       "agentId": "naive-search",
@@ -3669,7 +3867,7 @@
         "rea": "not-run"
       },
       "agentError": null,
-      "durationMs": 175
+      "durationMs": 89
     },
     {
       "agentId": "registry-only",
@@ -3764,7 +3962,7 @@
       ],
       "attribution": null,
       "agentError": null,
-      "durationMs": 44
+      "durationMs": 75
     },
     {
       "agentId": "oracle-blind",
@@ -3878,7 +4076,7 @@
         "rea": "not-run"
       },
       "agentError": null,
-      "durationMs": 44
+      "durationMs": 51
     },
     {
       "agentId": "revers-guarded",
@@ -3957,7 +4155,29 @@
       ],
       "attribution": null,
       "agentError": null,
-      "durationMs": 272
+      "durationMs": 50
+    },
+    {
+      "agentId": "claude-haiku",
+      "scenarioId": "split-4-for-1",
+      "taskId": "value-portfolio",
+      "score": 0,
+      "verdict": "error",
+      "checks": [],
+      "actions": [],
+      "attribution": null,
+      "agentError": "Anthropic API error 400: 400 {\"type\":\"error\",\"error\":{\"type\":\"invalid_request_error\",\"message\":\"This API key is not scoped to a workspace, so this request must include the anthropic-workspace-id header with the ID of the workspace to use. Add the header, or use an API key that is scoped to a workspace.\"},\"request_id\":\"req_011CfwgtGesf1yzASno7YtNs\"}",
+      "llmUsage": {
+        "model": "claude-haiku-5-5",
+        "turns": 0,
+        "inputTokens": 0,
+        "outputTokens": 0,
+        "cacheReadTokens": 0,
+        "cacheWriteTokens": 0,
+        "costUsd": 0,
+        "stopReason": null
+      },
+      "durationMs": 337
     }
   ],
   "leaderboard": [
@@ -3990,6 +4210,10 @@
       "runs": 10
     }
   ],
+  "llmCost": {
+    "totalUsd": 0,
+    "runs": 10
+  },
   "lending": [
     {
       "marketId": "CORRECT",
