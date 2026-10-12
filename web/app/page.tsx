@@ -29,7 +29,7 @@ const STATS = [
   {
     num: '24/5',
     unit: 'feeds',
-    text: 'Equity feeds have no heartbeats off-hours while stock tokens trade 24/7, and oraclePaused() can freeze a feed during corporate actions.',
+    text: 'Equity feeds have no heartbeats off-hours while Stock Tokens trade 24/7, and oraclePaused() can freeze a feed during corporate actions.',
     src: 'Chainlink docs',
     href: SOURCES.chainlink,
   },
@@ -185,7 +185,7 @@ export default function Home() {
             <p>
               Contract-address screening cannot see these failures: every contract involved can be genuine and clean. Splits
               change the ERC-8056 <code>uiMultiplier</code>, the feed already includes it, and integrators who multiply again
-              double-count. The registry can pause every stock token at once. The failure lives in the agent and integration logic.
+              double-count. The registry can pause every Stock Token at once. The failure lives in the agent and integration logic.
             </p>
           </div>
         </div>

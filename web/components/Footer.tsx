@@ -21,6 +21,7 @@ export function Footer() {
         </div>
         <div className="links">
           <Link href="/lab">Lab</Link>
+          <Link href="/wallet">Wallet check</Link>
           <Link href="/docs">Docs</Link>
           <a href={SITE.source} target="_blank" rel="noopener noreferrer">
             Source

@@ -1,6 +1,6 @@
 # revers.si: crash-test lab for AI trading agents
 
-revers.si (Reverse Intelligence) stages real-world market events for tokenized stocks on Robinhood Chain and
+revers.si (Reverse Intelligence) stages real-world market events for Stock Tokens on Robinhood Chain and
 scores which AI trading agents and DeFi integrations break. The events are stock splits, weekend-stale oracles,
 oracle pauses, global pauses, counterfeit tickers and honeypot pairs. For each failure it points to the line of
 agent code that caused it.
@@ -176,6 +176,37 @@ in `lab/src/agents/`.
   include the new multiplier). Ground truth is already computed from each scenario's declared per-share price, so
   that variant can be added without changing scoring.
 - The website reads `results.json` at build time, so new lab results need a rebuild and redeploy to appear.
+
+## Wallet check (`/wallet`)
+
+A read-only "Connect wallet" for Robinhood Chain, in the site's nav and at https://revers.si/wallet. It has no
+dependencies and no WalletConnect: browser wallets are found with EIP-6963 (`window.ethereum` as a fallback). On
+phones without an injected wallet, it offers "open in wallet" links for MetaMask, Coinbase Wallet and Trust Wallet,
+plus written steps for Robinhood Wallet, which has no documented deep link.
+
+- **Read-only.** Besides the connect, network-switch and disconnect requests, the code sends only `eth_call`,
+  `eth_getCode` and `eth_getBalance`, through the user's own wallet. Every other method (`eth_sendTransaction`,
+  `personal_sign`, `eth_signTypedData*`, approvals) is refused in `web/lib/wallet/eip1193.ts`. Nothing is sent to a
+  revers.si server; reads go through the wallet's own RPC (so the wallet's RPC provider sees the address and the
+  reads). The wallet address never goes into a URL. `localStorage` keeps only the last wallet's rdns.
+- **Verdict, keyed by address.** A token is genuine if `uid()` returns 32 bytes and either the Stock Token factory
+  `0x4783c67b63de2b358ac5951a7d41f47a38f3c046` maps `tokenAddress(uid)` to it, or it equals
+  `CREATE2(factory, uid, 0xe26032e0…5839)`, computed in the browser, while the mapping cannot be read. Otherwise the
+  token is "not a Robinhood Stock Token", or "unknown" if the RPC could not answer or the factory's mapping contradicts
+  a CREATE2 match. Code hash and pause flags are shown for context only.
+- **Holdings** are read with paced Multicall3 `balanceOf` batches over `web/public/data/stock-tokens.json`, then each
+  token with a balance gets the full check. The page shows the raw balance, `uiMultiplier`, and the share-equivalent
+  balance (balance x uiMultiplier / 1e18, cross-checked against `balanceOfUI()`).
+- **Rebuild the candidate list** with `cd web && npm run tokens`. It reads CoinGecko's public Robinhood Chain token
+  list and keeps only addresses that pass the factory check, reading symbols on chain. "Lookalikes" are list entries
+  that reuse a Stock Token symbol but fail the check. The 2026-10-12 build has 192 Stock Tokens (192 of the 194 in
+  Robinhood's published list as of 2026-10-08) and 14 lookalikes. Use `--extra 0x…,0x…` to add addresses by hand.
+
+Limits: Robinhood does not publish the factory address. We identified it on chain: every token in Robinhood's
+published list (snapshot of 2026-10-08) passes both checks, and known counterfeits fail. "Genuine" means issued by
+the factory, not currently listed. The factory and beacon are upgradeable by their admins. Robinhood Wallet's in-app
+browser and the deep links have not been tested on real devices. Not investment advice, not an audit, not affiliated
+with Robinhood.
 
 ## Deploying the site
 

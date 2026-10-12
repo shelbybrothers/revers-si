@@ -1,4 +1,4 @@
-# revers.si — Crash-test lab for AI agents trading tokenized stocks
+# revers.si — Crash-test lab for AI agents trading Stock Tokens on Robinhood Chain
 
 **One line:** Fork (or replicate) Robinhood Chain, throw real-world market events at it — stock splits,
 weekend-stale oracles, oracle pauses, global pauses, counterfeit tickers — and score which AI trading

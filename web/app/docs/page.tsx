@@ -1,6 +1,8 @@
 import type { Metadata } from 'next';
+import Link from 'next/link';
 import { CATEGORY_LABEL, results } from '@/lib/results';
 import { SITE, SOURCES } from '@/lib/site';
+import { MULTICALL3, STOCK_TOKEN_FACTORY, STOCK_TOKEN_INIT_CODE_HASH, STOCK_TOKEN_REGISTRY } from '@/lib/wallet/evm';
 
 export const metadata: Metadata = {
   title: 'Docs',
@@ -21,6 +23,7 @@ const TOC = [
   { id: 'schema', label: 'Results schema' },
   { id: 'guard', label: 'Guard API' },
   { id: 'mcp', label: 'MCP server' },
+  { id: 'wallet', label: 'Wallet check' },
   { id: 'limits', label: 'Limits' },
 ];
 
@@ -171,7 +174,7 @@ export default function DocsPage() {
               </table>
             </div>
             <p>
-              Background: equity feeds update 24/5 while stock tokens trade 24/7, and <code>oraclePaused()</code> can freeze a feed
+              Background: equity feeds update 24/5 while Stock Tokens trade 24/7, and <code>oraclePaused()</code> can freeze a feed
               during corporate actions (<a href={SOURCES.chainlink} target="_blank" rel="noopener noreferrer">Chainlink docs</a>).
               Splits change the ERC-8056 <code>uiMultiplier</code>; the feed already includes it (
               <a href={SOURCES.sqd} target="_blank" rel="noopener noreferrer">SQD</a>). Counterfeit tickers are documented by{' '}
@@ -271,6 +274,87 @@ guard.positionValue(token, balance)
   }
 }`}</code>
             </pre>
+          </section>
+
+          <section id="wallet">
+            <h2>Wallet check</h2>
+            <p>
+              <Link href="/wallet">/wallet</Link> connects a browser wallet (EIP-6963 discovery, <code>window.ethereum</code> as
+              fallback) and reads Robinhood Chain through that wallet’s own RPC. Reads are <code>eth_call</code>,{' '}
+              <code>eth_getCode</code> and <code>eth_getBalance</code>; besides those, the code only sends the connect, network-switch and
+              disconnect requests and refuses every other method (no signatures, transactions or approvals). Nothing goes to a
+              revers.si server, but your address and the reads do go through your wallet to its RPC provider (the node your
+              wallet uses for Robinhood Chain); <code>localStorage</code> keeps only the last wallet’s rdns.
+            </p>
+            <h3>Verdict, by address</h3>
+            <ol>
+              <li>The wallet must be on Robinhood Chain (4663).</li>
+              <li>
+                <code>uid()</code> must return 32 bytes. If it reverts: not a Robinhood Stock Token.
+              </li>
+              <li>
+                Genuine if the factory’s <code>tokenAddress(uid)</code> returns this address, or if{' '}
+                <code>CREATE2(factory, uid, initCodeHash)</code>, computed in the browser, equals it while the mapping cannot be
+                read. If the mapping points elsewhere (or to zero) and CREATE2 differs: not a Robinhood Stock Token. If CREATE2
+                matches but the mapping points elsewhere (or to zero): unknown, because the factory’s own record overrides it. If
+                the mapping cannot be read and CREATE2 differs: unknown.
+              </li>
+            </ol>
+            <div className="tbl-wrap">
+              <table className="tbl">
+                <tbody>
+                  <tr>
+                    <td>Stock Token factory</td>
+                    <td className="mono">{STOCK_TOKEN_FACTORY}</td>
+                  </tr>
+                  <tr>
+                    <td>CREATE2 init code hash</td>
+                    <td className="mono">{STOCK_TOKEN_INIT_CODE_HASH}</td>
+                  </tr>
+                  <tr>
+                    <td>Beacon / access registry</td>
+                    <td className="mono">{STOCK_TOKEN_REGISTRY}</td>
+                  </tr>
+                  <tr>
+                    <td>Multicall3</td>
+                    <td className="mono">{MULTICALL3}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <p>
+              Holdings: <code>balanceOf</code> for every candidate in paced Multicall3 batches of 40, then the full check for each
+              address with a balance. Share-equivalent balance = balance × <code>uiMultiplier</code> ÷ 10<sup>18</sup>, which
+              matches the token’s own <code>balanceOfUI()</code>. The candidate list, <code>public/data/stock-tokens.json</code>, is
+              rebuilt with <code>cd web &amp;&amp; npm run tokens</code>: addresses from CoinGecko’s public Robinhood Chain token
+              list, kept only if they pass the check above, with symbols read on chain. “Lookalikes” fail the check but reuse a
+              Stock Token symbol (a heuristic for what to scan, never for the verdict).
+            </p>
+            <h3>Limits</h3>
+            <ul>
+              <li>
+                Robinhood does not publish the factory address. We identified it on chain: all 194 tokens in Robinhood’s published
+                asset list (snapshot of 2026-10-08) pass both checks, and 5 known counterfeits (3 GME, 2 NVDA) fail. That is our
+                inference, not an official statement.
+              </li>
+              <li>
+                Genuine means issued by the factory, not listed or tradable: a token removed from Robinhood’s list still passes.
+              </li>
+              <li>
+                The factory and beacon are upgradeable by their admins, and the mapping and balances come from your wallet’s RPC.
+                Only the CREATE2 check is independent of the RPC.
+              </li>
+              <li>Code hash, beacon and pause flags are shown for context only: a clone can copy the code.</li>
+              <li>
+                Holdings cover only the candidate list (at the 2026-10-12 build: 192 of the 194 tokens in Robinhood’s list, plus
+                14 lookalikes). Check any other address on its own.
+              </li>
+              <li>
+                Not tested on real devices: Robinhood Wallet’s in-app browser (discovery, network switching) and the wallet deep
+                links. Robinhood Wallet has no documented deep link, so it gets written instructions.
+              </li>
+              <li>Read-only. Not investment advice, not an audit, not affiliated with Robinhood.</li>
+            </ul>
           </section>
 
           <section id="limits">

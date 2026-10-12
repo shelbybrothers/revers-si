@@ -3,7 +3,13 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useEffect, useState } from 'react';
+import { lockScroll, unlockScroll } from '@/lib/scrollLock';
 import { SITE } from '@/lib/site';
+import { shortAddress } from '@/lib/wallet/evm';
+import { onRobinhoodChain } from '@/lib/wallet/store';
+import { ConnectWallet, MobileWallet, NetworkBadge } from './wallet/ConnectWallet';
+import { WalletDialog } from './wallet/WalletDialog';
+import { useWallet } from './wallet/useWallet';
 import { XIcon } from './XIcon';
 
 const LINKS = [
@@ -16,6 +22,10 @@ const LINKS = [
 export function Nav() {
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
+  const w = useWallet();
+  const connected = w.status === 'connected' && !!w.account;
+  const short = connected ? shortAddress(w.account ?? '') : '';
+  const walletLabel = connected ? `, wallet ${short} on ${onRobinhoodChain(w) ? 'Robinhood Chain' : 'wrong network'}` : '';
 
   useEffect(() => setOpen(false), [pathname]);
 
@@ -25,12 +35,12 @@ export function Nav() {
     const onResize = () => window.innerWidth >= 768 && setOpen(false);
     document.addEventListener('keydown', onKey);
     window.addEventListener('resize', onResize);
-    const prev = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
+    // Counted lock shared with the wallet picker: either can close first without unlocking the other.
+    lockScroll();
     return () => {
       document.removeEventListener('keydown', onKey);
       window.removeEventListener('resize', onResize);
-      document.body.style.overflow = prev;
+      unlockScroll();
     };
   }, [open]);
 
@@ -55,18 +65,25 @@ export function Nav() {
           <a className="icon-btn" href={SITE.x} target="_blank" rel="noopener noreferrer" aria-label="revers.si on X (@reversintel)">
             <XIcon />
           </a>
+          <ConnectWallet />
           <a className="btn btn-accent nav-cta" href={SITE.x} target="_blank" rel="noopener noreferrer">
             Follow on X
           </a>
         </nav>
         <button
           type="button"
-          className="icon-btn menu-btn"
+          className={`icon-btn menu-btn${connected ? ' menu-btn-wallet' : ''}`}
           aria-expanded={open}
           aria-controls="mobile-menu"
-          aria-label={open ? 'Close menu' : 'Open menu'}
+          aria-label={`${open ? 'Close menu' : 'Open menu'}${walletLabel}`}
           onClick={() => setOpen((o) => !o)}
         >
+          {connected && (
+            <span className="mstatus" aria-hidden="true">
+              <NetworkBadge chainId={w.chainId} compact />
+              <span className="mono">{short}</span>
+            </span>
+          )}
           <span className="bars" aria-hidden="true">
             <span />
             <span />
@@ -87,11 +104,13 @@ export function Nav() {
             X / {SITE.xHandle}
             <XIcon size={18} />
           </a>
+          <MobileWallet onNavigate={() => setOpen(false)} />
           <a className="btn btn-accent" href={SITE.x} target="_blank" rel="noopener noreferrer">
             Follow on X
           </a>
         </nav>
       )}
+      <WalletDialog />
     </>
   );
 }
