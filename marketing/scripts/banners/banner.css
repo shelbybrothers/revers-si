@@ -1,0 +1,125 @@
+/* revers.si banner system: shared tokens, texture, header/footer. Rendered by render.mjs at exact pixel sizes. */
+:root {
+  --canvas: #e1e6df;
+  --panel: #f0f3ee;
+  --panel-2: #e8ece6;
+  --border: #c9d3c6;
+  --hair: rgba(38, 48, 42, 0.14);
+  --text: #26302a;
+  --muted: #5a665e;
+  --faint: #7d887f;
+  --accent: #016938;
+  --emerald: #01693a; /* the logo ground */
+  --jade-tint: #d7ebd0;
+  --band: #0f2a1e;
+  --band-2: #143426;
+  --band-accent: #bfdfb4;
+  --band-text: rgba(255, 255, 255, 0.95);
+  --band-muted: rgba(255, 255, 255, 0.66);
+  --band-faint: rgba(255, 255, 255, 0.42);
+  --band-hair: rgba(255, 255, 255, 0.14);
+  --pass: #016938;
+  --fail: #b4442f;
+  --defer: #8a5a00;
+  --term-pass: #9ad09a;
+  --term-fail: #ff8f85;
+  --term-defer: #f2c46d;
+  --sans: 'Inter Tight', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  --serif: 'Bitter', Georgia, serif;
+  --mono: 'JetBrains Mono', ui-monospace, Menlo, monospace;
+  --pad-x: 96px;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { background: var(--canvas); }
+body {
+  font-family: var(--sans);
+  color: var(--text);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: geometricPrecision;
+  font-feature-settings: 'ss01' 0, 'tnum' 1;
+}
+
+.frame {
+  position: relative;
+  width: 1600px;
+  height: 900px;
+  overflow: hidden;
+  background: var(--canvas);
+  isolation: isolate;
+}
+.frame.dark { background: var(--band); color: var(--band-text); }
+
+/* Texture: a hairline grid that fades out toward the edges, plus film grain. */
+.grid {
+  position: absolute; inset: 0; z-index: 0; pointer-events: none;
+  background-image:
+    linear-gradient(to right, rgba(38, 48, 42, 0.055) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(38, 48, 42, 0.055) 1px, transparent 1px);
+  background-size: 48px 48px;
+  background-position: -1px -1px;
+  -webkit-mask-image: radial-gradient(ellipse 85% 80% at 30% 35%, #000 25%, transparent 85%);
+          mask-image: radial-gradient(ellipse 85% 80% at 30% 35%, #000 25%, transparent 85%);
+}
+.dark .grid {
+  background-image:
+    linear-gradient(to right, rgba(191, 223, 180, 0.06) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(191, 223, 180, 0.06) 1px, transparent 1px);
+}
+.grain {
+  position: absolute; inset: 0; z-index: 50; pointer-events: none;
+  background-image: url(assets/grain.png);
+  background-size: 240px 240px;
+  opacity: 0.075;
+  mix-blend-mode: multiply;
+}
+.dark .grain { mix-blend-mode: soft-light; opacity: 0.16; }
+.glow {
+  position: absolute; z-index: 0; pointer-events: none; border-radius: 50%;
+  filter: blur(10px);
+}
+
+.content { position: absolute; inset: 0; z-index: 2; padding: 76px var(--pad-x) 0; }
+
+/* Eyebrow / header row */
+.toprow { display: flex; align-items: center; justify-content: space-between; }
+.eyebrow {
+  font-family: var(--mono); font-size: 15px; font-weight: 500; letter-spacing: 0.16em;
+  text-transform: uppercase; color: var(--muted); display: flex; align-items: center; gap: 14px;
+}
+.eyebrow::before { content: ''; width: 28px; height: 1px; background: currentColor; opacity: 0.7; }
+.dark .eyebrow { color: var(--band-accent); }
+.tag {
+  font-family: var(--mono); font-size: 15px; font-weight: 500; letter-spacing: 0.12em; text-transform: uppercase;
+  padding: 8px 14px 7px; border: 1px solid var(--border); border-radius: 999px; color: var(--muted);
+  background: rgba(240, 243, 238, 0.7);
+}
+.tag.accent { border-color: rgba(1, 105, 56, 0.35); color: var(--accent); background: var(--jade-tint); }
+.dark .tag { border-color: var(--band-hair); color: var(--band-muted); background: rgba(255, 255, 255, 0.04); }
+.dark .tag.accent { border-color: rgba(191, 223, 180, 0.4); color: var(--band-accent); background: rgba(191, 223, 180, 0.08); }
+
+/* Type */
+.h1 { font-weight: 300; letter-spacing: -0.04em; line-height: 0.98; }
+.acc {
+  font-family: var(--serif); font-style: italic; font-weight: 500; letter-spacing: -0.02em;
+  color: var(--accent); font-size: 0.95em;
+}
+.dark .acc { color: var(--band-accent); }
+.lede { font-size: 24px; line-height: 1.45; color: var(--muted); font-weight: 400; letter-spacing: -0.005em; }
+.dark .lede { color: var(--band-muted); }
+.mono { font-family: var(--mono); }
+.num { font-weight: 300; letter-spacing: -0.045em; line-height: 0.9; font-feature-settings: 'tnum' 1, 'lnum' 1; }
+
+/* Footer: logo + revers.si · micro-line · @reversintel */
+.foot {
+  position: absolute; z-index: 3; left: var(--pad-x); right: var(--pad-x); bottom: 44px;
+  display: flex; align-items: center; justify-content: space-between; gap: 32px;
+  padding-top: 22px; border-top: 1px solid var(--hair);
+}
+.dark .foot { border-top-color: var(--band-hair); }
+.brand { display: flex; align-items: center; gap: 14px; font-family: var(--mono); font-weight: 500; font-size: 21px; letter-spacing: -0.01em; }
+.brand img { width: 40px; height: 40px; border-radius: 9px; box-shadow: 0 1px 0 rgba(255,255,255,0.4) inset, 0 4px 14px -6px rgba(15, 42, 30, 0.45); }
+.micro { font-family: var(--mono); font-size: 13px; letter-spacing: 0.02em; color: var(--faint); text-align: center; flex: 1; line-height: 1.5; }
+.dark .micro { color: var(--band-faint); }
+.handle { display: flex; align-items: center; gap: 10px; font-family: var(--mono); font-weight: 500; font-size: 21px; letter-spacing: -0.01em; }
+.handle svg { width: 19px; height: 19px; }

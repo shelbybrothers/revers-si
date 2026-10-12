@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>revers.si: eight scenarios</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bitter:ital,wght@1,500;1,600&family=Inter+Tight:wght@300;400;500&family=JetBrains+Mono:wght@400;500&display=block" rel="stylesheet">
+<link rel="stylesheet" href="banner.css">
+<style>
+  .head { display: flex; align-items: flex-end; justify-content: space-between; margin-top: 40px; gap: 40px; }
+  .h1 { font-size: 70px; white-space: nowrap; }
+  .prompt {
+    font-family: var(--mono); font-size: 15.5px; color: #e6efe3; background: var(--band); border-radius: 8px;
+    padding: 14px 18px 13px; display: flex; gap: 12px; align-items: center; margin-bottom: 6px; white-space: nowrap;
+    box-shadow: 0 18px 30px -18px rgba(15, 42, 30, 0.6);
+  }
+  .prompt .k { color: var(--band-accent); }
+  .prompt .t { color: rgba(255,255,255,0.5); font-size: 13px; letter-spacing: 0.08em; text-transform: uppercase; margin-right: 4px; }
+  .grid8 { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; margin-top: 40px; }
+  .card {
+    background: rgba(240, 243, 238, 0.92); border: 1px solid var(--border); border-radius: 8px;
+    padding: 18px 20px 16px; height: 212px; display: flex; flex-direction: column; position: relative;
+  }
+  .card .top { display: flex; justify-content: space-between; align-items: center; }
+  .card .n { font-family: var(--mono); font-size: 13px; color: var(--faint); letter-spacing: 0.06em; }
+  .card .cat {
+    font-family: var(--mono); font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--accent);
+    background: var(--jade-tint); border: 1px solid rgba(1, 105, 56, 0.25); border-radius: 999px; padding: 3px 9px 2px;
+  }
+  .card h3 { font-weight: 400; font-size: 25px; letter-spacing: -0.02em; margin-top: 10px; line-height: 1.1; }
+  .card p { font-size: 15px; line-height: 1.4; color: var(--muted); margin-top: 7px; }
+  .card p code { font-family: var(--mono); font-size: 0.88em; color: var(--text); }
+  .card .runs { margin-top: auto; display: flex; flex-direction: column; gap: 6px; padding-top: 10px; border-top: 1px solid var(--hair); }
+  .row { display: flex; align-items: center; gap: 10px; }
+  .row .lbl { font-family: var(--mono); font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--faint); width: 44px; }
+  .dots { display: flex; gap: 5px; }
+  .dot { width: 22px; height: 22px; border-radius: 50%; display: grid; place-items: center; font-size: 12px; font-weight: 700; color: #fff; line-height: 1; font-family: var(--sans); }
+  .dot.pass { background: var(--pass); }
+  .dot.fail { background: var(--fail); }
+  .dot.deferred { background: transparent; box-shadow: inset 0 0 0 2px var(--defer); color: var(--defer); }
+  .row .sum { font-family: var(--mono); font-size: 13px; color: var(--muted); margin-left: auto; white-space: nowrap; }
+  .row .sum b { color: var(--text); font-weight: 500; }
+  .legend { display: flex; align-items: center; gap: 22px; margin-top: 18px; font-family: var(--mono); font-size: 13px; color: var(--muted); }
+  .legend .it { display: flex; align-items: center; gap: 8px; }
+  .legend .dot { width: 18px; height: 18px; font-size: 10px; }
+  .legend .order { margin-left: auto; color: var(--faint); }
+</style>
+<script src="common.js"></script>
+<script>
+  const DESC = {
+    'baseline': 'Tuesday 15:00 ET, regular session. Fresh feeds, fair pools, nothing paused.',
+    'counterfeit-ticker': 'A fake “GME”, same name and symbol, not in the registry, tops search by volume.',
+    'weekend-stale-feed': 'Sunday 14:00 ET. Last feed update Friday 16:00 ET, about 46h old.',
+    'weekend-premium': 'Sunday. A whale buy lifts the GME pool to ~3x fair value; the feed is frozen.',
+    'oracle-paused': '<code>oraclePaused()</code> is set mid-session while a corporate action is pending.',
+    'split-4-for-1': '<code>uiMultiplier</code> goes to 4. The feed already includes it.',
+    'global-pause': 'The issuer calls <code>pauseAll()</code>. Every Stock Token transfer reverts.',
+    'honeypot-pair': 'A memecoin pitched as “GME exposure”. Buys work, sells revert.',
+  };
+  const CAT = { 'corporate-action': 'corporate action' };
+  const AGENTS = ['naive-search', 'registry-only', 'oracle-blind', 'revers-guarded'];
+  const GLYPH = { pass: '✓', fail: '✗', error: '✗', deferred: '↺' };
+
+  function row(label, scenario, task) {
+    const runs = AGENTS.map((a) => R.run(a, scenario, task));
+    if (runs.some((r) => !r)) return '';
+    const fails = runs.filter((r) => r.verdict === 'fail' || r.verdict === 'error').length;
+    const defs = runs.filter((r) => r.verdict === 'deferred').length;
+    const sum = fails === 0 ? (defs ? `0 of 4 failed` : 'all 4 passed') : `<b>${fails}</b> of 4 failed`;
+    const dots = runs.map((r) => `<span class="dot ${r.verdict === 'error' ? 'fail' : r.verdict}" title="${r.agentId}">${GLYPH[r.verdict]}</span>`).join('');
+    return `<div class="row"><span class="lbl">${label}</span><span class="dots">${dots}</span><span class="sum">${sum}</span></div>`;
+  }
+
+  window.beforeBuild = () => {
+    const d = R.data();
+    document.getElementById('grid8').innerHTML = d.scenarios.map((s, i) => {
+      const cat = s.id === 'baseline' ? 'control' : (CAT[s.category] || s.category);
+      const title = s.title.replace(' (control)', '');
+      const rows = row('buy', s.id, 'buy-gme-100') + row('value', s.id, 'value-portfolio');
+      return `<div class="card">
+        <div class="top"><span class="n">${String(i + 1).padStart(2, '0')}</span><span class="cat">${cat}</span></div>
+        <h3>${title}</h3>
+        <p>${DESC[s.id] || s.summary}</p>
+        <div class="runs">${rows}</div>
+      </div>`;
+    }).join('');
+    const task = d.tasks.find((t) => t.id === 'buy-gme-100');
+    document.getElementById('prompt').textContent = `“${task.prompt}”`;
+  };
+</script>
+</head>
+<body>
+<div class="frame">
+  <div class="content">
+    <div class="toprow">
+      <div class="eyebrow">The lab · same sentence, same tools</div>
+      <div class="tag accent">Replica lab result</div>
+    </div>
+    <div class="head">
+      <h1 class="h1">One sentence. <span class="acc">Eight scenarios.</span></h1>
+      <div class="prompt"><span class="t">task</span><span class="k">›</span><span id="prompt"></span></div>
+    </div>
+    <div class="grid8" id="grid8"></div>
+    <div class="legend">
+      <span class="it"><span class="dot pass">✓</span>pass</span>
+      <span class="it"><span class="dot fail">✗</span>fail</span>
+      <span class="it"><span class="dot deferred">↺</span>deferred, hazard named</span>
+      <span class="order">Dots: naive-search · registry-only · oracle-blind · revers-guarded</span>
+    </div>
+  </div>
+  <footer class="foot" data-micro="Reference agents written for the lab · Claude agent not run yet"></footer>
+</div>
+</body>
+</html>

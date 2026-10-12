@@ -113,7 +113,7 @@ export default function Home() {
               Crash-test AI agents <em className="accent">before the market does.</em>
             </h1>
             <p className="sub rise" style={{ ['--d' as string]: '120ms' }}>
-              revers.si forks Robinhood Chain, throws splits, weekend-stale oracles and counterfeit tickers at trading
+              revers.si replicates Robinhood Chain’s Stock Token mechanics, throws splits, weekend-stale oracles and counterfeit tickers at trading
               agents, and shows the exact line of code that loses the money.
             </p>
             <div className="btn-row rise" style={{ ['--d' as string]: '180ms' }}>

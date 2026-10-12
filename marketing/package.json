@@ -1,0 +1,9 @@
+{
+  "name": "@revers/marketing",
+  "private": true,
+  "type": "module",
+  "description": "revers.si launch media: screenshots, banners, screen recordings, promo video, post calendar",
+  "devDependencies": {
+    "playwright-core": "^1.56.1"
+  }
+}

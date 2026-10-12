@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>revers.si: we used REA</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bitter:ital,wght@1,500;1,600&family=Inter+Tight:wght@300;400;500&family=JetBrains+Mono:wght@400;500&display=block" rel="stylesheet">
+<link rel="stylesheet" href="banner.css">
+<style>
+  .cols { display: grid; grid-template-columns: minmax(0, 1fr) 600px; gap: 72px; margin-top: 92px; align-items: center; }
+  .repo .acc { color: var(--band-accent); }
+  .h1 { font-size: 92px; }
+  .h1 .acc { display: block; margin-top: 4px; }
+  .lede { margin-top: 30px; font-size: 22px; max-width: 640px; }
+  .lede b { color: var(--text); font-weight: 500; }
+  .status { margin-top: 18px; display: flex; align-items: baseline; gap: 10px; font-family: var(--mono); font-size: 15px; line-height: 1.5; color: var(--muted); max-width: 660px; }
+  .status b { color: var(--text); font-weight: 500; }
+  .status .dot { flex: none; width: 8px; height: 8px; border-radius: 50%; background: var(--accent); transform: translateY(-1px); }
+  .quote { margin-top: 30px; padding-left: 20px; border-left: 2px solid var(--accent); max-width: 640px; }
+  .quote p { font-family: var(--serif); font-style: italic; font-weight: 500; font-size: 24px; line-height: 1.35; color: var(--text); letter-spacing: -0.01em; }
+  .quote .by { margin-top: 10px; font-family: var(--mono); font-size: 13px; color: var(--faint); letter-spacing: 0.02em; }
+
+  .repo {
+    background: var(--band); color: var(--band-text); border-radius: 12px; padding: 30px 32px 30px; position: relative; overflow: hidden;
+    box-shadow: 0 40px 70px -40px rgba(15, 42, 30, 0.75);
+  }
+  .repo::before {
+    content: ''; position: absolute; inset: 0;
+    background-image: linear-gradient(to right, rgba(191,223,180,0.06) 1px, transparent 1px), linear-gradient(to bottom, rgba(191,223,180,0.06) 1px, transparent 1px);
+    background-size: 24px 24px; -webkit-mask-image: linear-gradient(160deg, #000 0%, transparent 70%);
+  }
+  .repo > * { position: relative; }
+  .repo .top { display: flex; justify-content: space-between; align-items: center; font-family: var(--mono); font-size: 12.5px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--band-muted); }
+  .repo .top .lic { color: var(--band-accent); border: 1px solid rgba(191,223,180,0.4); border-radius: 999px; padding: 4px 10px 3px; letter-spacing: 0.1em; }
+  .repo .name { margin-top: 20px; display: flex; align-items: center; gap: 14px; font-family: var(--mono); font-size: 32px; font-weight: 500; letter-spacing: -0.01em; }
+  .repo .name svg { width: 30px; height: 30px; color: var(--band-accent); flex: none; }
+  .repo .name .o { color: var(--band-muted); font-weight: 400; }
+  .repo .full { margin-top: 10px; font-size: 26px; font-weight: 300; letter-spacing: -0.02em; color: var(--band-text); }
+  .repo .full .acc { font-size: 1em; }
+  .repo .desc { margin-top: 14px; font-size: 17px; line-height: 1.45; color: var(--band-muted); }
+  .targets { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 18px; }
+  .targets span { font-family: var(--mono); font-size: 12.5px; padding: 5px 9px 4px; border-radius: 6px; background: rgba(255,255,255,0.06); border: 1px solid var(--band-hair); color: rgba(255,255,255,0.82); }
+  .targets span.hl { border-color: rgba(191,223,180,0.5); color: var(--band-accent); background: rgba(191,223,180,0.08); }
+  .cmd { margin-top: 20px; padding: 13px 16px 12px; border-radius: 8px; background: rgba(0,0,0,0.28); font-family: var(--mono); font-size: 16px; color: #e4f1df; font-variant-ligatures: none; }
+  .cmd .p { color: var(--band-accent); margin-right: 10px; }
+  .links { display: flex; gap: 22px; margin-top: 18px; font-family: var(--mono); font-size: 16px; color: var(--text); }
+  .links span { display: flex; align-items: center; gap: 9px; }
+  .links svg { width: 17px; height: 17px; }
+</style>
+<script src="common.js"></script>
+<script>
+  const GH = '<svg viewBox="0 0 16 16" aria-hidden="true"><path fill="currentColor" d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>';
+  window.beforeBuild = () => {
+    document.querySelectorAll('[data-gh]').forEach((el) => (el.insertAdjacentHTML('afterbegin', GH)));
+    document.querySelectorAll('[data-x]').forEach((el) => (el.insertAdjacentHTML('afterbegin', xIcon(17))));
+  };
+</script>
+</head>
+<body>
+<div class="frame">
+  <div class="content">
+    <div class="toprow">
+      <div class="eyebrow">Open source · credit where it’s due</div>
+      <div class="tag">github.com/morluto/rea</div>
+    </div>
+    <div class="cols">
+      <div>
+        <h1 class="h1">We used REA. <span class="acc">Open source.</span></h1>
+        <p class="lede">We used <b>REA, Reverse Engineer Anything</b>, while building revers.si: an MIT‑licensed project from @reatools that connects AI agents to reverse-engineering tools through MCP.</p>
+        <p class="status"><span class="dot"></span><span>The lab’s line-of-code attributions don’t use REA yet: every record says <b>rea:&nbsp;not‑run</b>.</span></p>
+        <div class="quote">
+          <p>“Reverse engineer anything with agents, from app behavior down to native binaries.”</p>
+          <div class="by">REA, project description on GitHub</div>
+        </div>
+        <div class="links">
+          <span data-x>@reatools</span>
+          <span data-gh>morluto/rea</span>
+        </div>
+      </div>
+      <div>
+        <div class="repo">
+          <div class="top"><span>Open-source repository</span><span class="lic">MIT</span></div>
+          <div class="name" data-gh><span><span class="o">morluto /</span> rea</span></div>
+          <div class="full">Reverse Engineer <span class="acc">Anything</span></div>
+          <p class="desc">One MCP server for agents. Targets in its README include:</p>
+          <div class="targets">
+            <span class="hl">EVM bytecode</span><span>native binaries</span><span>WASM</span><span>JavaScript / Electron</span>
+            <span>websites</span><span>.NET</span><span>Android APKs</span><span>firmware</span><span>process behavior</span>
+          </div>
+          <div class="cmd"><span class="p">$</span>npx rea-agents setup</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <footer class="foot" data-micro="Thank you to the REA maintainers · @reatools"></footer>
+</div>
+</body>
+</html>

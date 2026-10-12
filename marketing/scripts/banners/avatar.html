@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>revers.si: avatar</title>
+<link rel="stylesheet" href="banner.css">
+<style>
+  /* 1080x1080; X crops to a circle, so the star stays inside a centred 900px circle. */
+  .frame {
+    width: 1080px; height: 1080px;
+    background:
+      radial-gradient(circle at 50% 44%, rgba(20, 150, 88, 0.55) 0%, rgba(1, 105, 58, 0) 58%),
+      linear-gradient(180deg, #01733f 0%, #01693a 50%, #015a31 100%);
+  }
+  .grid {
+    background-image:
+      linear-gradient(to right, rgba(191, 223, 180, 0.07) 1px, transparent 1px),
+      linear-gradient(to bottom, rgba(191, 223, 180, 0.07) 1px, transparent 1px);
+    background-size: 60px 60px; background-position: 29px 29px;
+    -webkit-mask-image: radial-gradient(circle at 50% 50%, #000 15%, transparent 62%);
+            mask-image: radial-gradient(circle at 50% 50%, #000 15%, transparent 62%);
+  }
+  .grain { mix-blend-mode: soft-light; opacity: 0.18; }
+  .star {
+    position: absolute; z-index: 2; left: 50%; top: 50%; width: 760px;
+    transform: translate(-50%, -48%);
+    filter: drop-shadow(0 46px 40px rgba(0, 30, 15, 0.38)) drop-shadow(0 8px 10px rgba(0, 30, 15, 0.22));
+  }
+</style>
+<script src="common.js"></script>
+</head>
+<body>
+<div class="frame" data-nogrid>
+  <div class="grid"></div>
+  <img class="star" src="assets/star-cutout.png" alt="">
+</div>
+</body>
+</html>

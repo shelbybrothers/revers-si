@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>revers.si: wallet check</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bitter:ital,wght@1,500;1,600&family=Inter+Tight:wght@300;400;500&family=JetBrains+Mono:wght@400;500&display=block" rel="stylesheet">
+<link rel="stylesheet" href="banner.css">
+<style>
+  .cols { display: grid; grid-template-columns: minmax(0, 1fr) 640px; gap: 72px; margin-top: 40px; align-items: start; }
+  body { font-variant-ligatures: none; }
+  .mono, .code, .chip, .refuse, .v { font-variant-ligatures: none; }
+  .h1 { font-size: 78px; margin-top: 40px; white-space: nowrap; }
+  .h1 .acc { display: block; margin-top: 6px; }
+  .lede { margin-top: 4px; font-size: 22px; max-width: 640px; }
+  .lede b { color: var(--text); font-weight: 500; }
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 30px; }
+  .chip { font-family: var(--mono); font-size: 13.5px; padding: 7px 11px 6px; border-radius: 999px; border: 1px solid var(--border); background: rgba(240,243,238,0.85); color: var(--text); }
+  .chip.ok { background: var(--jade-tint); border-color: rgba(1,105,56,0.3); color: var(--accent); font-weight: 500; letter-spacing: 0.06em; }
+  .refuse { margin-top: 18px; font-family: var(--mono); font-size: 13.5px; color: var(--muted); line-height: 1.6; }
+  .refuse s { text-decoration-color: rgba(180,68,47,0.75); text-decoration-thickness: 1.5px; color: var(--faint); }
+
+  .card {
+    background: var(--panel); border: 1px solid var(--border); border-radius: 10px; padding: 22px 26px 20px;
+    box-shadow: 0 30px 60px -40px rgba(15, 42, 30, 0.45), 0 1px 0 rgba(255,255,255,0.6) inset;
+  }
+  .card .ct { display: flex; justify-content: space-between; align-items: center; }
+  .card .ct .t { font-family: var(--mono); font-size: 13px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted); }
+  .card .ct .k { font-family: var(--mono); font-size: 12.5px; color: var(--faint); }
+  .steps { margin-top: 14px; display: flex; flex-direction: column; }
+  .step { display: grid; grid-template-columns: 34px minmax(0,1fr); gap: 14px; padding: 13px 0; border-top: 1px solid var(--hair); }
+  .step .n { width: 30px; height: 30px; border-radius: 50%; background: var(--band); color: var(--band-accent); font-family: var(--mono); font-size: 13px; display: grid; place-items: center; margin-top: 1px; }
+  .step .code { font-family: var(--mono); font-size: 17px; color: var(--text); }
+  .step .code .fn { color: var(--accent); font-weight: 500; }
+  .step .d { font-size: 15.5px; color: var(--muted); margin-top: 5px; line-height: 1.4; }
+  .step .d .mono { font-size: 0.9em; color: var(--text); }
+  .verdicts { display: flex; gap: 8px; margin-top: 6px; padding-top: 16px; border-top: 1px solid var(--hair); flex-wrap: wrap; }
+  .v { font-family: var(--mono); font-size: 13px; padding: 6px 10px 5px 6px; border-radius: 999px; display: flex; align-items: center; gap: 7px; border: 1px solid var(--border); background: #fff8; }
+  .v i { width: 18px; height: 18px; border-radius: 50%; display: grid; place-items: center; font-style: normal; font-size: 10.5px; font-weight: 700; color: #fff; font-family: var(--sans); }
+  .v.g i { background: var(--pass); }
+  .v.n i { background: var(--fail); }
+  .v.u i { background: transparent; box-shadow: inset 0 0 0 2px var(--defer); color: var(--defer); }
+  .quote { margin-top: 30px; font-family: var(--serif); font-style: italic; font-weight: 500; font-size: 24px; line-height: 1.35; color: var(--accent); letter-spacing: -0.01em; }
+</style>
+<script src="common.js"></script>
+</head>
+<body>
+<div class="frame">
+  <div class="content">
+    <div class="toprow">
+      <div class="eyebrow">Wallet check · revers.si/wallet</div>
+      <div class="tag">Robinhood Chain · 4663</div>
+    </div>
+    <h1 class="h1">Genuine or counterfeit? <span class="acc">Read-only, no signatures.</span></h1>
+    <div class="cols">
+      <div>
+        <p class="lede">Connect a wallet on Robinhood Chain. revers.si reads which <b>Stock Tokens</b> it holds, through your own wallet, and checks every contract address against the Stock Token factory.</p>
+        <div class="chips">
+          <span class="chip ok">READ-ONLY</span>
+          <span class="chip">eth_call</span><span class="chip">eth_getCode</span><span class="chip">eth_getBalance</span>
+        </div>
+        <p class="refuse">Refused in code: <s>eth_sendTransaction</s> · <s>personal_sign</s> · <s>eth_signTypedData</s> · <s>approvals</s>. Nothing is sent to a revers.si server.</p>
+        <p class="quote">Counterfeits copy names and symbols.<br>They can’t copy the factory’s record.</p>
+      </div>
+      <div>
+        <div class="card">
+          <div class="ct"><span class="t">The factory check</span><span class="k">keyed by address, not name</span></div>
+          <div class="steps">
+            <div class="step"><span class="n">1</span><div><div class="code">token.<span class="fn">uid</span>()</div><div class="d">Must return a 32-byte id.</div></div></div>
+            <div class="step"><span class="n">2</span><div><div class="code">factory.<span class="fn">tokenAddress</span>(uid) == token</div><div class="d">Stock Token factory <span class="mono">0x4783…c046</span> maps the id to this exact address.</div></div></div>
+            <div class="step"><span class="n">3</span><div><div class="code"><span class="fn">CREATE2</span>(factory, uid, initCodeHash)</div><div class="d">If the mapping can’t be read, the address is computed in your browser instead.</div></div></div>
+          </div>
+          <div class="verdicts">
+            <span class="v g"><i>✓</i>Genuine</span>
+            <span class="v n"><i>✗</i>Not a Robinhood Stock Token</span>
+            <span class="v u"><i>?</i>Unknown</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <footer class="foot" data-micro="Independent · not affiliated with Robinhood · not investment advice"></footer>
+</div>
+</body>
+</html>

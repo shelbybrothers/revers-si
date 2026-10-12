@@ -25,3 +25,7 @@ contracts/deployments/world.test.json
 *.log
 .vercel
 .env*
+
+# marketing media output (large binaries)
+marketing/out/
+marketing/node_modules/

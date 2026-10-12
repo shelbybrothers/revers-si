@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>revers.si: $REVERS contract</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bitter:ital,wght@1,500;1,600&family=Inter+Tight:wght@300;400;500&family=JetBrains+Mono:wght@400;500&display=block" rel="stylesheet">
+<link rel="stylesheet" href="banner.css">
+<style>
+  .frame.dark { background: radial-gradient(ellipse 60% 75% at 82% 38%, #0f5a36 0%, #0f3a26 38%, #0f2a1e 70%, #0b2118 100%); }
+  .star {
+    position: absolute; z-index: 1; right: 92px; top: 196px; width: 440px; transform: rotate(-4deg);
+    filter: drop-shadow(0 40px 40px rgba(0, 0, 0, 0.45)) drop-shadow(0 0 60px rgba(154, 208, 154, 0.12));
+  }
+  .ticker { font-size: 200px; font-weight: 300; letter-spacing: -0.055em; line-height: 0.86; margin-top: 66px; color: var(--band-text); }
+  .ticker .d { color: var(--band-accent); font-weight: 300; margin-right: 0.02em; }
+  .sub { margin-top: 26px; font-size: 50px; font-weight: 300; letter-spacing: -0.03em; line-height: 1.05; }
+  .sub .acc { font-size: 1em; }
+  .ca { margin-top: 56px; width: max-content; }
+  .ca .lbl { display: flex; justify-content: space-between; font-family: var(--mono); font-size: 13px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--band-muted); }
+  .ca .box {
+    margin-top: 12px; padding: 20px 24px 19px; border-radius: 10px; border: 1px solid rgba(191, 223, 180, 0.32);
+    background: rgba(5, 20, 14, 0.55); box-shadow: inset 0 1px 0 rgba(255,255,255,0.05), 0 24px 50px -30px rgba(0,0,0,0.7);
+    font-family: var(--mono); font-size: 33px; letter-spacing: 0.005em; color: #e4f1df; white-space: nowrap;
+    font-variant-ligatures: none;
+  }
+  .ca .box b { color: var(--band-accent); font-weight: 500; }
+  .ca .hint { margin-top: 12px; font-family: var(--mono); font-size: 13.5px; color: var(--band-muted); line-height: 1.55; }
+  .ca .hint b { color: var(--band-accent); font-weight: 500; }
+  .risk { position: absolute; left: var(--pad-x); right: var(--pad-x); bottom: 128px; z-index: 3; font-family: var(--mono); font-size: 13.5px; color: var(--band-muted); line-height: 1.5; display: flex; gap: 10px; align-items: baseline; }
+  .risk .w { flex: none; color: var(--term-defer); }
+</style>
+<script src="common.js"></script>
+<script>
+  const ADDRESS = '0x326fcb91685d946529ac68031e95be7dc32e24cc';
+  window.beforeBuild = () => {
+    const a = ADDRESS;
+    document.getElementById('addr').textContent = a;
+  };
+</script>
+</head>
+<body>
+<div class="frame dark">
+  <img class="star" src="assets/star-cutout.png" alt="">
+  <div class="content">
+    <div class="toprow">
+      <div class="eyebrow">On Robinhood Chain · the revers.si coin</div>
+      <div class="tag accent">Verify before you buy</div>
+    </div>
+    <div class="ticker"><span class="d">$</span>REVERS</div>
+    <div class="sub">Check the contract <span class="acc">before you buy.</span></div>
+    <div class="ca">
+      <div class="lbl"><span>Contract address · Robinhood Chain</span><span>the only one linked from revers.si</span></div>
+      <div class="box" id="addr"></div>
+      <p class="hint">Copycats reuse names and tickers. Match the <b>whole</b> address. Buy and explorer links: <b>revers.si/#token</b></p>
+    </div>
+  </div>
+  <p class="risk"><span class="w">!</span><span>$REVERS is a community token, not a Stock Token. Crypto tokens are volatile and you can lose what you put in. Nothing here is investment advice.</span></p>
+  <footer class="foot" data-micro="Independent project · not affiliated with Robinhood"></footer>
+</div>
+</body>
+</html>

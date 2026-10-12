@@ -3,7 +3,7 @@ export const SITE = {
   url: 'https://revers.si',
   title: 'revers.si — crash-test lab for AI trading agents',
   description:
-    'revers.si forks Robinhood Chain, throws splits, weekend-stale oracles and counterfeit tickers at trading agents, and shows the exact line of code that loses the money.',
+    'revers.si replicates Robinhood Chain’s Stock Token mechanics, throws splits, weekend-stale oracles and counterfeit tickers at trading agents, and shows the exact line of code that loses the money.',
   x: 'https://x.com/reversintel',
   xHandle: '@reversintel',
   reaGithub: 'https://github.com/morluto/rea',

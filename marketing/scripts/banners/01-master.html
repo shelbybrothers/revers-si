@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>revers.si: master banner</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bitter:ital,wght@1,500;1,600&family=Inter+Tight:wght@300;400;500&family=JetBrains+Mono:wght@400;500&display=block" rel="stylesheet">
+<link rel="stylesheet" href="banner.css">
+<style>
+  .panel-em {
+    position: absolute; top: 0; right: 0; bottom: 0; width: 480px; z-index: 1;
+    background:
+      radial-gradient(ellipse 70% 55% at 52% 44%, rgba(16, 140, 82, 0.55) 0%, rgba(1, 105, 58, 0) 70%),
+      linear-gradient(180deg, #01703e 0%, #01693a 45%, #015a31 100%);
+    overflow: hidden;
+  }
+  .panel-em::before { /* fine grid on the emerald, same rhythm as the canvas */
+    content: ''; position: absolute; inset: 0;
+    background-image:
+      linear-gradient(to right, rgba(191, 223, 180, 0.07) 1px, transparent 1px),
+      linear-gradient(to bottom, rgba(191, 223, 180, 0.07) 1px, transparent 1px);
+    background-size: 48px 48px; background-position: -1px -1px;
+    -webkit-mask-image: radial-gradient(ellipse 80% 70% at 50% 45%, #000 20%, transparent 80%);
+  }
+  .panel-em .star {
+    position: absolute; left: 50%; top: 47%; width: 384px; transform: translate(-50%, -50%);
+    filter: drop-shadow(0 34px 34px rgba(0, 30, 15, 0.38)) drop-shadow(0 6px 8px rgba(0, 30, 15, 0.25));
+  }
+  .panel-em .cap {
+    position: absolute; left: 48px; right: 48px; bottom: 50px; display: flex; justify-content: space-between;
+    font-family: var(--mono); font-size: 14px; letter-spacing: 0.14em; text-transform: uppercase; color: rgba(215, 235, 208, 0.78);
+    padding-top: 20px; border-top: 1px solid rgba(215, 235, 208, 0.18);
+  }
+  .panel-em .tagline {
+    position: absolute; top: 76px; left: 48px; right: 48px; display: flex; justify-content: space-between; align-items: center;
+    font-family: var(--mono); font-size: 14px; letter-spacing: 0.14em; text-transform: uppercase; color: rgba(215, 235, 208, 0.78);
+  }
+  .left { width: 1040px; padding-right: 40px; }
+  .h1 { font-size: 98px; margin-top: 138px; white-space: nowrap; }
+  .h1 .acc { display: block; }
+  .lede { margin-top: 40px; max-width: 860px; }
+  .chips { display: flex; gap: 10px; margin-top: 40px; flex-wrap: wrap; }
+  .chip {
+    font-family: var(--mono); font-size: 15px; padding: 9px 14px 8px; border-radius: 6px; color: var(--text);
+    background: rgba(240, 243, 238, 0.85); border: 1px solid var(--border);
+  }
+  .chip b { font-weight: 500; color: var(--accent); }
+  .chip.skip { color: var(--muted); border-style: dashed; background: transparent; }
+  .foot { right: calc(480px + 64px); }
+</style>
+<script src="common.js"></script>
+<script>
+  window.beforeBuild = () => {
+    const d = R.data();
+    const ran = d.agents.filter((a) => a.status === 'ran' && a.kind === 'reference').length;
+    const claude = d.agents.find((a) => a.kind === 'llm');
+    document.getElementById('chips').innerHTML = `
+      <span class="chip"><b>${d.scenarios.length}</b> scenarios</span>
+      <span class="chip"><b>${ran}</b> reference agents</span>
+      <span class="chip"><b>${d.runs.length}</b> scored runs</span>
+      <span class="chip skip">Claude agent: ${claude && claude.status === 'skipped' ? 'not run yet' : claude.status}</span>`;
+  };
+</script>
+</head>
+<body>
+<div class="frame">
+  <div class="panel-em">
+    <div class="tagline"><span>Replica mode</span><span>Stock Tokens</span></div>
+    <img class="star" src="assets/star-cutout.png" alt="">
+    <div class="cap"><span>Crash-test lab</span><span>for AI agents</span></div>
+  </div>
+  <div class="content">
+    <div class="left">
+      <div class="toprow"><div class="eyebrow">Research preview · Robinhood Chain</div></div>
+      <h1 class="h1">Crash-test AI agents <span class="acc">before the market does.</span></h1>
+      <p class="lede">Splits, weekend-stale oracles, pauses and counterfeit tickers, staged on a replica of Robinhood Chain Stock Token mechanics. See which agent breaks, and the line of code that did it.</p>
+      <div class="chips" id="chips"></div>
+    </div>
+  </div>
+  <footer class="foot" data-micro="Replica-mode results · not investment advice"></footer>
+</div>
+</body>
+</html>

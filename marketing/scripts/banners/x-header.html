@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>revers.si: X header</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bitter:ital,wght@1,500;1,600&family=Inter+Tight:wght@300;400;500&family=JetBrains+Mono:wght@400;500&display=block" rel="stylesheet">
+<link rel="stylesheet" href="banner.css">
+<style>
+  /* 1500x500. X overlaps the avatar on the lower left and may crop top/bottom on some screens,
+     so the type sits right of x=520 and inside y=80..420. */
+  .frame { width: 1500px; height: 500px; }
+  .grid { -webkit-mask-image: radial-gradient(ellipse 70% 90% at 62% 45%, #000 30%, transparent 85%); mask-image: radial-gradient(ellipse 70% 90% at 62% 45%, #000 30%, transparent 85%); }
+  .stripe { position: absolute; left: 0; right: 0; bottom: 0; height: 10px; background: linear-gradient(90deg, #01693a, #0b7a45 60%, #bfdfb4); z-index: 2; }
+  .block { position: absolute; z-index: 2; left: 540px; right: 80px; top: 92px; }
+  .eyebrow { font-size: 13.5px; }
+  .h1 { font-size: 74px; margin-top: 26px; white-space: nowrap; }
+  .h1 .acc { display: block; margin-top: 2px; }
+  .meta { margin-top: 30px; display: flex; gap: 10px; align-items: center; font-family: var(--mono); font-size: 15px; color: var(--muted); }
+  .meta .chip { padding: 6px 11px 5px; border: 1px solid var(--border); border-radius: 999px; background: rgba(240,243,238,0.85); color: var(--text); }
+  .meta .chip.acc2 { background: var(--jade-tint); border-color: rgba(1,105,56,0.3); color: var(--accent); font-weight: 500; }
+  .meta .dot { color: var(--faint); }
+</style>
+<script src="common.js"></script>
+</head>
+<body>
+<div class="frame">
+  <div class="block">
+    <div class="eyebrow">Crash-test lab for AI agents · Stock Tokens on Robinhood Chain</div>
+    <h1 class="h1">Crash-test AI agents <span class="acc">before the market does.</span></h1>
+    <div class="meta">
+      <span class="chip acc2">revers.si</span>
+      <span class="chip">Splits</span><span class="chip">Stale oracles</span><span class="chip">Pauses</span><span class="chip">Counterfeit tickers</span>
+      <span class="dot">·</span><span>research preview</span>
+    </div>
+  </div>
+  <div class="stripe"></div>
+</div>
+</body>
+</html>

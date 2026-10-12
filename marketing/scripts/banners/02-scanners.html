@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>revers.si: scanners vs agents</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bitter:ital,wght@1,500;1,600&family=Inter+Tight:wght@300;400;500&family=JetBrains+Mono:wght@400;500&display=block" rel="stylesheet">
+<link rel="stylesheet" href="banner.css">
+<style>
+  .h1 { font-size: 84px; margin-top: 64px; }
+  .h1 .acc { display: block; margin-top: 4px; }
+  .stats { display: grid; grid-template-columns: minmax(0,1fr) minmax(0,1.18fr) minmax(0,1fr); gap: 0; margin-top: 72px; }
+  .stat { padding: 0 40px 0 0; position: relative; }
+  .stat + .stat { padding-left: 40px; border-left: 1px solid var(--hair); }
+  .idx { font-family: var(--mono); font-size: 13px; letter-spacing: 0.14em; color: var(--faint); text-transform: uppercase; display: flex; gap: 10px; align-items: center; }
+  .idx i { width: 8px; height: 8px; border-radius: 2px; background: var(--accent); display: inline-block; }
+  .big { display: flex; align-items: baseline; gap: 14px; margin-top: 18px; }
+  .big .num { font-size: 112px; color: var(--text); }
+  .big .unit { font-size: 25px; color: var(--muted); letter-spacing: -0.01em; }
+  .big .vs { font-family: var(--mono); font-size: 22px; color: var(--muted); }
+  .big .vs b { color: var(--accent); font-weight: 500; }
+  .txt { margin-top: 18px; font-size: 21px; line-height: 1.45; color: var(--text); max-width: 420px; letter-spacing: -0.005em; }
+  .txt code { font-family: var(--mono); font-size: 0.86em; background: var(--panel); border: 1px solid var(--border); border-radius: 4px; padding: 1px 6px; }
+  .src { margin-top: 18px; font-family: var(--mono); font-size: 13px; color: var(--faint); letter-spacing: 0.02em; line-height: 1.5; }
+  .src b { color: var(--muted); font-weight: 500; }
+</style>
+<script src="common.js"></script>
+</head>
+<body>
+<div class="frame">
+  <div class="content">
+    <div class="toprow">
+      <div class="eyebrow">The blind spot · Stock Tokens on Robinhood Chain</div>
+      <div class="tag">Sourced figures</div>
+    </div>
+    <h1 class="h1">Contract scanners check the token. <span class="acc">Nobody checks the agent.</span></h1>
+    <div class="stats">
+      <div class="stat">
+        <div class="idx"><i></i>Identity</div>
+        <div class="big"><span class="num">361</span><span class="unit">contracts</span></div>
+        <p class="txt">use the GME symbol on Robinhood Chain. Only one of them is the registry token.</p>
+        <p class="src">Source: <b>Bitquery</b> · Jul 2026</p>
+      </div>
+      <div class="stat">
+        <div class="idx"><i></i>Volume</div>
+        <div class="big"><span class="num">$213.0M</span></div>
+        <p class="txt">traded in impostor GME tokens, out-trading the genuine one two to one.</p>
+        <p class="src">Source: <b>Bitquery</b> · Jul 2026</p>
+      </div>
+      <div class="stat">
+        <div class="idx"><i></i>Oracles</div>
+        <div class="big"><span class="num">24/5</span><span class="unit">feeds</span></div>
+        <p class="txt">for Stock Tokens that trade 24/7. No heartbeats off-hours, and <code>oraclePaused()</code> can freeze a feed.</p>
+        <p class="src">Source: <b>Chainlink docs</b></p>
+      </div>
+    </div>
+  </div>
+  <footer class="foot" data-micro="Every contract can be genuine and clean · the loss is in the agent logic"></footer>
+</div>
+</body>
+</html>

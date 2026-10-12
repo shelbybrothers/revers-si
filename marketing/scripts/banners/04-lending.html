@@ -1,0 +1,134 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>revers.si: lending drill</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bitter:ital,wght@1,500;1,600&family=Inter+Tight:wght@300;400;500&family=JetBrains+Mono:wght@400;500&display=block" rel="stylesheet">
+<link rel="stylesheet" href="banner.css">
+<style>
+  .frame.dark { background: radial-gradient(ellipse 70% 80% at 72% 30%, #173a2a 0%, #0f2a1e 60%, #0c241a 100%); }
+  .head { margin-top: 40px; }
+  .h1 { font-size: 74px; white-space: nowrap; }
+  .lede { font-size: 21px; margin-top: 16px; line-height: 1.45; }
+  .lede b { color: var(--band-text); font-weight: 500; }
+
+  .chart { position: relative; margin-top: 66px; height: 336px; }
+  /* columns: label 0..360, plot 400..1060, outcome 1100..1408 (relative to content box) */
+  .plot { position: absolute; left: 400px; width: 660px; top: 0; bottom: 34px; }
+  .vline { position: absolute; top: -6px; bottom: 0; width: 0; border-left: 1px solid rgba(255,255,255,0.16); }
+  .vline.truth { border-left: 1px solid rgba(191, 223, 180, 0.55); }
+  .vline.liq { border-left: 1px solid rgba(255, 143, 133, 0.5); }
+  .vlabel { position: absolute; top: -32px; transform: translateX(-50%); font-family: var(--mono); font-size: 12.5px; letter-spacing: 0.04em; white-space: nowrap; }
+  .vlabel.truth { color: var(--band-accent); }
+  .vlabel.liq { color: var(--term-fail); }
+  .ticks { position: absolute; left: 400px; width: 660px; bottom: 0; height: 24px; }
+  .tick { position: absolute; transform: translateX(-50%); font-family: var(--mono); font-size: 13px; color: var(--band-faint); }
+  .axis-title { position: absolute; left: 0; bottom: 2px; font-family: var(--mono); font-size: 12.5px; color: var(--band-faint); letter-spacing: 0.06em; text-transform: uppercase; }
+
+  .mrow { position: absolute; left: 0; right: 0; height: 96px; display: flex; align-items: center; }
+  .mrow + .mrow { }
+  .mrow .lab { width: 360px; }
+  .mrow .lab .m { font-family: var(--mono); font-size: 17px; font-weight: 500; color: var(--band-text); letter-spacing: 0.01em; }
+  .mrow .lab .f { font-family: var(--mono); font-size: 13.5px; color: var(--band-muted); margin-top: 6px; }
+  .track { position: absolute; left: 400px; width: 660px; top: 50%; height: 0; border-top: 1px solid rgba(255,255,255,0.12); }
+  .seg { position: absolute; top: 50%; height: 2px; margin-top: -1px; border-radius: 2px; }
+  .mk { position: absolute; top: 50%; width: 22px; height: 22px; margin: -11px 0 0 -11px; border-radius: 50%; }
+  .mk.truth { box-shadow: inset 0 0 0 2px var(--band-accent); background: #0f2a1e; width: 16px; height: 16px; margin: -8px 0 0 -8px; }
+  .mk.obs { box-shadow: 0 0 0 3px #10291e; display: grid; place-items: center; color: #0f2a1e; font-size: 12px; font-weight: 700; font-family: var(--sans); }
+  .obs-label { position: absolute; top: 50%; margin-top: -42px; transform: translateX(-50%); font-family: var(--mono); font-size: 14px; color: var(--band-text); white-space: nowrap; }
+  .out { position: absolute; left: 1110px; right: 0; top: 50%; transform: translateY(-50%); }
+  .out .v { display: flex; align-items: baseline; gap: 12px; }
+  .out .from { font-family: var(--mono); font-size: 18px; color: var(--band-faint); }
+  .out .arrow { font-family: var(--mono); font-size: 18px; color: var(--band-faint); }
+  .out .to { font-size: 58px; font-weight: 300; letter-spacing: -0.04em; line-height: 0.9; color: var(--band-text); }
+  .out .what { margin-top: 10px; font-family: var(--mono); font-size: 13.5px; color: var(--band-muted); display: flex; align-items: center; gap: 8px; white-space: nowrap; }
+  .out .what i { flex: none; width: 16px; height: 16px; border-radius: 50%; display: inline-grid; place-items: center; font-style: normal; font-size: 10px; font-weight: 700; color: #0f2a1e; font-family: var(--sans); }
+  .sep { position: absolute; left: 0; right: 0; height: 0; border-top: 1px solid var(--band-hair); }
+
+  .note { margin-top: 22px; font-family: var(--mono); font-size: 13.5px; color: var(--band-muted); line-height: 1.5; padding-left: 14px; border-left: 2px solid rgba(191, 223, 180, 0.5); }
+  .note b { color: var(--band-text); font-weight: 500; }
+</style>
+<script src="common.js"></script>
+<script>
+  const MAX = 7, W = 660;
+  const x = (v) => (v / MAX) * W;
+  const MARKETS = [
+    { id: 'CORRECT', f: 'balance × feed answer' },
+    { id: 'DOUBLE_MULTIPLIER', f: 'balance × feed answer × uiMultiplier' },
+    { id: 'RAW_BALANCE_SPOT_FEED', f: 'balance × (feed answer ÷ uiMultiplier)' },
+  ];
+  const STYLE = {
+    ok: { c: 'var(--term-pass)', g: '✓', what: 'matches ground truth' },
+    'inflated-collateral': { c: 'var(--term-defer)', g: '✗', what: 'multiplier counted twice' },
+    'wrongful-liquidation': { c: 'var(--term-fail)', g: '✗', what: 'healthy position liquidatable' },
+  };
+
+  window.beforeBuild = () => {
+    const chart = document.getElementById('chart');
+    const rows = MARKETS.map((m, i) => {
+      const l = R.lending(m.id, 'split-4-for-1');
+      const st = STYLE[l.finding] || STYLE.ok;
+      const t = l.groundTruthHealth, o = l.observedHealth;
+      const lo = Math.min(t, o), hi = Math.max(t, o);
+      const top = i * 96 + 8;
+      const ratio = o / t;
+      const what = l.finding === 'inflated-collateral' ? `split counted twice (${ratio.toFixed(0)}x)`
+        : l.finding === 'wrongful-liquidation' ? 'wrongful liquidation' : st.what;
+      return `
+        ${i ? `<div class="sep" style="top:${top}px"></div>` : ''}
+        <div class="mrow" style="top:${top}px">
+          <div class="lab"><div class="m">${m.id}</div><div class="f">${m.f}</div></div>
+          <div class="track"></div>
+          <div class="seg" style="left:${400 + x(lo)}px; width:${x(hi) - x(lo)}px; background:${st.c}; opacity:${o === t ? 0 : 0.85}"></div>
+          <div class="mk truth" style="left:${400 + x(t)}px"></div>
+          <div class="mk obs" style="left:${400 + x(o)}px; background:${st.c}">${st.g}</div>
+          <div class="out">
+            <div class="v"><span class="from">${t.toFixed(1)}</span><span class="arrow">→</span><span class="to">${o.toFixed(1)}</span></div>
+            <div class="what"><i style="background:${st.c}">${st.g}</i>${what}</div>
+          </div>
+        </div>`;
+    }).join('');
+    const truth = R.lending('CORRECT', 'split-4-for-1').groundTruthHealth;
+    let ticks = '';
+    for (let v = 0; v <= MAX; v++) ticks += `<span class="tick" style="left:${x(v)}px">${v}</span>`;
+    chart.innerHTML = `
+      <div class="plot">
+        ${[2,3,4,5,6,7].map((v) => `<div class="vline" style="left:${x(v)}px; border-left-color: rgba(255,255,255,0.06)"></div>`).join('')}
+        <div class="vline liq" style="left:${x(1)}px"></div><span class="vlabel liq" style="left:${x(1) - 34}px">liquidation &lt; 1.0</span>
+        <div class="vline truth" style="left:${x(truth)}px"></div><span class="vlabel truth" style="left:${x(truth) + 48}px">truth ${truth.toFixed(1)}</span>
+      </div>
+      ${rows}
+      <div class="ticks">${ticks}</div>
+      <div class="axis-title">Health factor after the split<br><span style="text-transform:none;letter-spacing:0">○ ground truth&nbsp;&nbsp;● observed</span></div>`;
+
+    // Stale / paused feed outcome, from the same drill.
+    const stale = ['weekend-stale-feed', 'oracle-paused'];
+    const brokenUsedStale = ['DOUBLE_MULTIPLIER', 'RAW_BALANCE_SPOT_FEED'].every((m) => stale.every((s) => R.lending(m, s).finding === 'used-stale-price'));
+    const correctRefused = stale.every((s) => R.lending('CORRECT', s).observedHealth === null && R.lending('CORRECT', s).finding === 'ok');
+    const age = (R.lending('CORRECT', 'weekend-stale-feed').detail.match(/feed age ([\d.]+h)/) || [])[1];
+    document.getElementById('note').innerHTML = brokenUsedStale && correctRefused
+      ? `Same drill, weekend-stale feed (${age} old) and <b>oraclePaused()</b>: both broken markets kept valuing collateral; CORRECT refused with a StalePrice revert.`
+      : '';
+  };
+</script>
+</head>
+<body>
+<div class="frame dark">
+  <div class="content">
+    <div class="toprow">
+      <div class="eyebrow">Lending drill · 4-for-1 split</div>
+      <div class="tag accent">Replica lab result</div>
+    </div>
+    <div class="head">
+      <h1 class="h1">Same collateral. <span class="acc">Three answers.</span></h1>
+      <p class="lede">Deposit 10 GME, borrow at 50% LTV, apply the split, then compare each market’s health factor with <b>ground truth</b>.</p>
+    </div>
+    <div class="chart" id="chart"></div>
+    <p class="note" id="note"></p>
+  </div>
+  <footer class="foot" data-micro="Replica of Robinhood Chain Stock Token mechanics on a local chain · not real chain data"></footer>
+</div>
+</body>
+</html>
