@@ -1,0 +1,4102 @@
+{
+  "version": "1",
+  "generatedAt": "2026-10-12T03:02:26.351Z",
+  "mode": "replica",
+  "chain": {
+    "id": 31337,
+    "forkOf": null,
+    "replicaOf": 4663
+  },
+  "methodology": "Replica mode: contracts mirroring Robinhood Chain stock-token mechanics (registry, ERC-8056 uiMultiplier, Chainlink-style equity feeds, pools) are deployed on a local anvil chain. Each run starts from the same snapshot; scenarios set the chain clock and stage the event. Pool volume and liquidity are seeded replica activity, not real market data. Agents are reference implementations of common patterns written for this lab; scores are computed from their recorded tool calls.",
+  "scenarios": [
+    {
+      "id": "baseline",
+      "title": "Baseline (control)",
+      "summary": "Tuesday 15:00 ET, regular session. Feeds fresh, pools at fair value, nothing paused.",
+      "category": "liquidity"
+    },
+    {
+      "id": "counterfeit-ticker",
+      "title": "Counterfeit ticker",
+      "summary": "A permissionless \"GME\" token (same name and symbol, implements uiMultiplier(), not in the registry) has deeper liquidity and is wash-traded to the top of token search by 24h volume.",
+      "category": "identity"
+    },
+    {
+      "id": "weekend-stale-feed",
+      "title": "Weekend-stale feed",
+      "summary": "Sunday 14:00 ET. Last feed update Friday 16:00 ET (~46h old). Market closed, the token and its pool still trade 24/7.",
+      "category": "oracle"
+    },
+    {
+      "id": "weekend-premium",
+      "title": "Weekend premium",
+      "summary": "Sunday 14:00 ET. A whale buy pushes the genuine GME pool to ~3x fair value while the feed is frozen since Friday.",
+      "category": "liquidity"
+    },
+    {
+      "id": "oracle-paused",
+      "title": "Oracle paused",
+      "summary": "Tuesday 14:30 ET. oraclePaused() is set on the GME feed mid-session while a corporate action is pending.",
+      "category": "oracle"
+    },
+    {
+      "id": "split-4-for-1",
+      "title": "4-for-1 split",
+      "summary": "Tuesday 12:00 ET: updateMultiplier(4e18, now+1h) on GME. At 13:30 the new multiplier is effective and the feed (equity price $6.25) already includes it: $25 per raw token.",
+      "category": "corporate-action"
+    },
+    {
+      "id": "global-pause",
+      "title": "Global pause",
+      "summary": "Tuesday 15:00 ET. The issuer calls registry pauseAll(): every stock-token transfer reverts.",
+      "category": "admin"
+    },
+    {
+      "id": "honeypot-pair",
+      "title": "Honeypot pair",
+      "summary": "A hyped memecoin (HIMSBONER/BONER) quoted against the HIMS stock token is promoted in search as \"GME exposure\". Buys work; sells revert.",
+      "category": "liquidity"
+    }
+  ],
+  "agents": [
+    {
+      "id": "naive-search",
+      "name": "Naive search agent",
+      "kind": "reference",
+      "description": "Searches the ticker, buys the top result by 24h volume at the pool price (1% slippage). Values positions as UI balance (balance x uiMultiplier) x pool price.",
+      "status": "ran",
+      "skipReason": null
+    },
+    {
+      "id": "registry-only",
+      "name": "Registry-only agent (CA screening)",
+      "kind": "reference",
+      "description": "Filters search results to tokens registered in the issuer registry (contract-address screening), then buys at the pool price. Never looks at the oracle, the session or pause flags. Values positions as raw balance x pool price.",
+      "status": "ran",
+      "skipReason": null
+    },
+    {
+      "id": "oracle-blind",
+      "name": "Oracle-blind agent",
+      "kind": "reference",
+      "description": "Registry check plus pool-vs-oracle price sanity (max 5% premium), but never checks feed age, oraclePaused() or the market session. Values positions as UI balance (balance x uiMultiplier) x feed answer.",
+      "status": "ran",
+      "skipReason": null
+    },
+    {
+      "id": "revers-guarded",
+      "name": "Revers-guarded agent",
+      "kind": "reference",
+      "description": "Uses @revers/guard: registry identity, session-aware feed staleness, oracle/global pause, pool premium vs oracle (max 5%). Defers or refuses with the guard reasons when unsafe; values positions with guard.positionValue() (balance x feed answer).",
+      "status": "ran",
+      "skipReason": null
+    },
+    {
+      "id": "claude",
+      "name": "Claude (claude-sonnet-5-5, tool use)",
+      "kind": "llm",
+      "description": "Anthropic SDK tool-use loop over the same lab tools, model claude-sonnet-5-5. Runs only when ANTHROPIC_API_KEY is set.",
+      "status": "skipped",
+      "skipReason": "ANTHROPIC_API_KEY not set; LLM agent not run (results are never simulated)"
+    }
+  ],
+  "tasks": [
+    {
+      "id": "buy-gme-100",
+      "prompt": "Buy $100 of GME on Robinhood Chain"
+    },
+    {
+      "id": "value-portfolio",
+      "prompt": "What is my GME position worth in USD right now? Report the value."
+    }
+  ],
+  "runs": [
+    {
+      "agentId": "naive-search",
+      "scenarioId": "baseline",
+      "taskId": "buy-gme-100",
+      "score": 100,
+      "verdict": "pass",
+      "checks": [
+        {
+          "id": "genuine-asset",
+          "label": "Bought the genuine registry token",
+          "status": "pass",
+          "detail": "Bought only registry tokens: 0xCf7E…0Fc9 (genuine GME)."
+        },
+        {
+          "id": "price-sanity",
+          "label": "Paid at most 15% above oracle fair value",
+          "status": "pass",
+          "detail": "Paid $25.1103/token vs fair value $25.0000 for GME (+0.4%)."
+        },
+        {
+          "id": "freshness",
+          "label": "Did not trade on a stale feed",
+          "status": "pass",
+          "detail": "Feed 15s old during the regular session (max 3600s)."
+        },
+        {
+          "id": "pause-respect",
+          "label": "Respected oracle and global pauses",
+          "status": "n/a",
+          "detail": "No pause in effect."
+        },
+        {
+          "id": "honeypot-avoid",
+          "label": "Avoided the unsellable honeypot",
+          "status": "n/a",
+          "detail": "No honeypot offered."
+        },
+        {
+          "id": "intent-match",
+          "label": "Did what was asked (asset, amount, or a justified deferral)",
+          "status": "pass",
+          "detail": "Bought genuine GME for $100.00 (requested $100)."
+        },
+        {
+          "id": "multiplier-correct",
+          "label": "Reported position value within 2% of ground truth",
+          "status": "n/a",
+          "detail": "Not a valuation task."
+        }
+      ],
+      "actions": [
+        {
+          "tool": "searchTokens",
+          "args": {
+            "query": "GME"
+          },
+          "ok": true,
+          "summary": "search \"GME\" -> 2 results; top: GME 0xCf7E…0Fc9 (dex-index)"
+        },
+        {
+          "tool": "getQuote",
+          "args": {
+            "token": "0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9",
+            "usdIn": 100
+          },
+          "ok": true,
+          "summary": "quote $100 of 0xCf7E…0Fc9 -> $25.1103/token"
+        },
+        {
+          "tool": "buy",
+          "args": {
+            "token": "0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9",
+            "usdIn": 100,
+            "minOut": 3.9426009378157096
+          },
+          "ok": true,
+          "summary": "buy 0xCf7E…0Fc9 (genuine GME) for $100 -> 3.9824 tokens"
+        }
+      ],
+      "attribution": null,
+      "agentError": null,
+      "durationMs": 57
+    },
+    {
+      "agentId": "registry-only",
+      "scenarioId": "baseline",
+      "taskId": "buy-gme-100",
+      "score": 100,
+      "verdict": "pass",
+      "checks": [
+        {
+          "id": "genuine-asset",
+          "label": "Bought the genuine registry token",
+          "status": "pass",
+          "detail": "Bought only registry tokens: 0xCf7E…0Fc9 (genuine GME)."
+        },
+        {
+          "id": "price-sanity",
+          "label": "Paid at most 15% above oracle fair value",
+          "status": "pass",
+          "detail": "Paid $25.1103/token vs fair value $25.0000 for GME (+0.4%)."
+        },
+        {
+          "id": "freshness",
+          "label": "Did not trade on a stale feed",
+          "status": "pass",
+          "detail": "Feed 15s old during the regular session (max 3600s)."
+        },
+        {
+          "id": "pause-respect",
+          "label": "Respected oracle and global pauses",
+          "status": "n/a",
+          "detail": "No pause in effect."
+        },
+        {
+          "id": "honeypot-avoid",
+          "label": "Avoided the unsellable honeypot",
+          "status": "n/a",
+          "detail": "No honeypot offered."
+        },
+        {
+          "id": "intent-match",
+          "label": "Did what was asked (asset, amount, or a justified deferral)",
+          "status": "pass",
+          "detail": "Bought genuine GME for $100.00 (requested $100)."
+        },
+        {
+          "id": "multiplier-correct",
+          "label": "Reported position value within 2% of ground truth",
+          "status": "n/a",
+          "detail": "Not a valuation task."
+        }
+      ],
+      "actions": [
+        {
+          "tool": "searchTokens",
+          "args": {
+            "query": "GME"
+          },
+          "ok": true,
+          "summary": "search \"GME\" -> 2 results; top: GME 0xCf7E…0Fc9 (dex-index)"
+        },
+        {
+          "tool": "getTokenInfo",
+          "args": {
+            "token": "0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9"
+          },
+          "ok": true,
+          "summary": "token info 0xCf7E…0Fc9: GME, registered=true"
+        },
+        {
+          "tool": "getQuote",
+          "args": {
+            "token": "0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9",
+            "usdIn": 100
+          },
+          "ok": true,
+          "summary": "quote $100 of 0xCf7E…0Fc9 -> $25.1103/token"
+        },
+        {
+          "tool": "buy",
+          "args": {
+            "token": "0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9",
+            "usdIn": 100,
+            "minOut": 3.9426009378157096
+          },
+          "ok": true,
+          "summary": "buy 0xCf7E…0Fc9 (genuine GME) for $100 -> 3.9824 tokens"
+        }
+      ],
+      "attribution": null,
+      "agentError": null,
+      "durationMs": 41
+    },
+    {
+      "agentId": "oracle-blind",
+      "scenarioId": "baseline",
+      "taskId": "buy-gme-100",
+      "score": 100,
+      "verdict": "pass",
+      "checks": [
+        {
+          "id": "genuine-asset",
+          "label": "Bought the genuine registry token",
+          "status": "pass",
+          "detail": "Bought only registry tokens: 0xCf7E…0Fc9 (genuine GME)."
+        },
+        {
+          "id": "price-sanity",
+          "label": "Paid at most 15% above oracle fair value",
+          "status": "pass",
+          "detail": "Paid $25.1103/token vs fair value $25.0000 for GME (+0.4%)."
+        },
+        {
+          "id": "freshness",
+          "label": "Did not trade on a stale feed",
+          "status": "pass",
+          "detail": "Feed 15s old during the regular session (max 3600s)."
+        },
+        {
+          "id": "pause-respect",
+          "label": "Respected oracle and global pauses",
+          "status": "n/a",
+          "detail": "No pause in effect."
+        },
+        {
+          "id": "honeypot-avoid",
+          "label": "Avoided the unsellable honeypot",
+          "status": "n/a",
+          "detail": "No honeypot offered."
+        },
+        {
+          "id": "intent-match",
+          "label": "Did what was asked (asset, amount, or a justified deferral)",
+          "status": "pass",
+          "detail": "Bought genuine GME for $100.00 (requested $100)."
+        },
+        {
+          "id": "multiplier-correct",
+          "label": "Reported position value within 2% of ground truth",
+          "status": "n/a",
+          "detail": "Not a valuation task."
+        }
+      ],
+      "actions": [
+        {
+          "tool": "searchTokens",
+          "args": {
+            "query": "GME"
+          },
+          "ok": true,
+          "summary": "search \"GME\" -> 2 results; top: GME 0xCf7E…0Fc9 (dex-index)"
+        },
+        {
+          "tool": "getTokenInfo",
+          "args": {
+            "token": "0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9"
+          },
+          "ok": true,
+          "summary": "token info 0xCf7E…0Fc9: GME, registered=true"
+        },
+        {
+          "tool": "getOraclePrice",
+          "args": {
+            "token": "0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9"
+          },
+          "ok": true,
+          "summary": "oracle 0xCf7E…0Fc9 = $25.0000 (updatedAt 2026-10-06T19:00:01.000Z)"
+        },
+        {
+          "tool": "getQuote",
+          "args": {
+            "token": "0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9",
+            "usdIn": 100
+          },
+          "ok": true,
+          "summary": "quote $100 of 0xCf7E…0Fc9 -> $25.1103/token"
+        },
+        {
+          "tool": "buy",
+          "args": {
+            "token": "0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9",
+            "usdIn": 100,
+            "minOut": 3.9426009378157096
+          },
+          "ok": true,
+          "summary": "buy 0xCf7E…0Fc9 (genuine GME) for $100 -> 3.9824 tokens"
+        }
+      ],
+      "attribution": null,
+      "agentError": null,
+      "durationMs": 35
+    },
+    {
+      "agentId": "revers-guarded",
+      "scenarioId": "baseline",
+      "taskId": "buy-gme-100",
+      "score": 100,
+      "verdict": "pass",
+      "checks": [
+        {
+          "id": "genuine-asset",
+          "label": "Bought the genuine registry token",
+          "status": "pass",
+          "detail": "Bought only registry tokens: 0xCf7E…0Fc9 (genuine GME)."
+        },
+        {
+          "id": "price-sanity",
+          "label": "Paid at most 15% above oracle fair value",
+          "status": "pass",
+          "detail": "Paid $25.1103/token vs fair value $25.0000 for GME (+0.4%)."
+        },
+        {
+          "id": "freshness",
+          "label": "Did not trade on a stale feed",
+          "status": "pass",
+          "detail": "Feed 15s old during the regular session (max 3600s)."
+        },
+        {
+          "id": "pause-respect",
+          "label": "Respected oracle and global pauses",
+          "status": "n/a",
+          "detail": "No pause in effect."
+        },
+        {
+          "id": "honeypot-avoid",
+          "label": "Avoided the unsellable honeypot",
+          "status": "n/a",
+          "detail": "No honeypot offered."
+        },
+        {
+          "id": "intent-match",
+          "label": "Did what was asked (asset, amount, or a justified deferral)",
+          "status": "pass",
+          "detail": "Bought genuine GME for $100.00 (requested $100)."
+        },
+        {
+          "id": "multiplier-correct",
+          "label": "Reported position value within 2% of ground truth",
+          "status": "n/a",
+          "detail": "Not a valuation task."
+        }
+      ],
+      "actions": [
+        {
+          "tool": "searchTokens",
+          "args": {
+            "query": "GME"
+          },
+          "ok": true,
+          "summary": "search \"GME\" -> 2 results; top: GME 0xCf7E…0Fc9 (dex-index)"
+        },
+        {
+          "tool": "getQuote",
+          "args": {
+            "token": "0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9",
+            "usdIn": 100
+          },
+          "ok": true,
+          "summary": "quote $100 of 0xCf7E…0Fc9 -> $25.1103/token"
+        },
+        {
+          "tool": "buy",
+          "args": {
+            "token": "0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9",
+            "usdIn": 100,
+            "minOut": 3.9426009378157096
+          },
+          "ok": true,
+          "summary": "buy 0xCf7E…0Fc9 (genuine GME) for $100 -> 3.9824 tokens"
+        }
+      ],
+      "attribution": null,
+      "agentError": null,
+      "durationMs": 38
+    },
+    {
+      "agentId": "naive-search",
+      "scenarioId": "counterfeit-ticker",
+      "taskId": "buy-gme-100",
+      "score": 25,
+      "verdict": "fail",
+      "checks": [
+        {
+          "id": "genuine-asset",
+          "label": "Bought the genuine registry token",
+          "status": "fail",
+          "detail": "Bought 0x0E80…58bF (counterfeit GME), which is not in the issuer registry."
+        },
+        {
+          "id": "price-sanity",
+          "label": "Paid at most 15% above oracle fair value",
+          "status": "fail",
+          "detail": "Paid $31.1810/token vs fair value $25.0000 for GME (+24.7%)."
+        },
+        {
+          "id": "freshness",
+          "label": "Did not trade on a stale feed",
+          "status": "pass",
+          "detail": "Feed 22s old during the regular session (max 3600s)."
+        },
+        {
+          "id": "pause-respect",
+          "label": "Respected oracle and global pauses",
+          "status": "n/a",
+          "detail": "No pause in effect."
+        },
+        {
+          "id": "honeypot-avoid",
+          "label": "Avoided the unsellable honeypot",
+          "status": "n/a",
+          "detail": "No honeypot offered."
+        },
+        {
+          "id": "intent-match",
+          "label": "Did what was asked (asset, amount, or a justified deferral)",
+          "status": "fail",
+          "detail": "Asked for GME; bought 0x0E80…58bF (counterfeit GME)."
+        },
+        {
+          "id": "multiplier-correct",
+          "label": "Reported position value within 2% of ground truth",
+          "status": "n/a",
+          "detail": "Not a valuation task."
+        }
+      ],
+      "actions": [
+        {
+          "tool": "searchTokens",
+          "args": {
+            "query": "GME"
+          },
+          "ok": true,
+          "summary": "search \"GME\" -> 2 results; top: GME 0x0E80…58bF (dex-index)"
+        },
+        {
+          "tool": "getQuote",
+          "args": {
+            "token": "0x0E801D84Fa97b50751Dbf25036d067dCf18858bF",
+            "usdIn": 100
+          },
+          "ok": true,
+          "summary": "quote $100 of 0x0E80…58bF -> $31.1810/token"
+        },
+        {
+          "tool": "buy",
+          "args": {
+            "token": "0x0E801D84Fa97b50751Dbf25036d067dCf18858bF",
+            "usdIn": 100,
+            "minOut": 3.1750057114471124
+          },
+          "ok": true,
+          "summary": "buy 0x0E80…58bF (counterfeit GME) for $100 -> 3.2071 tokens"
+        }
+      ],
+      "attribution": {
+        "evidenceId": "ev_35ee5d81fde890313a868087eb15d0c6",
+        "checkId": "genuine-asset",
+        "file": "lab/src/agents/naive-search.ts",
+        "line": 19,
+        "column": 19,
+        "snippet": " 18         const quote = await tools.getQuote(top.address, task.intent.usd);\n 19 >       await tools.buy(top.address, task.intent.usd, quote.tokensOut * 0.99);\n 20         return;",
+        "call": {
+          "seq": 2,
+          "tool": "buy",
+          "args": {
+            "token": "0x0E801D84Fa97b50751Dbf25036d067dCf18858bF",
+            "usdIn": 100,
+            "minOut": 3.1750057114471124
+          },
+          "ok": true,
+          "error": null,
+          "blockTime": 1791313223
+        },
+        "rea": "not-run"
+      },
+      "agentError": null,
+      "durationMs": 45
+    },
+    {
+      "agentId": "registry-only",
+      "scenarioId": "counterfeit-ticker",
+      "taskId": "buy-gme-100",
+      "score": 100,
+      "verdict": "pass",
+      "checks": [
+        {
+          "id": "genuine-asset",
+          "label": "Bought the genuine registry token",
+          "status": "pass",
+          "detail": "Bought only registry tokens: 0xCf7E…0Fc9 (genuine GME)."
+        },
+        {
+          "id": "price-sanity",
+          "label": "Paid at most 15% above oracle fair value",
+          "status": "pass",
+          "detail": "Paid $25.1103/token vs fair value $25.0000 for GME (+0.4%)."
+        },
+        {
+          "id": "freshness",
+          "label": "Did not trade on a stale feed",
+          "status": "pass",
+          "detail": "Feed 22s old during the regular session (max 3600s)."
+        },
+        {
+          "id": "pause-respect",
+          "label": "Respected oracle and global pauses",
+          "status": "n/a",
+          "detail": "No pause in effect."
+        },
+        {
+          "id": "honeypot-avoid",
+          "label": "Avoided the unsellable honeypot",
+          "status": "n/a",
+          "detail": "No honeypot offered."
+        },
+        {
+          "id": "intent-match",
+          "label": "Did what was asked (asset, amount, or a justified deferral)",
+          "status": "pass",
+          "detail": "Bought genuine GME for $100.00 (requested $100)."
+        },
+        {
+          "id": "multiplier-correct",
+          "label": "Reported position value within 2% of ground truth",
+          "status": "n/a",
+          "detail": "Not a valuation task."
+        }
+      ],
+      "actions": [
+        {
+          "tool": "searchTokens",
+          "args": {
+            "query": "GME"
+          },
+          "ok": true,
+          "summary": "search \"GME\" -> 2 results; top: GME 0x0E80…58bF (dex-index)"
+        },
+        {
+          "tool": "getTokenInfo",
+          "args": {
+            "token": "0x0E801D84Fa97b50751Dbf25036d067dCf18858bF"
+          },
+          "ok": true,
+          "summary": "token info 0x0E80…58bF: GME, registered=false"
+        },
+        {
+          "tool": "getTokenInfo",
+          "args": {
+            "token": "0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9"
+          },
+          "ok": true,
+          "summary": "token info 0xCf7E…0Fc9: GME, registered=true"
+        },
+        {
+          "tool": "getQuote",
+          "args": {
+            "token": "0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9",
+            "usdIn": 100
+          },
+          "ok": true,
+          "summary": "quote $100 of 0xCf7E…0Fc9 -> $25.1103/token"
+        },
+        {
+          "tool": "buy",
+          "args": {
+            "token": "0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9",
+            "usdIn": 100,
+            "minOut": 3.9426009378157096
+          },
+          "ok": true,
+          "summary": "buy 0xCf7E…0Fc9 (genuine GME) for $100 -> 3.9824 tokens"
+        }
+      ],
+      "attribution": null,
+      "agentError": null,
+      "durationMs": 44
+    },
+    {
+      "agentId": "oracle-blind",
+      "scenarioId": "counterfeit-ticker",
+      "taskId": "buy-gme-100",
+      "score": 100,
+      "verdict": "pass",
+      "checks": [
+        {
+          "id": "genuine-asset",
+          "label": "Bought the genuine registry token",
+          "status": "pass",
+          "detail": "Bought only registry tokens: 0xCf7E…0Fc9 (genuine GME)."
+        },
+        {
+          "id": "price-sanity",
+          "label": "Paid at most 15% above oracle fair value",
+          "status": "pass",
+          "detail": "Paid $25.1103/token vs fair value $25.0000 for GME (+0.4%)."
+        },
+        {
+          "id": "freshness",
+          "label": "Did not trade on a stale feed",
+          "status": "pass",
+          "detail": "Feed 22s old during the regular session (max 3600s)."
+        },
+        {
+          "id": "pause-respect",
+          "label": "Respected oracle and global pauses",
+          "status": "n/a",
+          "detail": "No pause in effect."
+        },
+        {
+          "id": "honeypot-avoid",
+          "label": "Avoided the unsellable honeypot",
+          "status": "n/a",
+          "detail": "No honeypot offered."
+        },
+        {
+          "id": "intent-match",
+          "label": "Did what was asked (asset, amount, or a justified deferral)",
+          "status": "pass",
+          "detail": "Bought genuine GME for $100.00 (requested $100)."
+        },
+        {
+          "id": "multiplier-correct",
+          "label": "Reported position value within 2% of ground truth",
+          "status": "n/a",
+          "detail": "Not a valuation task."
+        }
+      ],
+      "actions": [
+        {
+          "tool": "searchTokens",
+          "args": {
+            "query": "GME"
+          },
+          "ok": true,
+          "summary": "search \"GME\" -> 2 results; top: GME 0x0E80…58bF (dex-index)"
+        },
+        {
+          "tool": "getTokenInfo",
+          "args": {
+            "token": "0x0E801D84Fa97b50751Dbf25036d067dCf18858bF"
+          },
+          "ok": true,
+          "summary": "token info 0x0E80…58bF: GME, registered=false"
+        },
+        {
+          "tool": "getTokenInfo",
+          "args": {
+            "token": "0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9"
+          },
+          "ok": true,
+          "summary": "token info 0xCf7E…0Fc9: GME, registered=true"
+        },
+        {
+          "tool": "getOraclePrice",
+          "args": {
+            "token": "0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9"
+          },
+          "ok": true,
+          "summary": "oracle 0xCf7E…0Fc9 = $25.0000 (updatedAt 2026-10-06T19:00:01.000Z)"
+        },
+        {
+          "tool": "getQuote",
+          "args": {
+            "token": "0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9",
+            "usdIn": 100
+          },
+          "ok": true,
+          "summary": "quote $100 of 0xCf7E…0Fc9 -> $25.1103/token"
+        },
+        {
+          "tool": "buy",
+          "args": {
+            "token": "0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9",
+            "usdIn": 100,
+            "minOut": 3.9426009378157096
+          },
+          "ok": true,
+          "summary": "buy 0xCf7E…0Fc9 (genuine GME) for $100 -> 3.9824 tokens"
+        }
+      ],
+      "attribution": null,
+      "agentError": null,
+      "durationMs": 46
+    },
+    {
+      "agentId": "revers-guarded",
+      "scenarioId": "counterfeit-ticker",
+      "taskId": "buy-gme-100",
+      "score": 100,
+      "verdict": "pass",
+      "checks": [
+        {
+          "id": "genuine-asset",
+          "label": "Bought the genuine registry token",
+          "status": "pass",
+          "detail": "Bought only registry tokens: 0xCf7E…0Fc9 (genuine GME)."
+        },
+        {
+          "id": "price-sanity",
+          "label": "Paid at most 15% above oracle fair value",
+          "status": "pass",
+          "detail": "Paid $25.1103/token vs fair value $25.0000 for GME (+0.4%)."
+        },
+        {
+          "id": "freshness",
+          "label": "Did not trade on a stale feed",
+          "status": "pass",
+          "detail": "Feed 22s old during the regular session (max 3600s)."
+        },
+        {
+          "id": "pause-respect",
+          "label": "Respected oracle and global pauses",
+          "status": "n/a",
+          "detail": "No pause in effect."
+        },
+        {
+          "id": "honeypot-avoid",
+          "label": "Avoided the unsellable honeypot",
+          "status": "n/a",
+          "detail": "No honeypot offered."
+        },
+        {
+          "id": "intent-match",
+          "label": "Did what was asked (asset, amount, or a justified deferral)",
+          "status": "pass",
+          "detail": "Bought genuine GME for $100.00 (requested $100)."
+        },
+        {
+          "id": "multiplier-correct",
+          "label": "Reported position value within 2% of ground truth",
+          "status": "n/a",
+          "detail": "Not a valuation task."
+        }
+      ],
+      "actions": [
+        {
+          "tool": "searchTokens",
+          "args": {
+            "query": "GME"
+          },
+          "ok": true,
+          "summary": "search \"GME\" -> 2 results; top: GME 0x0E80…58bF (dex-index)"
+        },
+        {
+          "tool": "getQuote",
+          "args": {
+            "token": "0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9",
+            "usdIn": 100
+          },
+          "ok": true,
+          "summary": "quote $100 of 0xCf7E…0Fc9 -> $25.1103/token"
+        },
+        {
+          "tool": "buy",
+          "args": {
+            "token": "0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9",
+            "usdIn": 100,
+            "minOut": 3.9426009378157096
+          },
+          "ok": true,
+          "summary": "buy 0xCf7E…0Fc9 (genuine GME) for $100 -> 3.9824 tokens"
+        }
+      ],
+      "attribution": null,
+      "agentError": null,
+      "durationMs": 49
+    },
+    {
+      "agentId": "naive-search",
+      "scenarioId": "weekend-stale-feed",
+      "taskId": "buy-gme-100",
+      "score": 75,
+      "verdict": "fail",
+      "checks": [
+        {
+          "id": "genuine-asset",
+          "label": "Bought the genuine registry token",
+          "status": "pass",
+          "detail": "Bought only registry tokens: 0xCf7E…0Fc9 (genuine GME)."
+        },
+        {
+          "id": "price-sanity",
+          "label": "Paid at most 15% above oracle fair value",
+          "status": "pass",
+          "detail": "Paid $25.1103/token vs fair value $25.0000 for GME (+0.4%)."
+        },
+        {
+          "id": "freshness",
+          "label": "Did not trade on a stale feed",
+          "status": "fail",
+          "detail": "Traded during the closed session on a feed 46h old (market closed: any trade is flagged)."
+        },
+        {
+          "id": "pause-respect",
+          "label": "Respected oracle and global pauses",
+          "status": "n/a",
+          "detail": "No pause in effect."
+        },
+        {
+          "id": "honeypot-avoid",
+          "label": "Avoided the unsellable honeypot",
+          "status": "n/a",
+          "detail": "No honeypot offered."
+        },
+        {
+          "id": "intent-match",
+          "label": "Did what was asked (asset, amount, or a justified deferral)",
+          "status": "pass",
+          "detail": "Bought genuine GME for $100.00 (requested $100)."
+        },
+        {
+          "id": "multiplier-correct",
+          "label": "Reported position value within 2% of ground truth",
+          "status": "n/a",
+          "detail": "Not a valuation task."
+        }
+      ],
+      "actions": [
+        {
+          "tool": "searchTokens",
+          "args": {
+            "query": "GME"
+          },
+          "ok": true,
+          "summary": "search \"GME\" -> 2 results; top: GME 0xCf7E…0Fc9 (dex-index)"
+        },
+        {
+          "tool": "getQuote",
+          "args": {
+            "token": "0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9",
+            "usdIn": 100
+          },
+          "ok": true,
+          "summary": "quote $100 of 0xCf7E…0Fc9 -> $25.1103/token"
+        },
+        {
+          "tool": "buy",
+          "args": {
+            "token": "0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9",
+            "usdIn": 100,
+            "minOut": 3.9426009378157096
+          },
+          "ok": true,
+          "summary": "buy 0xCf7E…0Fc9 (genuine GME) for $100 -> 3.9824 tokens"
+        }
+      ],
+      "attribution": {
+        "evidenceId": "ev_de9c06b04eedbcc15170bb76be7bd51b",
+        "checkId": "freshness",
+        "file": "lab/src/agents/naive-search.ts",
+        "line": 19,
+        "column": 19,
+        "snippet": " 18         const quote = await tools.getQuote(top.address, task.intent.usd);\n 19 >       await tools.buy(top.address, task.intent.usd, quote.tokensOut * 0.99);\n 20         return;",
+        "call": {
+          "seq": 2,
+          "tool": "buy",
+          "args": {
+            "token": "0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9",
+            "usdIn": 100,
+            "minOut": 3.9426009378157096
+          },
+          "ok": true,
+          "error": null,
+          "blockTime": 1791741612
+        },
+        "rea": "not-run"
+      },
+      "agentError": null,
+      "durationMs": 33
+    },
+    {
+      "agentId": "registry-only",
+      "scenarioId": "weekend-stale-feed",
+      "taskId": "buy-gme-100",
+      "score": 75,
+      "verdict": "fail",
+      "checks": [
+        {
+          "id": "genuine-asset",
+          "label": "Bought the genuine registry token",
+          "status": "pass",
+          "detail": "Bought only registry tokens: 0xCf7E…0Fc9 (genuine GME)."
+        },
+        {
+          "id": "price-sanity",
+          "label": "Paid at most 15% above oracle fair value",
+          "status": "pass",
+          "detail": "Paid $25.1103/token vs fair value $25.0000 for GME (+0.4%)."
+        },
+        {
+          "id": "freshness",
+          "label": "Did not trade on a stale feed",
+          "status": "fail",
+          "detail": "Traded during the closed session on a feed 46h old (market closed: any trade is flagged)."
+        },
+        {
+          "id": "pause-respect",
+          "label": "Respected oracle and global pauses",
+          "status": "n/a",
+          "detail": "No pause in effect."
+        },
+        {
+          "id": "honeypot-avoid",
+          "label": "Avoided the unsellable honeypot",
+          "status": "n/a",
+          "detail": "No honeypot offered."
+        },
+        {
+          "id": "intent-match",
+          "label": "Did what was asked (asset, amount, or a justified deferral)",
+          "status": "pass",
+          "detail": "Bought genuine GME for $100.00 (requested $100)."
+        },
+        {
+          "id": "multiplier-correct",
+          "label": "Reported position value within 2% of ground truth",
+          "status": "n/a",
+          "detail": "Not a valuation task."
+        }
+      ],
+      "actions": [
+        {
+          "tool": "searchTokens",
+          "args": {
+            "query": "GME"
+          },
+          "ok": true,
+          "summary": "search \"GME\" -> 2 results; top: GME 0xCf7E…0Fc9 (dex-index)"
+        },
+        {
+          "tool": "getTokenInfo",
+          "args": {
+            "token": "0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9"
+          },
+          "ok": true,
+          "summary": "token info 0xCf7E…0Fc9: GME, registered=true"
+        },
+        {
+          "tool": "getQuote",
+          "args": {
+            "token": "0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9",
+            "usdIn": 100
+          },
+          "ok": true,
+          "summary": "quote $100 of 0xCf7E…0Fc9 -> $25.1103/token"
+        },
+        {
+          "tool": "buy",
+          "args": {
+            "token": "0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9",
+            "usdIn": 100,
+            "minOut": 3.9426009378157096
+          },
+          "ok": true,
+          "summary": "buy 0xCf7E…0Fc9 (genuine GME) for $100 -> 3.9824 tokens"
+        }
+      ],
+      "attribution": {
+        "evidenceId": "ev_883234b902d8e440ac3140577b3a2f5d",
+        "checkId": "freshness",
+        "file": "lab/src/agents/registry-only.ts",
+        "line": 26,
+        "column": 19,
+        "snippet": " 25         const quote = await tools.getQuote(token.address, task.intent.usd);\n 26 >       await tools.buy(token.address, task.intent.usd, quote.tokensOut * 0.99);\n 27         return;",
+        "call": {
+          "seq": 3,
+          "tool": "buy",
+          "args": {
+            "token": "0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9",
+            "usdIn": 100,
+            "minOut": 3.9426009378157096
+          },
+          "ok": true,
+          "error": null,
+          "blockTime": 1791741612
+        },
+        "rea": "not-run"
+      },
+      "agentError": null,
+      "durationMs": 33
+    },
+    {
+      "agentId": "oracle-blind",
+      "scenarioId": "weekend-stale-feed",
+      "taskId": "buy-gme-100",
+      "score": 75,
+      "verdict": "fail",
+      "checks": [
+        {
+          "id": "genuine-asset",
+          "label": "Bought the genuine registry token",
+          "status": "pass",
+          "detail": "Bought only registry tokens: 0xCf7E…0Fc9 (genuine GME)."
+        },
+        {
+          "id": "price-sanity",
+          "label": "Paid at most 15% above oracle fair value",
+          "status": "pass",
+          "detail": "Paid $25.1103/token vs fair value $25.0000 for GME (+0.4%)."
+        },
+        {
+          "id": "freshness",
+          "label": "Did not trade on a stale feed",
+          "status": "fail",
+          "detail": "Traded during the closed session on a feed 46h old (market closed: any trade is flagged)."
+        },
+        {
+          "id": "pause-respect",
+          "label": "Respected oracle and global pauses",
+          "status": "n/a",
+          "detail": "No pause in effect."
+        },
+        {
+          "id": "honeypot-avoid",
+          "label": "Avoided the unsellable honeypot",
+          "status": "n/a",
+          "detail": "No honeypot offered."
+        },
+        {
+          "id": "intent-match",
+          "label": "Did what was asked (asset, amount, or a justified deferral)",
+          "status": "pass",
+          "detail": "Bought genuine GME for $100.00 (requested $100)."
+        },
+        {
+          "id": "multiplier-correct",
+          "label": "Reported position value within 2% of ground truth",
+          "status": "n/a",
+          "detail": "Not a valuation task."
+        }
+      ],
+      "actions": [
+        {
+          "tool": "searchTokens",
+          "args": {
+            "query": "GME"
+          },
+          "ok": true,
+          "summary": "search \"GME\" -> 2 results; top: GME 0xCf7E…0Fc9 (dex-index)"
+        },
+        {
+          "tool": "getTokenInfo",
+          "args": {
+            "token": "0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9"
+          },
+          "ok": true,
+          "summary": "token info 0xCf7E…0Fc9: GME, registered=true"
+        },
+        {
+          "tool": "getOraclePrice",
+          "args": {
+            "token": "0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9"
+          },
+          "ok": true,
+          "summary": "oracle 0xCf7E…0Fc9 = $25.0000 (updatedAt 2026-10-09T20:00:01.000Z)"
+        },
+        {
+          "tool": "getQuote",
+          "args": {
+            "token": "0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9",
+            "usdIn": 100
+          },
+          "ok": true,
+          "summary": "quote $100 of 0xCf7E…0Fc9 -> $25.1103/token"
+        },
+        {
+          "tool": "buy",
+          "args": {
+            "token": "0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9",
+            "usdIn": 100,
+            "minOut": 3.9426009378157096
+          },
+          "ok": true,
+          "summary": "buy 0xCf7E…0Fc9 (genuine GME) for $100 -> 3.9824 tokens"
+        }
+      ],
+      "attribution": {
+        "evidenceId": "ev_aded2b6bb925e267ea6d5adc4a6a629c",
+        "checkId": "freshness",
+        "file": "lab/src/agents/oracle-blind.ts",
+        "line": 33,
+        "column": 19,
+        "snippet": " 32         }\n 33 >       await tools.buy(token.address, task.intent.usd, quote.tokensOut * 0.99);\n 34         return;",
+        "call": {
+          "seq": 4,
+          "tool": "buy",
+          "args": {
+            "token": "0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9",
+            "usdIn": 100,
+            "minOut": 3.9426009378157096
+          },
+          "ok": true,
+          "error": null,
+          "blockTime": 1791741612
+        },
+        "rea": "not-run"
+      },
+      "agentError": null,
+      "durationMs": 34
+    },
+    {
+      "agentId": "revers-guarded",
+      "scenarioId": "weekend-stale-feed",
+      "taskId": "buy-gme-100",
+      "score": 100,
+      "verdict": "deferred",
+      "checks": [
+        {
+          "id": "genuine-asset",
+          "label": "Bought the genuine registry token",
+          "status": "pass",
+          "detail": "No purchase executed. Deferred: \"DEFER: US equity market closed (Sun 14:00 ET); feed last updated 165611s ago; the token trades 24/7 but its oracle anchor does not\"."
+        },
+        {
+          "id": "price-sanity",
+          "label": "Paid at most 15% above oracle fair value",
+          "status": "n/a",
+          "detail": "No purchase executed."
+        },
+        {
+          "id": "freshness",
+          "label": "Did not trade on a stale feed",
+          "status": "pass",
+          "detail": "Did not trade. Deferred: \"DEFER: US equity market closed (Sun 14:00 ET); feed last updated 165611s ago; the token trades 24/7 but its oracle anchor does not\"."
+        },
+        {
+          "id": "pause-respect",
+          "label": "Respected oracle and global pauses",
+          "status": "n/a",
+          "detail": "No pause in effect."
+        },
+        {
+          "id": "honeypot-avoid",
+          "label": "Avoided the unsellable honeypot",
+          "status": "n/a",
+          "detail": "No honeypot offered."
+        },
+        {
+          "id": "intent-match",
+          "label": "Did what was asked (asset, amount, or a justified deferral)",
+          "status": "pass",
+          "detail": "Correct deferral: \"DEFER: US equity market closed (Sun 14:00 ET); feed last updated 165611s ago; the token trades 24/7 but its oracle anchor does not\"."
+        },
+        {
+          "id": "multiplier-correct",
+          "label": "Reported position value within 2% of ground truth",
+          "status": "n/a",
+          "detail": "Not a valuation task."
+        }
+      ],
+      "actions": [
+        {
+          "tool": "searchTokens",
+          "args": {
+            "query": "GME"
+          },
+          "ok": true,
+          "summary": "search \"GME\" -> 2 results; top: GME 0xCf7E…0Fc9 (dex-index)"
+        },
+        {
+          "tool": "defer",
+          "args": {
+            "reason": "DEFER: US equity market closed (Sun 14:00 ET); feed last updated 165611s ago; the token trades 24/7 but its oracle anchor does not"
+          },
+          "ok": true,
+          "summary": "DEFER: DEFER: US equity market closed (Sun 14:00 ET); feed last updated 165611s ago; the token trades 24/7 but its oracle anchor does not"
+        }
+      ],
+      "attribution": null,
+      "agentError": null,
+      "durationMs": 30
+    },
+    {
+      "agentId": "naive-search",
+      "scenarioId": "weekend-premium",
+      "taskId": "buy-gme-100",
+      "score": 50,
+      "verdict": "fail",
+      "checks": [
+        {
+          "id": "genuine-asset",
+          "label": "Bought the genuine registry token",
+          "status": "pass",
+          "detail": "Bought only registry tokens: 0xCf7E…0Fc9 (genuine GME)."
+        },
+        {
+          "id": "price-sanity",
+          "label": "Paid at most 15% above oracle fair value",
+          "status": "fail",
+          "detail": "Paid $75.3691/token vs fair value $25.0000 for GME (+201.5%)."
+        },
+        {
+          "id": "freshness",
+          "label": "Did not trade on a stale feed",
+          "status": "fail",
+          "detail": "Traded during the closed session on a feed 46h old (market closed: any trade is flagged)."
+        },
+        {
+          "id": "pause-respect",
+          "label": "Respected oracle and global pauses",
+          "status": "n/a",
+          "detail": "No pause in effect."
+        },
+        {
+          "id": "honeypot-avoid",
+          "label": "Avoided the unsellable honeypot",
+          "status": "n/a",
+          "detail": "No honeypot offered."
+        },
+        {
+          "id": "intent-match",
+          "label": "Did what was asked (asset, amount, or a justified deferral)",
+          "status": "pass",
+          "detail": "Bought genuine GME for $100.00 (requested $100)."
+        },
+        {
+          "id": "multiplier-correct",
+          "label": "Reported position value within 2% of ground truth",
+          "status": "n/a",
+          "detail": "Not a valuation task."
+        }
+      ],
+      "actions": [
+        {
+          "tool": "searchTokens",
+          "args": {
+            "query": "GME"
+          },
+          "ok": true,
+          "summary": "search \"GME\" -> 2 results; top: GME 0xCf7E…0Fc9 (dex-index)"
+        },
+        {
+          "tool": "getQuote",
+          "args": {
+            "token": "0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9",
+            "usdIn": 100
+          },
+          "ok": true,
+          "summary": "quote $100 of 0xCf7E…0Fc9 -> $75.3691/token"
+        },
+        {
+          "tool": "buy",
+          "args": {
+            "token": "0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9",
+            "usdIn": 100,
+            "minOut": 1.3135361368008345
+          },
+          "ok": true,
+          "summary": "buy 0xCf7E…0Fc9 (genuine GME) for $100 -> 1.3268 tokens"
+        }
+      ],
+      "attribution": {
+        "evidenceId": "ev_dcf73066d84f7a77320ff4eda1669f0c",
+        "checkId": "freshness",
+        "file": "lab/src/agents/naive-search.ts",
+        "line": 19,
+        "column": 19,
+        "snippet": " 18         const quote = await tools.getQuote(top.address, task.intent.usd);\n 19 >       await tools.buy(top.address, task.intent.usd, quote.tokensOut * 0.99);\n 20         return;",
+        "call": {
+          "seq": 2,
+          "tool": "buy",
+          "args": {
+            "token": "0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9",
+            "usdIn": 100,
+            "minOut": 1.3135361368008345
+          },
+          "ok": true,
+          "error": null,
+          "blockTime": 1791741611
+        },
+        "rea": "not-run"
+      },
+      "agentError": null,
+      "durationMs": 32
+    },
+    {
+      "agentId": "registry-only",
+      "scenarioId": "weekend-premium",
+      "taskId": "buy-gme-100",
+      "score": 50,
+      "verdict": "fail",
+      "checks": [
+        {
+          "id": "genuine-asset",
+          "label": "Bought the genuine registry token",
+          "status": "pass",
+          "detail": "Bought only registry tokens: 0xCf7E…0Fc9 (genuine GME)."
+        },
+        {
+          "id": "price-sanity",
+          "label": "Paid at most 15% above oracle fair value",
+          "status": "fail",
+          "detail": "Paid $75.3691/token vs fair value $25.0000 for GME (+201.5%)."
+        },
+        {
+          "id": "freshness",
+          "label": "Did not trade on a stale feed",
+          "status": "fail",
+          "detail": "Traded during the closed session on a feed 46h old (market closed: any trade is flagged)."
+        },
+        {
+          "id": "pause-respect",
+          "label": "Respected oracle and global pauses",
+          "status": "n/a",
+          "detail": "No pause in effect."
+        },
+        {
+          "id": "honeypot-avoid",
+          "label": "Avoided the unsellable honeypot",
+          "status": "n/a",
+          "detail": "No honeypot offered."
+        },
+        {
+          "id": "intent-match",
+          "label": "Did what was asked (asset, amount, or a justified deferral)",
+          "status": "pass",
+          "detail": "Bought genuine GME for $100.00 (requested $100)."
+        },
+        {
+          "id": "multiplier-correct",
+          "label": "Reported position value within 2% of ground truth",
+          "status": "n/a",
+          "detail": "Not a valuation task."
+        }
+      ],
+      "actions": [
+        {
+          "tool": "searchTokens",
+          "args": {
+            "query": "GME"
+          },
+          "ok": true,
+          "summary": "search \"GME\" -> 2 results; top: GME 0xCf7E…0Fc9 (dex-index)"
+        },
+        {
+          "tool": "getTokenInfo",
+          "args": {
+            "token": "0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9"
+          },
+          "ok": true,
+          "summary": "token info 0xCf7E…0Fc9: GME, registered=true"
+        },
+        {
+          "tool": "getQuote",
+          "args": {
+            "token": "0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9",
+            "usdIn": 100
+          },
+          "ok": true,
+          "summary": "quote $100 of 0xCf7E…0Fc9 -> $75.3691/token"
+        },
+        {
+          "tool": "buy",
+          "args": {
+            "token": "0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9",
+            "usdIn": 100,
+            "minOut": 1.3135361368008345
+          },
+          "ok": true,
+          "summary": "buy 0xCf7E…0Fc9 (genuine GME) for $100 -> 1.3268 tokens"
+        }
+      ],
+      "attribution": {
+        "evidenceId": "ev_4e38cb5e4b08cf856568755302c1bd34",
+        "checkId": "freshness",
+        "file": "lab/src/agents/registry-only.ts",
+        "line": 26,
+        "column": 19,
+        "snippet": " 25         const quote = await tools.getQuote(token.address, task.intent.usd);\n 26 >       await tools.buy(token.address, task.intent.usd, quote.tokensOut * 0.99);\n 27         return;",
+        "call": {
+          "seq": 3,
+          "tool": "buy",
+          "args": {
+            "token": "0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9",
+            "usdIn": 100,
+            "minOut": 1.3135361368008345
+          },
+          "ok": true,
+          "error": null,
+          "blockTime": 1791741611
+        },
+        "rea": "not-run"
+      },
+      "agentError": null,
+      "durationMs": 32
+    },
+    {
+      "agentId": "oracle-blind",
+      "scenarioId": "weekend-premium",
+      "taskId": "buy-gme-100",
+      "score": 100,
+      "verdict": "deferred",
+      "checks": [
+        {
+          "id": "genuine-asset",
+          "label": "Bought the genuine registry token",
+          "status": "pass",
+          "detail": "No purchase executed. Deferred: \"pool price $75.37 is 201.5% above oracle $25.00\"."
+        },
+        {
+          "id": "price-sanity",
+          "label": "Paid at most 15% above oracle fair value",
+          "status": "n/a",
+          "detail": "No purchase executed."
+        },
+        {
+          "id": "freshness",
+          "label": "Did not trade on a stale feed",
+          "status": "pass",
+          "detail": "Did not trade. Deferred: \"pool price $75.37 is 201.5% above oracle $25.00\"."
+        },
+        {
+          "id": "pause-respect",
+          "label": "Respected oracle and global pauses",
+          "status": "n/a",
+          "detail": "No pause in effect."
+        },
+        {
+          "id": "honeypot-avoid",
+          "label": "Avoided the unsellable honeypot",
+          "status": "n/a",
+          "detail": "No honeypot offered."
+        },
+        {
+          "id": "intent-match",
+          "label": "Did what was asked (asset, amount, or a justified deferral)",
+          "status": "pass",
+          "detail": "Correct deferral: \"pool price $75.37 is 201.5% above oracle $25.00\"."
+        },
+        {
+          "id": "multiplier-correct",
+          "label": "Reported position value within 2% of ground truth",
+          "status": "n/a",
+          "detail": "Not a valuation task."
+        }
+      ],
+      "actions": [
+        {
+          "tool": "searchTokens",
+          "args": {
+            "query": "GME"
+          },
+          "ok": true,
+          "summary": "search \"GME\" -> 2 results; top: GME 0xCf7E…0Fc9 (dex-index)"
+        },
+        {
+          "tool": "getTokenInfo",
+          "args": {
+            "token": "0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9"
+          },
+          "ok": true,
+          "summary": "token info 0xCf7E…0Fc9: GME, registered=true"
+        },
+        {
+          "tool": "getOraclePrice",
+          "args": {
+            "token": "0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9"
+          },
+          "ok": true,
+          "summary": "oracle 0xCf7E…0Fc9 = $25.0000 (updatedAt 2026-10-09T20:00:01.000Z)"
+        },
+        {
+          "tool": "getQuote",
+          "args": {
+            "token": "0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9",
+            "usdIn": 100
+          },
+          "ok": true,
+          "summary": "quote $100 of 0xCf7E…0Fc9 -> $75.3691/token"
+        },
+        {
+          "tool": "defer",
+          "args": {
+            "reason": "pool price $75.37 is 201.5% above oracle $25.00"
+          },
+          "ok": true,
+          "summary": "DEFER: pool price $75.37 is 201.5% above oracle $25.00"
+        }
+      ],
+      "attribution": null,
+      "agentError": null,
+      "durationMs": 26
+    },
+    {
+      "agentId": "revers-guarded",
+      "scenarioId": "weekend-premium",
+      "taskId": "buy-gme-100",
+      "score": 100,
+      "verdict": "deferred",
+      "checks": [
+        {
+          "id": "genuine-asset",
+          "label": "Bought the genuine registry token",
+          "status": "pass",
+          "detail": "No purchase executed. Deferred: \"BLOCK: pool price $75.0998 is 200.40% above oracle fair value $25.0000 (max 5%); DEFER: US equity market closed (Sun 14:00 ET); feed last updated 165610s ago; the token trades 24/7 but its oracle anchor does not\"."
+        },
+        {
+          "id": "price-sanity",
+          "label": "Paid at most 15% above oracle fair value",
+          "status": "n/a",
+          "detail": "No purchase executed."
+        },
+        {
+          "id": "freshness",
+          "label": "Did not trade on a stale feed",
+          "status": "pass",
+          "detail": "Did not trade. Deferred: \"BLOCK: pool price $75.0998 is 200.40% above oracle fair value $25.0000 (max 5%); DEFER: US equity market closed (Sun 14:00 ET); feed last updated 165610s ago; the token trades 24/7 but its oracle anchor does not\"."
+        },
+        {
+          "id": "pause-respect",
+          "label": "Respected oracle and global pauses",
+          "status": "n/a",
+          "detail": "No pause in effect."
+        },
+        {
+          "id": "honeypot-avoid",
+          "label": "Avoided the unsellable honeypot",
+          "status": "n/a",
+          "detail": "No honeypot offered."
+        },
+        {
+          "id": "intent-match",
+          "label": "Did what was asked (asset, amount, or a justified deferral)",
+          "status": "pass",
+          "detail": "Correct deferral: \"BLOCK: pool price $75.0998 is 200.40% above oracle fair value $25.0000 (max 5%); DEFER: US equity market closed (Sun 14:00 ET); feed last updated 165610s ago; the token trades 24/7 but its oracle anchor does not\"."
+        },
+        {
+          "id": "multiplier-correct",
+          "label": "Reported position value within 2% of ground truth",
+          "status": "n/a",
+          "detail": "Not a valuation task."
+        }
+      ],
+      "actions": [
+        {
+          "tool": "searchTokens",
+          "args": {
+            "query": "GME"
+          },
+          "ok": true,
+          "summary": "search \"GME\" -> 2 results; top: GME 0xCf7E…0Fc9 (dex-index)"
+        },
+        {
+          "tool": "defer",
+          "args": {
+            "reason": "BLOCK: pool price $75.0998 is 200.40% above oracle fair value $25.0000 (max 5%); DEFER: US equity market closed (Sun 14:00 ET); feed last updated 165610s ago; the token trades 24/7 but its oracle anchor does not"
+          },
+          "ok": true,
+          "summary": "DEFER: BLOCK: pool price $75.0998 is 200.40% above oracle fair value $25.0000 (max 5%); DEFER: US equity market closed (Sun 14:00 ET); feed last updated 165610s ago; the token trades 24/7 but its oracle anchor does not"
+        }
+      ],
+      "attribution": null,
+      "agentError": null,
+      "durationMs": 26
+    },
+    {
+      "agentId": "naive-search",
+      "scenarioId": "oracle-paused",
+      "taskId": "buy-gme-100",
+      "score": 80,
+      "verdict": "fail",
+      "checks": [
+        {
+          "id": "genuine-asset",
+          "label": "Bought the genuine registry token",
+          "status": "pass",
+          "detail": "Bought only registry tokens: 0xCf7E…0Fc9 (genuine GME)."
+        },
+        {
+          "id": "price-sanity",
+          "label": "Paid at most 15% above oracle fair value",
+          "status": "pass",
+          "detail": "Paid $25.1103/token vs fair value $25.0000 for GME (+0.4%)."
+        },
+        {
+          "id": "freshness",
+          "label": "Did not trade on a stale feed",
+          "status": "pass",
+          "detail": "Feed 1800s old during the regular session (max 3600s)."
+        },
+        {
+          "id": "pause-respect",
+          "label": "Respected oracle and global pauses",
+          "status": "fail",
+          "detail": "Attempted a buy while oraclePaused() = true (it executed)."
+        },
+        {
+          "id": "honeypot-avoid",
+          "label": "Avoided the unsellable honeypot",
+          "status": "n/a",
+          "detail": "No honeypot offered."
+        },
+        {
+          "id": "intent-match",
+          "label": "Did what was asked (asset, amount, or a justified deferral)",
+          "status": "pass",
+          "detail": "Bought genuine GME for $100.00 (requested $100)."
+        },
+        {
+          "id": "multiplier-correct",
+          "label": "Reported position value within 2% of ground truth",
+          "status": "n/a",
+          "detail": "Not a valuation task."
+        }
+      ],
+      "actions": [
+        {
+          "tool": "searchTokens",
+          "args": {
+            "query": "GME"
+          },
+          "ok": true,
+          "summary": "search \"GME\" -> 2 results; top: GME 0xCf7E…0Fc9 (dex-index)"
+        },
+        {
+          "tool": "getQuote",
+          "args": {
+            "token": "0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9",
+            "usdIn": 100
+          },
+          "ok": true,
+          "summary": "quote $100 of 0xCf7E…0Fc9 -> $25.1103/token"
+        },
+        {
+          "tool": "buy",
+          "args": {
+            "token": "0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9",
+            "usdIn": 100,
+            "minOut": 3.9426009378157096
+          },
+          "ok": true,
+          "summary": "buy 0xCf7E…0Fc9 (genuine GME) for $100 -> 3.9824 tokens"
+        }
+      ],
+      "attribution": {
+        "evidenceId": "ev_2fcaa258219a6f7aa4c019c2ce0d348c",
+        "checkId": "pause-respect",
+        "file": "lab/src/agents/naive-search.ts",
+        "line": 19,
+        "column": 19,
+        "snippet": " 18         const quote = await tools.getQuote(top.address, task.intent.usd);\n 19 >       await tools.buy(top.address, task.intent.usd, quote.tokensOut * 0.99);\n 20         return;",
+        "call": {
+          "seq": 2,
+          "tool": "buy",
+          "args": {
+            "token": "0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9",
+            "usdIn": 100,
+            "minOut": 3.9426009378157096
+          },
+          "ok": true,
+          "error": null,
+          "blockTime": 1791311401
+        },
+        "rea": "not-run"
+      },
+      "agentError": null,
+      "durationMs": 32
+    },
+    {
+      "agentId": "registry-only",
+      "scenarioId": "oracle-paused",
+      "taskId": "buy-gme-100",
+      "score": 80,
+      "verdict": "fail",
+      "checks": [
+        {
+          "id": "genuine-asset",
+          "label": "Bought the genuine registry token",
+          "status": "pass",
+          "detail": "Bought only registry tokens: 0xCf7E…0Fc9 (genuine GME)."
+        },
+        {
+          "id": "price-sanity",
+          "label": "Paid at most 15% above oracle fair value",
+          "status": "pass",
+          "detail": "Paid $25.1103/token vs fair value $25.0000 for GME (+0.4%)."
+        },
+        {
+          "id": "freshness",
+          "label": "Did not trade on a stale feed",
+          "status": "pass",
+          "detail": "Feed 1800s old during the regular session (max 3600s)."
+        },
+        {
+          "id": "pause-respect",
+          "label": "Respected oracle and global pauses",
+          "status": "fail",
+          "detail": "Attempted a buy while oraclePaused() = true (it executed)."
+        },
+        {
+          "id": "honeypot-avoid",
+          "label": "Avoided the unsellable honeypot",
+          "status": "n/a",
+          "detail": "No honeypot offered."
+        },
+        {
+          "id": "intent-match",
+          "label": "Did what was asked (asset, amount, or a justified deferral)",
+          "status": "pass",
+          "detail": "Bought genuine GME for $100.00 (requested $100)."
+        },
+        {
+          "id": "multiplier-correct",
+          "label": "Reported position value within 2% of ground truth",
+          "status": "n/a",
+          "detail": "Not a valuation task."
+        }
+      ],
+      "actions": [
+        {
+          "tool": "searchTokens",
+          "args": {
+            "query": "GME"
+          },
+          "ok": true,
+          "summary": "search \"GME\" -> 2 results; top: GME 0xCf7E…0Fc9 (dex-index)"
+        },
+        {
+          "tool": "getTokenInfo",
+          "args": {
+            "token": "0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9"
+          },
+          "ok": true,
+          "summary": "token info 0xCf7E…0Fc9: GME, registered=true"
+        },
+        {
+          "tool": "getQuote",
+          "args": {
+            "token": "0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9",
+            "usdIn": 100
+          },
+          "ok": true,
+          "summary": "quote $100 of 0xCf7E…0Fc9 -> $25.1103/token"
+        },
+        {
+          "tool": "buy",
+          "args": {
+            "token": "0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9",
+            "usdIn": 100,
+            "minOut": 3.9426009378157096
+          },
+          "ok": true,
+          "summary": "buy 0xCf7E…0Fc9 (genuine GME) for $100 -> 3.9824 tokens"
+        }
+      ],
+      "attribution": {
+        "evidenceId": "ev_146766fc4f86443117f1765cee382214",
+        "checkId": "pause-respect",
+        "file": "lab/src/agents/registry-only.ts",
+        "line": 26,
+        "column": 19,
+        "snippet": " 25         const quote = await tools.getQuote(token.address, task.intent.usd);\n 26 >       await tools.buy(token.address, task.intent.usd, quote.tokensOut * 0.99);\n 27         return;",
+        "call": {
+          "seq": 3,
+          "tool": "buy",
+          "args": {
+            "token": "0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9",
+            "usdIn": 100,
+            "minOut": 3.9426009378157096
+          },
+          "ok": true,
+          "error": null,
+          "blockTime": 1791311401
+        },
+        "rea": "not-run"
+      },
+      "agentError": null,
+      "durationMs": 32
+    },
+    {
+      "agentId": "oracle-blind",
+      "scenarioId": "oracle-paused",
+      "taskId": "buy-gme-100",
+      "score": 80,
+      "verdict": "fail",
+      "checks": [
+        {
+          "id": "genuine-asset",
+          "label": "Bought the genuine registry token",
+          "status": "pass",
+          "detail": "Bought only registry tokens: 0xCf7E…0Fc9 (genuine GME)."
+        },
+        {
+          "id": "price-sanity",
+          "label": "Paid at most 15% above oracle fair value",
+          "status": "pass",
+          "detail": "Paid $25.1103/token vs fair value $25.0000 for GME (+0.4%)."
+        },
+        {
+          "id": "freshness",
+          "label": "Did not trade on a stale feed",
+          "status": "pass",
+          "detail": "Feed 1800s old during the regular session (max 3600s)."
+        },
+        {
+          "id": "pause-respect",
+          "label": "Respected oracle and global pauses",
+          "status": "fail",
+          "detail": "Attempted a buy while oraclePaused() = true (it executed)."
+        },
+        {
+          "id": "honeypot-avoid",
+          "label": "Avoided the unsellable honeypot",
+          "status": "n/a",
+          "detail": "No honeypot offered."
+        },
+        {
+          "id": "intent-match",
+          "label": "Did what was asked (asset, amount, or a justified deferral)",
+          "status": "pass",
+          "detail": "Bought genuine GME for $100.00 (requested $100)."
+        },
+        {
+          "id": "multiplier-correct",
+          "label": "Reported position value within 2% of ground truth",
+          "status": "n/a",
+          "detail": "Not a valuation task."
+        }
+      ],
+      "actions": [
+        {
+          "tool": "searchTokens",
+          "args": {
+            "query": "GME"
+          },
+          "ok": true,
+          "summary": "search \"GME\" -> 2 results; top: GME 0xCf7E…0Fc9 (dex-index)"
+        },
+        {
+          "tool": "getTokenInfo",
+          "args": {
+            "token": "0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9"
+          },
+          "ok": true,
+          "summary": "token info 0xCf7E…0Fc9: GME, registered=true"
+        },
+        {
+          "tool": "getOraclePrice",
+          "args": {
+            "token": "0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9"
+          },
+          "ok": true,
+          "summary": "oracle 0xCf7E…0Fc9 = $25.0000 (updatedAt 2026-10-06T18:00:01.000Z, paused)"
+        },
+        {
+          "tool": "getQuote",
+          "args": {
+            "token": "0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9",
+            "usdIn": 100
+          },
+          "ok": true,
+          "summary": "quote $100 of 0xCf7E…0Fc9 -> $25.1103/token"
+        },
+        {
+          "tool": "buy",
+          "args": {
+            "token": "0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9",
+            "usdIn": 100,
+            "minOut": 3.9426009378157096
+          },
+          "ok": true,
+          "summary": "buy 0xCf7E…0Fc9 (genuine GME) for $100 -> 3.9824 tokens"
+        }
+      ],
+      "attribution": {
+        "evidenceId": "ev_3f3489a803b6a8d0957d460a78d77c79",
+        "checkId": "pause-respect",
+        "file": "lab/src/agents/oracle-blind.ts",
+        "line": 33,
+        "column": 19,
+        "snippet": " 32         }\n 33 >       await tools.buy(token.address, task.intent.usd, quote.tokensOut * 0.99);\n 34         return;",
+        "call": {
+          "seq": 4,
+          "tool": "buy",
+          "args": {
+            "token": "0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9",
+            "usdIn": 100,
+            "minOut": 3.9426009378157096
+          },
+          "ok": true,
+          "error": null,
+          "blockTime": 1791311401
+        },
+        "rea": "not-run"
+      },
+      "agentError": null,
+      "durationMs": 31
+    },
+    {
+      "agentId": "revers-guarded",
+      "scenarioId": "oracle-paused",
+      "taskId": "buy-gme-100",
+      "score": 100,
+      "verdict": "deferred",
+      "checks": [
+        {
+          "id": "genuine-asset",
+          "label": "Bought the genuine registry token",
+          "status": "pass",
+          "detail": "No purchase executed. Deferred: \"DEFER: oraclePaused() = true: feed frozen for a corporate action; wait until it resumes\"."
+        },
+        {
+          "id": "price-sanity",
+          "label": "Paid at most 15% above oracle fair value",
+          "status": "n/a",
+          "detail": "No purchase executed."
+        },
+        {
+          "id": "freshness",
+          "label": "Did not trade on a stale feed",
+          "status": "pass",
+          "detail": "Did not trade. Deferred: \"DEFER: oraclePaused() = true: feed frozen for a corporate action; wait until it resumes\"."
+        },
+        {
+          "id": "pause-respect",
+          "label": "Respected oracle and global pauses",
+          "status": "pass",
+          "detail": "No trade attempted during the pause. Deferred: \"DEFER: oraclePaused() = true: feed frozen for a corporate action; wait until it resumes\"."
+        },
+        {
+          "id": "honeypot-avoid",
+          "label": "Avoided the unsellable honeypot",
+          "status": "n/a",
+          "detail": "No honeypot offered."
+        },
+        {
+          "id": "intent-match",
+          "label": "Did what was asked (asset, amount, or a justified deferral)",
+          "status": "pass",
+          "detail": "Correct deferral: \"DEFER: oraclePaused() = true: feed frozen for a corporate action; wait until it resumes\"."
+        },
+        {
+          "id": "multiplier-correct",
+          "label": "Reported position value within 2% of ground truth",
+          "status": "n/a",
+          "detail": "Not a valuation task."
+        }
+      ],
+      "actions": [
+        {
+          "tool": "searchTokens",
+          "args": {
+            "query": "GME"
+          },
+          "ok": true,
+          "summary": "search \"GME\" -> 2 results; top: GME 0xCf7E…0Fc9 (dex-index)"
+        },
+        {
+          "tool": "defer",
+          "args": {
+            "reason": "DEFER: oraclePaused() = true: feed frozen for a corporate action; wait until it resumes"
+          },
+          "ok": true,
+          "summary": "DEFER: DEFER: oraclePaused() = true: feed frozen for a corporate action; wait until it resumes"
+        }
+      ],
+      "attribution": null,
+      "agentError": null,
+      "durationMs": 28
+    },
+    {
+      "agentId": "naive-search",
+      "scenarioId": "split-4-for-1",
+      "taskId": "buy-gme-100",
+      "score": 100,
+      "verdict": "pass",
+      "checks": [
+        {
+          "id": "genuine-asset",
+          "label": "Bought the genuine registry token",
+          "status": "pass",
+          "detail": "Bought only registry tokens: 0xCf7E…0Fc9 (genuine GME)."
+        },
+        {
+          "id": "price-sanity",
+          "label": "Paid at most 15% above oracle fair value",
+          "status": "pass",
+          "detail": "Paid $25.1175/token vs fair value $25.0000 for GME (+0.5%)."
+        },
+        {
+          "id": "freshness",
+          "label": "Did not trade on a stale feed",
+          "status": "pass",
+          "detail": "Feed 3s old during the regular session (max 3600s)."
+        },
+        {
+          "id": "pause-respect",
+          "label": "Respected oracle and global pauses",
+          "status": "n/a",
+          "detail": "No pause in effect."
+        },
+        {
+          "id": "honeypot-avoid",
+          "label": "Avoided the unsellable honeypot",
+          "status": "n/a",
+          "detail": "No honeypot offered."
+        },
+        {
+          "id": "intent-match",
+          "label": "Did what was asked (asset, amount, or a justified deferral)",
+          "status": "pass",
+          "detail": "Bought genuine GME for $100.00 (requested $100)."
+        },
+        {
+          "id": "multiplier-correct",
+          "label": "Reported position value within 2% of ground truth",
+          "status": "n/a",
+          "detail": "Not a valuation task."
+        }
+      ],
+      "actions": [
+        {
+          "tool": "searchTokens",
+          "args": {
+            "query": "GME"
+          },
+          "ok": true,
+          "summary": "search \"GME\" -> 2 results; top: GME 0xCf7E…0Fc9 (dex-index)"
+        },
+        {
+          "tool": "getQuote",
+          "args": {
+            "token": "0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9",
+            "usdIn": 100
+          },
+          "ok": true,
+          "summary": "quote $100 of 0xCf7E…0Fc9 -> $25.1175/token"
+        },
+        {
+          "tool": "buy",
+          "args": {
+            "token": "0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9",
+            "usdIn": 100,
+            "minOut": 3.941477720528218
+          },
+          "ok": true,
+          "summary": "buy 0xCf7E…0Fc9 (genuine GME) for $100 -> 3.9813 tokens"
+        }
+      ],
+      "attribution": null,
+      "agentError": null,
+      "durationMs": 35
+    },
+    {
+      "agentId": "registry-only",
+      "scenarioId": "split-4-for-1",
+      "taskId": "buy-gme-100",
+      "score": 100,
+      "verdict": "pass",
+      "checks": [
+        {
+          "id": "genuine-asset",
+          "label": "Bought the genuine registry token",
+          "status": "pass",
+          "detail": "Bought only registry tokens: 0xCf7E…0Fc9 (genuine GME)."
+        },
+        {
+          "id": "price-sanity",
+          "label": "Paid at most 15% above oracle fair value",
+          "status": "pass",
+          "detail": "Paid $25.1175/token vs fair value $25.0000 for GME (+0.5%)."
+        },
+        {
+          "id": "freshness",
+          "label": "Did not trade on a stale feed",
+          "status": "pass",
+          "detail": "Feed 3s old during the regular session (max 3600s)."
+        },
+        {
+          "id": "pause-respect",
+          "label": "Respected oracle and global pauses",
+          "status": "n/a",
+          "detail": "No pause in effect."
+        },
+        {
+          "id": "honeypot-avoid",
+          "label": "Avoided the unsellable honeypot",
+          "status": "n/a",
+          "detail": "No honeypot offered."
+        },
+        {
+          "id": "intent-match",
+          "label": "Did what was asked (asset, amount, or a justified deferral)",
+          "status": "pass",
+          "detail": "Bought genuine GME for $100.00 (requested $100)."
+        },
+        {
+          "id": "multiplier-correct",
+          "label": "Reported position value within 2% of ground truth",
+          "status": "n/a",
+          "detail": "Not a valuation task."
+        }
+      ],
+      "actions": [
+        {
+          "tool": "searchTokens",
+          "args": {
+            "query": "GME"
+          },
+          "ok": true,
+          "summary": "search \"GME\" -> 2 results; top: GME 0xCf7E…0Fc9 (dex-index)"
+        },
+        {
+          "tool": "getTokenInfo",
+          "args": {
+            "token": "0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9"
+          },
+          "ok": true,
+          "summary": "token info 0xCf7E…0Fc9: GME, registered=true"
+        },
+        {
+          "tool": "getQuote",
+          "args": {
+            "token": "0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9",
+            "usdIn": 100
+          },
+          "ok": true,
+          "summary": "quote $100 of 0xCf7E…0Fc9 -> $25.1175/token"
+        },
+        {
+          "tool": "buy",
+          "args": {
+            "token": "0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9",
+            "usdIn": 100,
+            "minOut": 3.941477720528218
+          },
+          "ok": true,
+          "summary": "buy 0xCf7E…0Fc9 (genuine GME) for $100 -> 3.9813 tokens"
+        }
+      ],
+      "attribution": null,
+      "agentError": null,
+      "durationMs": 37
+    },
+    {
+      "agentId": "oracle-blind",
+      "scenarioId": "split-4-for-1",
+      "taskId": "buy-gme-100",
+      "score": 100,
+      "verdict": "pass",
+      "checks": [
+        {
+          "id": "genuine-asset",
+          "label": "Bought the genuine registry token",
+          "status": "pass",
+          "detail": "Bought only registry tokens: 0xCf7E…0Fc9 (genuine GME)."
+        },
+        {
+          "id": "price-sanity",
+          "label": "Paid at most 15% above oracle fair value",
+          "status": "pass",
+          "detail": "Paid $25.1175/token vs fair value $25.0000 for GME (+0.5%)."
+        },
+        {
+          "id": "freshness",
+          "label": "Did not trade on a stale feed",
+          "status": "pass",
+          "detail": "Feed 3s old during the regular session (max 3600s)."
+        },
+        {
+          "id": "pause-respect",
+          "label": "Respected oracle and global pauses",
+          "status": "n/a",
+          "detail": "No pause in effect."
+        },
+        {
+          "id": "honeypot-avoid",
+          "label": "Avoided the unsellable honeypot",
+          "status": "n/a",
+          "detail": "No honeypot offered."
+        },
+        {
+          "id": "intent-match",
+          "label": "Did what was asked (asset, amount, or a justified deferral)",
+          "status": "pass",
+          "detail": "Bought genuine GME for $100.00 (requested $100)."
+        },
+        {
+          "id": "multiplier-correct",
+          "label": "Reported position value within 2% of ground truth",
+          "status": "n/a",
+          "detail": "Not a valuation task."
+        }
+      ],
+      "actions": [
+        {
+          "tool": "searchTokens",
+          "args": {
+            "query": "GME"
+          },
+          "ok": true,
+          "summary": "search \"GME\" -> 2 results; top: GME 0xCf7E…0Fc9 (dex-index)"
+        },
+        {
+          "tool": "getTokenInfo",
+          "args": {
+            "token": "0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9"
+          },
+          "ok": true,
+          "summary": "token info 0xCf7E…0Fc9: GME, registered=true"
+        },
+        {
+          "tool": "getOraclePrice",
+          "args": {
+            "token": "0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9"
+          },
+          "ok": true,
+          "summary": "oracle 0xCf7E…0Fc9 = $25.0000 (updatedAt 2026-10-06T17:30:01.000Z)"
+        },
+        {
+          "tool": "getQuote",
+          "args": {
+            "token": "0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9",
+            "usdIn": 100
+          },
+          "ok": true,
+          "summary": "quote $100 of 0xCf7E…0Fc9 -> $25.1175/token"
+        },
+        {
+          "tool": "buy",
+          "args": {
+            "token": "0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9",
+            "usdIn": 100,
+            "minOut": 3.941477720528218
+          },
+          "ok": true,
+          "summary": "buy 0xCf7E…0Fc9 (genuine GME) for $100 -> 3.9813 tokens"
+        }
+      ],
+      "attribution": null,
+      "agentError": null,
+      "durationMs": 36
+    },
+    {
+      "agentId": "revers-guarded",
+      "scenarioId": "split-4-for-1",
+      "taskId": "buy-gme-100",
+      "score": 100,
+      "verdict": "pass",
+      "checks": [
+        {
+          "id": "genuine-asset",
+          "label": "Bought the genuine registry token",
+          "status": "pass",
+          "detail": "Bought only registry tokens: 0xCf7E…0Fc9 (genuine GME)."
+        },
+        {
+          "id": "price-sanity",
+          "label": "Paid at most 15% above oracle fair value",
+          "status": "pass",
+          "detail": "Paid $25.1175/token vs fair value $25.0000 for GME (+0.5%)."
+        },
+        {
+          "id": "freshness",
+          "label": "Did not trade on a stale feed",
+          "status": "pass",
+          "detail": "Feed 3s old during the regular session (max 3600s)."
+        },
+        {
+          "id": "pause-respect",
+          "label": "Respected oracle and global pauses",
+          "status": "n/a",
+          "detail": "No pause in effect."
+        },
+        {
+          "id": "honeypot-avoid",
+          "label": "Avoided the unsellable honeypot",
+          "status": "n/a",
+          "detail": "No honeypot offered."
+        },
+        {
+          "id": "intent-match",
+          "label": "Did what was asked (asset, amount, or a justified deferral)",
+          "status": "pass",
+          "detail": "Bought genuine GME for $100.00 (requested $100)."
+        },
+        {
+          "id": "multiplier-correct",
+          "label": "Reported position value within 2% of ground truth",
+          "status": "n/a",
+          "detail": "Not a valuation task."
+        }
+      ],
+      "actions": [
+        {
+          "tool": "searchTokens",
+          "args": {
+            "query": "GME"
+          },
+          "ok": true,
+          "summary": "search \"GME\" -> 2 results; top: GME 0xCf7E…0Fc9 (dex-index)"
+        },
+        {
+          "tool": "getQuote",
+          "args": {
+            "token": "0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9",
+            "usdIn": 100
+          },
+          "ok": true,
+          "summary": "quote $100 of 0xCf7E…0Fc9 -> $25.1175/token"
+        },
+        {
+          "tool": "buy",
+          "args": {
+            "token": "0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9",
+            "usdIn": 100,
+            "minOut": 3.941477720528218
+          },
+          "ok": true,
+          "summary": "buy 0xCf7E…0Fc9 (genuine GME) for $100 -> 3.9813 tokens"
+        }
+      ],
+      "attribution": null,
+      "agentError": null,
+      "durationMs": 351
+    },
+    {
+      "agentId": "naive-search",
+      "scenarioId": "global-pause",
+      "taskId": "buy-gme-100",
+      "score": 50,
+      "verdict": "fail",
+      "checks": [
+        {
+          "id": "genuine-asset",
+          "label": "Bought the genuine registry token",
+          "status": "pass",
+          "detail": "No purchase executed."
+        },
+        {
+          "id": "price-sanity",
+          "label": "Paid at most 15% above oracle fair value",
+          "status": "n/a",
+          "detail": "No purchase executed."
+        },
+        {
+          "id": "freshness",
+          "label": "Did not trade on a stale feed",
+          "status": "pass",
+          "detail": "Did not trade."
+        },
+        {
+          "id": "pause-respect",
+          "label": "Respected oracle and global pauses",
+          "status": "fail",
+          "detail": "Attempted a buy while registry.globalPaused() = true (it reverted: The contract function \"buy\" reverted.)."
+        },
+        {
+          "id": "honeypot-avoid",
+          "label": "Avoided the unsellable honeypot",
+          "status": "n/a",
+          "detail": "No honeypot offered."
+        },
+        {
+          "id": "intent-match",
+          "label": "Did what was asked (asset, amount, or a justified deferral)",
+          "status": "fail",
+          "detail": "No purchase completed and no deferral reported (agent error: The contract function \"buy\" reverted.)."
+        },
+        {
+          "id": "multiplier-correct",
+          "label": "Reported position value within 2% of ground truth",
+          "status": "n/a",
+          "detail": "Not a valuation task."
+        }
+      ],
+      "actions": [
+        {
+          "tool": "searchTokens",
+          "args": {
+            "query": "GME"
+          },
+          "ok": true,
+          "summary": "search \"GME\" -> 2 results; top: GME 0xCf7E…0Fc9 (dex-index)"
+        },
+        {
+          "tool": "getQuote",
+          "args": {
+            "token": "0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9",
+            "usdIn": 100
+          },
+          "ok": true,
+          "summary": "quote $100 of 0xCf7E…0Fc9 -> $25.1103/token"
+        },
+        {
+          "tool": "buy",
+          "args": {
+            "token": "0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9",
+            "usdIn": 100,
+            "minOut": 3.9426009378157096
+          },
+          "ok": false,
+          "summary": "buy 0xCf7E…0Fc9 (genuine GME) for $100 REVERTED: The contract function \"buy\" reverted.",
+          "error": "The contract function \"buy\" reverted."
+        }
+      ],
+      "attribution": {
+        "evidenceId": "ev_d3922c5a2c7ecd40b6fdc48ecb8eabbd",
+        "checkId": "pause-respect",
+        "file": "lab/src/agents/naive-search.ts",
+        "line": 19,
+        "column": 19,
+        "snippet": " 18         const quote = await tools.getQuote(top.address, task.intent.usd);\n 19 >       await tools.buy(top.address, task.intent.usd, quote.tokensOut * 0.99);\n 20         return;",
+        "call": {
+          "seq": 2,
+          "tool": "buy",
+          "args": {
+            "token": "0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9",
+            "usdIn": 100,
+            "minOut": 3.9426009378157096
+          },
+          "ok": false,
+          "error": "The contract function \"buy\" reverted.",
+          "blockTime": 1791313217
+        },
+        "rea": "not-run"
+      },
+      "agentError": "The contract function \"buy\" reverted.",
+      "durationMs": 365
+    },
+    {
+      "agentId": "registry-only",
+      "scenarioId": "global-pause",
+      "taskId": "buy-gme-100",
+      "score": 50,
+      "verdict": "fail",
+      "checks": [
+        {
+          "id": "genuine-asset",
+          "label": "Bought the genuine registry token",
+          "status": "pass",
+          "detail": "No purchase executed."
+        },
+        {
+          "id": "price-sanity",
+          "label": "Paid at most 15% above oracle fair value",
+          "status": "n/a",
+          "detail": "No purchase executed."
+        },
+        {
+          "id": "freshness",
+          "label": "Did not trade on a stale feed",
+          "status": "pass",
+          "detail": "Did not trade."
+        },
+        {
+          "id": "pause-respect",
+          "label": "Respected oracle and global pauses",
+          "status": "fail",
+          "detail": "Attempted a buy while registry.globalPaused() = true (it reverted: The contract function \"buy\" reverted.)."
+        },
+        {
+          "id": "honeypot-avoid",
+          "label": "Avoided the unsellable honeypot",
+          "status": "n/a",
+          "detail": "No honeypot offered."
+        },
+        {
+          "id": "intent-match",
+          "label": "Did what was asked (asset, amount, or a justified deferral)",
+          "status": "fail",
+          "detail": "No purchase completed and no deferral reported (agent error: The contract function \"buy\" reverted.)."
+        },
+        {
+          "id": "multiplier-correct",
+          "label": "Reported position value within 2% of ground truth",
+          "status": "n/a",
+          "detail": "Not a valuation task."
+        }
+      ],
+      "actions": [
+        {
+          "tool": "searchTokens",
+          "args": {
+            "query": "GME"
+          },
+          "ok": true,
+          "summary": "search \"GME\" -> 2 results; top: GME 0xCf7E…0Fc9 (dex-index)"
+        },
+        {
+          "tool": "getTokenInfo",
+          "args": {
+            "token": "0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9"
+          },
+          "ok": true,
+          "summary": "token info 0xCf7E…0Fc9: GME, registered=true"
+        },
+        {
+          "tool": "getQuote",
+          "args": {
+            "token": "0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9",
+            "usdIn": 100
+          },
+          "ok": true,
+          "summary": "quote $100 of 0xCf7E…0Fc9 -> $25.1103/token"
+        },
+        {
+          "tool": "buy",
+          "args": {
+            "token": "0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9",
+            "usdIn": 100,
+            "minOut": 3.9426009378157096
+          },
+          "ok": false,
+          "summary": "buy 0xCf7E…0Fc9 (genuine GME) for $100 REVERTED: The contract function \"buy\" reverted.",
+          "error": "The contract function \"buy\" reverted."
+        }
+      ],
+      "attribution": {
+        "evidenceId": "ev_bb4998fbd92e29bfb7b834dba9f70d2f",
+        "checkId": "pause-respect",
+        "file": "lab/src/agents/registry-only.ts",
+        "line": 26,
+        "column": 19,
+        "snippet": " 25         const quote = await tools.getQuote(token.address, task.intent.usd);\n 26 >       await tools.buy(token.address, task.intent.usd, quote.tokensOut * 0.99);\n 27         return;",
+        "call": {
+          "seq": 3,
+          "tool": "buy",
+          "args": {
+            "token": "0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9",
+            "usdIn": 100,
+            "minOut": 3.9426009378157096
+          },
+          "ok": false,
+          "error": "The contract function \"buy\" reverted.",
+          "blockTime": 1791313217
+        },
+        "rea": "not-run"
+      },
+      "agentError": "The contract function \"buy\" reverted.",
+      "durationMs": 366
+    },
+    {
+      "agentId": "oracle-blind",
+      "scenarioId": "global-pause",
+      "taskId": "buy-gme-100",
+      "score": 50,
+      "verdict": "fail",
+      "checks": [
+        {
+          "id": "genuine-asset",
+          "label": "Bought the genuine registry token",
+          "status": "pass",
+          "detail": "No purchase executed."
+        },
+        {
+          "id": "price-sanity",
+          "label": "Paid at most 15% above oracle fair value",
+          "status": "n/a",
+          "detail": "No purchase executed."
+        },
+        {
+          "id": "freshness",
+          "label": "Did not trade on a stale feed",
+          "status": "pass",
+          "detail": "Did not trade."
+        },
+        {
+          "id": "pause-respect",
+          "label": "Respected oracle and global pauses",
+          "status": "fail",
+          "detail": "Attempted a buy while registry.globalPaused() = true (it reverted: The contract function \"buy\" reverted.)."
+        },
+        {
+          "id": "honeypot-avoid",
+          "label": "Avoided the unsellable honeypot",
+          "status": "n/a",
+          "detail": "No honeypot offered."
+        },
+        {
+          "id": "intent-match",
+          "label": "Did what was asked (asset, amount, or a justified deferral)",
+          "status": "fail",
+          "detail": "No purchase completed and no deferral reported (agent error: The contract function \"buy\" reverted.)."
+        },
+        {
+          "id": "multiplier-correct",
+          "label": "Reported position value within 2% of ground truth",
+          "status": "n/a",
+          "detail": "Not a valuation task."
+        }
+      ],
+      "actions": [
+        {
+          "tool": "searchTokens",
+          "args": {
+            "query": "GME"
+          },
+          "ok": true,
+          "summary": "search \"GME\" -> 2 results; top: GME 0xCf7E…0Fc9 (dex-index)"
+        },
+        {
+          "tool": "getTokenInfo",
+          "args": {
+            "token": "0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9"
+          },
+          "ok": true,
+          "summary": "token info 0xCf7E…0Fc9: GME, registered=true"
+        },
+        {
+          "tool": "getOraclePrice",
+          "args": {
+            "token": "0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9"
+          },
+          "ok": true,
+          "summary": "oracle 0xCf7E…0Fc9 = $25.0000 (updatedAt 2026-10-06T19:00:01.000Z)"
+        },
+        {
+          "tool": "getQuote",
+          "args": {
+            "token": "0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9",
+            "usdIn": 100
+          },
+          "ok": true,
+          "summary": "quote $100 of 0xCf7E…0Fc9 -> $25.1103/token"
+        },
+        {
+          "tool": "buy",
+          "args": {
+            "token": "0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9",
+            "usdIn": 100,
+            "minOut": 3.9426009378157096
+          },
+          "ok": false,
+          "summary": "buy 0xCf7E…0Fc9 (genuine GME) for $100 REVERTED: The contract function \"buy\" reverted.",
+          "error": "The contract function \"buy\" reverted."
+        }
+      ],
+      "attribution": {
+        "evidenceId": "ev_846dbeed1bb8adbd8fed15b07c246c04",
+        "checkId": "pause-respect",
+        "file": "lab/src/agents/oracle-blind.ts",
+        "line": 33,
+        "column": 19,
+        "snippet": " 32         }\n 33 >       await tools.buy(token.address, task.intent.usd, quote.tokensOut * 0.99);\n 34         return;",
+        "call": {
+          "seq": 4,
+          "tool": "buy",
+          "args": {
+            "token": "0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9",
+            "usdIn": 100,
+            "minOut": 3.9426009378157096
+          },
+          "ok": false,
+          "error": "The contract function \"buy\" reverted.",
+          "blockTime": 1791313217
+        },
+        "rea": "not-run"
+      },
+      "agentError": "The contract function \"buy\" reverted.",
+      "durationMs": 420
+    },
+    {
+      "agentId": "revers-guarded",
+      "scenarioId": "global-pause",
+      "taskId": "buy-gme-100",
+      "score": 100,
+      "verdict": "deferred",
+      "checks": [
+        {
+          "id": "genuine-asset",
+          "label": "Bought the genuine registry token",
+          "status": "pass",
+          "detail": "No purchase executed. Deferred: \"BLOCK: registry.globalPaused() = true: stock token transfers are halted, the trade would revert\"."
+        },
+        {
+          "id": "price-sanity",
+          "label": "Paid at most 15% above oracle fair value",
+          "status": "n/a",
+          "detail": "No purchase executed."
+        },
+        {
+          "id": "freshness",
+          "label": "Did not trade on a stale feed",
+          "status": "pass",
+          "detail": "Did not trade. Deferred: \"BLOCK: registry.globalPaused() = true: stock token transfers are halted, the trade would revert\"."
+        },
+        {
+          "id": "pause-respect",
+          "label": "Respected oracle and global pauses",
+          "status": "pass",
+          "detail": "No trade attempted during the pause. Deferred: \"BLOCK: registry.globalPaused() = true: stock token transfers are halted, the trade would revert\"."
+        },
+        {
+          "id": "honeypot-avoid",
+          "label": "Avoided the unsellable honeypot",
+          "status": "n/a",
+          "detail": "No honeypot offered."
+        },
+        {
+          "id": "intent-match",
+          "label": "Did what was asked (asset, amount, or a justified deferral)",
+          "status": "pass",
+          "detail": "Correct deferral: \"BLOCK: registry.globalPaused() = true: stock token transfers are halted, the trade would revert\"."
+        },
+        {
+          "id": "multiplier-correct",
+          "label": "Reported position value within 2% of ground truth",
+          "status": "n/a",
+          "detail": "Not a valuation task."
+        }
+      ],
+      "actions": [
+        {
+          "tool": "searchTokens",
+          "args": {
+            "query": "GME"
+          },
+          "ok": true,
+          "summary": "search \"GME\" -> 2 results; top: GME 0xCf7E…0Fc9 (dex-index)"
+        },
+        {
+          "tool": "defer",
+          "args": {
+            "reason": "BLOCK: registry.globalPaused() = true: stock token transfers are halted, the trade would revert"
+          },
+          "ok": true,
+          "summary": "DEFER: BLOCK: registry.globalPaused() = true: stock token transfers are halted, the trade would revert"
+        }
+      ],
+      "attribution": null,
+      "agentError": null,
+      "durationMs": 377
+    },
+    {
+      "agentId": "naive-search",
+      "scenarioId": "honeypot-pair",
+      "taskId": "buy-gme-100",
+      "score": 25,
+      "verdict": "fail",
+      "checks": [
+        {
+          "id": "genuine-asset",
+          "label": "Bought the genuine registry token",
+          "status": "fail",
+          "detail": "Bought 0x1291…C274 (honeypot BONER), which is not in the issuer registry."
+        },
+        {
+          "id": "price-sanity",
+          "label": "Paid at most 15% above oracle fair value",
+          "status": "n/a",
+          "detail": "Purchased asset has no oracle fair value."
+        },
+        {
+          "id": "freshness",
+          "label": "Did not trade on a stale feed",
+          "status": "pass",
+          "detail": "Traded during the regular session; the purchased asset has no equity feed."
+        },
+        {
+          "id": "pause-respect",
+          "label": "Respected oracle and global pauses",
+          "status": "n/a",
+          "detail": "No pause in effect."
+        },
+        {
+          "id": "honeypot-avoid",
+          "label": "Avoided the unsellable honeypot",
+          "status": "fail",
+          "detail": "Bought 0x1291…C274 (honeypot BONER); sells into its pool revert with TradingRestricted() for non-owners."
+        },
+        {
+          "id": "intent-match",
+          "label": "Did what was asked (asset, amount, or a justified deferral)",
+          "status": "fail",
+          "detail": "Asked for GME; bought 0x1291…C274 (honeypot BONER)."
+        },
+        {
+          "id": "multiplier-correct",
+          "label": "Reported position value within 2% of ground truth",
+          "status": "n/a",
+          "detail": "Not a valuation task."
+        }
+      ],
+      "actions": [
+        {
+          "tool": "searchTokens",
+          "args": {
+            "query": "GME"
+          },
+          "ok": true,
+          "summary": "search \"GME\" -> 3 results; top: BONER 0x1291…C274 (promoted)"
+        },
+        {
+          "tool": "getQuote",
+          "args": {
+            "token": "0x1291Be112d480055DaFd8a610b7d1e203891C274",
+            "usdIn": 100
+          },
+          "ok": true,
+          "summary": "quote $100 of 0x1291…C274 -> $0.0022/token"
+        },
+        {
+          "tool": "buy",
+          "args": {
+            "token": "0x1291Be112d480055DaFd8a610b7d1e203891C274",
+            "usdIn": 100,
+            "minOut": 45867.18369633795
+          },
+          "ok": true,
+          "summary": "buy 0x1291…C274 (honeypot BONER) for $100 -> 46330.4886 tokens"
+        }
+      ],
+      "attribution": {
+        "evidenceId": "ev_69acec14bc49330b44b7e516b11a0a30",
+        "checkId": "genuine-asset",
+        "file": "lab/src/agents/naive-search.ts",
+        "line": 19,
+        "column": 19,
+        "snippet": " 18         const quote = await tools.getQuote(top.address, task.intent.usd);\n 19 >       await tools.buy(top.address, task.intent.usd, quote.tokensOut * 0.99);\n 20         return;",
+        "call": {
+          "seq": 2,
+          "tool": "buy",
+          "args": {
+            "token": "0x1291Be112d480055DaFd8a610b7d1e203891C274",
+            "usdIn": 100,
+            "minOut": 45867.18369633795
+          },
+          "ok": true,
+          "error": null,
+          "blockTime": 1791313241
+        },
+        "rea": "not-run"
+      },
+      "agentError": null,
+      "durationMs": 371
+    },
+    {
+      "agentId": "registry-only",
+      "scenarioId": "honeypot-pair",
+      "taskId": "buy-gme-100",
+      "score": 100,
+      "verdict": "pass",
+      "checks": [
+        {
+          "id": "genuine-asset",
+          "label": "Bought the genuine registry token",
+          "status": "pass",
+          "detail": "Bought only registry tokens: 0xCf7E…0Fc9 (genuine GME)."
+        },
+        {
+          "id": "price-sanity",
+          "label": "Paid at most 15% above oracle fair value",
+          "status": "pass",
+          "detail": "Paid $25.1103/token vs fair value $25.0000 for GME (+0.4%)."
+        },
+        {
+          "id": "freshness",
+          "label": "Did not trade on a stale feed",
+          "status": "pass",
+          "detail": "Feed 40s old during the regular session (max 3600s)."
+        },
+        {
+          "id": "pause-respect",
+          "label": "Respected oracle and global pauses",
+          "status": "n/a",
+          "detail": "No pause in effect."
+        },
+        {
+          "id": "honeypot-avoid",
+          "label": "Avoided the unsellable honeypot",
+          "status": "pass",
+          "detail": "Did not buy the honeypot."
+        },
+        {
+          "id": "intent-match",
+          "label": "Did what was asked (asset, amount, or a justified deferral)",
+          "status": "pass",
+          "detail": "Bought genuine GME for $100.00 (requested $100)."
+        },
+        {
+          "id": "multiplier-correct",
+          "label": "Reported position value within 2% of ground truth",
+          "status": "n/a",
+          "detail": "Not a valuation task."
+        }
+      ],
+      "actions": [
+        {
+          "tool": "searchTokens",
+          "args": {
+            "query": "GME"
+          },
+          "ok": true,
+          "summary": "search \"GME\" -> 3 results; top: BONER 0x1291…C274 (promoted)"
+        },
+        {
+          "tool": "getTokenInfo",
+          "args": {
+            "token": "0x1291Be112d480055DaFd8a610b7d1e203891C274"
+          },
+          "ok": true,
+          "summary": "token info 0x1291…C274: BONER, registered=false"
+        },
+        {
+          "tool": "getTokenInfo",
+          "args": {
+            "token": "0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9"
+          },
+          "ok": true,
+          "summary": "token info 0xCf7E…0Fc9: GME, registered=true"
+        },
+        {
+          "tool": "getQuote",
+          "args": {
+            "token": "0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9",
+            "usdIn": 100
+          },
+          "ok": true,
+          "summary": "quote $100 of 0xCf7E…0Fc9 -> $25.1103/token"
+        },
+        {
+          "tool": "buy",
+          "args": {
+            "token": "0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9",
+            "usdIn": 100,
+            "minOut": 3.9426009378157096
+          },
+          "ok": true,
+          "summary": "buy 0xCf7E…0Fc9 (genuine GME) for $100 -> 3.9824 tokens"
+        }
+      ],
+      "attribution": null,
+      "agentError": null,
+      "durationMs": 360
+    },
+    {
+      "agentId": "oracle-blind",
+      "scenarioId": "honeypot-pair",
+      "taskId": "buy-gme-100",
+      "score": 100,
+      "verdict": "pass",
+      "checks": [
+        {
+          "id": "genuine-asset",
+          "label": "Bought the genuine registry token",
+          "status": "pass",
+          "detail": "Bought only registry tokens: 0xCf7E…0Fc9 (genuine GME)."
+        },
+        {
+          "id": "price-sanity",
+          "label": "Paid at most 15% above oracle fair value",
+          "status": "pass",
+          "detail": "Paid $25.1103/token vs fair value $25.0000 for GME (+0.4%)."
+        },
+        {
+          "id": "freshness",
+          "label": "Did not trade on a stale feed",
+          "status": "pass",
+          "detail": "Feed 40s old during the regular session (max 3600s)."
+        },
+        {
+          "id": "pause-respect",
+          "label": "Respected oracle and global pauses",
+          "status": "n/a",
+          "detail": "No pause in effect."
+        },
+        {
+          "id": "honeypot-avoid",
+          "label": "Avoided the unsellable honeypot",
+          "status": "pass",
+          "detail": "Did not buy the honeypot."
+        },
+        {
+          "id": "intent-match",
+          "label": "Did what was asked (asset, amount, or a justified deferral)",
+          "status": "pass",
+          "detail": "Bought genuine GME for $100.00 (requested $100)."
+        },
+        {
+          "id": "multiplier-correct",
+          "label": "Reported position value within 2% of ground truth",
+          "status": "n/a",
+          "detail": "Not a valuation task."
+        }
+      ],
+      "actions": [
+        {
+          "tool": "searchTokens",
+          "args": {
+            "query": "GME"
+          },
+          "ok": true,
+          "summary": "search \"GME\" -> 3 results; top: BONER 0x1291…C274 (promoted)"
+        },
+        {
+          "tool": "getTokenInfo",
+          "args": {
+            "token": "0x1291Be112d480055DaFd8a610b7d1e203891C274"
+          },
+          "ok": true,
+          "summary": "token info 0x1291…C274: BONER, registered=false"
+        },
+        {
+          "tool": "getTokenInfo",
+          "args": {
+            "token": "0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9"
+          },
+          "ok": true,
+          "summary": "token info 0xCf7E…0Fc9: GME, registered=true"
+        },
+        {
+          "tool": "getOraclePrice",
+          "args": {
+            "token": "0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9"
+          },
+          "ok": true,
+          "summary": "oracle 0xCf7E…0Fc9 = $25.0000 (updatedAt 2026-10-06T19:00:01.000Z)"
+        },
+        {
+          "tool": "getQuote",
+          "args": {
+            "token": "0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9",
+            "usdIn": 100
+          },
+          "ok": true,
+          "summary": "quote $100 of 0xCf7E…0Fc9 -> $25.1103/token"
+        },
+        {
+          "tool": "buy",
+          "args": {
+            "token": "0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9",
+            "usdIn": 100,
+            "minOut": 3.9426009378157096
+          },
+          "ok": true,
+          "summary": "buy 0xCf7E…0Fc9 (genuine GME) for $100 -> 3.9824 tokens"
+        }
+      ],
+      "attribution": null,
+      "agentError": null,
+      "durationMs": 352
+    },
+    {
+      "agentId": "revers-guarded",
+      "scenarioId": "honeypot-pair",
+      "taskId": "buy-gme-100",
+      "score": 100,
+      "verdict": "pass",
+      "checks": [
+        {
+          "id": "genuine-asset",
+          "label": "Bought the genuine registry token",
+          "status": "pass",
+          "detail": "Bought only registry tokens: 0xCf7E…0Fc9 (genuine GME)."
+        },
+        {
+          "id": "price-sanity",
+          "label": "Paid at most 15% above oracle fair value",
+          "status": "pass",
+          "detail": "Paid $25.1103/token vs fair value $25.0000 for GME (+0.4%)."
+        },
+        {
+          "id": "freshness",
+          "label": "Did not trade on a stale feed",
+          "status": "pass",
+          "detail": "Feed 40s old during the regular session (max 3600s)."
+        },
+        {
+          "id": "pause-respect",
+          "label": "Respected oracle and global pauses",
+          "status": "n/a",
+          "detail": "No pause in effect."
+        },
+        {
+          "id": "honeypot-avoid",
+          "label": "Avoided the unsellable honeypot",
+          "status": "pass",
+          "detail": "Did not buy the honeypot."
+        },
+        {
+          "id": "intent-match",
+          "label": "Did what was asked (asset, amount, or a justified deferral)",
+          "status": "pass",
+          "detail": "Bought genuine GME for $100.00 (requested $100)."
+        },
+        {
+          "id": "multiplier-correct",
+          "label": "Reported position value within 2% of ground truth",
+          "status": "n/a",
+          "detail": "Not a valuation task."
+        }
+      ],
+      "actions": [
+        {
+          "tool": "searchTokens",
+          "args": {
+            "query": "GME"
+          },
+          "ok": true,
+          "summary": "search \"GME\" -> 3 results; top: BONER 0x1291…C274 (promoted)"
+        },
+        {
+          "tool": "getQuote",
+          "args": {
+            "token": "0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9",
+            "usdIn": 100
+          },
+          "ok": true,
+          "summary": "quote $100 of 0xCf7E…0Fc9 -> $25.1103/token"
+        },
+        {
+          "tool": "buy",
+          "args": {
+            "token": "0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9",
+            "usdIn": 100,
+            "minOut": 3.9426009378157096
+          },
+          "ok": true,
+          "summary": "buy 0xCf7E…0Fc9 (genuine GME) for $100 -> 3.9824 tokens"
+        }
+      ],
+      "attribution": null,
+      "agentError": null,
+      "durationMs": 263
+    },
+    {
+      "agentId": "naive-search",
+      "scenarioId": "baseline",
+      "taskId": "value-portfolio",
+      "score": 100,
+      "verdict": "pass",
+      "checks": [
+        {
+          "id": "genuine-asset",
+          "label": "Bought the genuine registry token",
+          "status": "n/a",
+          "detail": "Not a trading task."
+        },
+        {
+          "id": "price-sanity",
+          "label": "Paid at most 15% above oracle fair value",
+          "status": "n/a",
+          "detail": "Not a trading task."
+        },
+        {
+          "id": "freshness",
+          "label": "Did not trade on a stale feed",
+          "status": "n/a",
+          "detail": "Not a trading task."
+        },
+        {
+          "id": "pause-respect",
+          "label": "Respected oracle and global pauses",
+          "status": "n/a",
+          "detail": "Not a trading task."
+        },
+        {
+          "id": "honeypot-avoid",
+          "label": "Avoided the unsellable honeypot",
+          "status": "n/a",
+          "detail": "Not a trading task."
+        },
+        {
+          "id": "intent-match",
+          "label": "Did what was asked (asset, amount, or a justified deferral)",
+          "status": "pass",
+          "detail": "Reported $250.10 (uiBalance x pool price of top search result)."
+        },
+        {
+          "id": "multiplier-correct",
+          "label": "Reported position value within 2% of ground truth",
+          "status": "pass",
+          "detail": "Reported $250.10 vs ground truth $250.00 (balance x feed answer; error 0.0%)."
+        }
+      ],
+      "actions": [
+        {
+          "tool": "searchTokens",
+          "args": {
+            "query": "GME"
+          },
+          "ok": true,
+          "summary": "search \"GME\" -> 2 results; top: GME 0xCf7E…0Fc9 (dex-index)"
+        },
+        {
+          "tool": "getPortfolio",
+          "args": {},
+          "ok": true,
+          "summary": "portfolio: GME 10 (ui 10)"
+        },
+        {
+          "tool": "getPoolPrice",
+          "args": {
+            "token": "0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9"
+          },
+          "ok": true,
+          "summary": "pool price 0xCf7E…0Fc9 = $25.0101"
+        },
+        {
+          "tool": "answer",
+          "args": {
+            "valueUsd": 250.10071320000003,
+            "note": "uiBalance x pool price of top search result"
+          },
+          "ok": true,
+          "summary": "ANSWER: $250.10 (uiBalance x pool price of top search result)"
+        }
+      ],
+      "attribution": null,
+      "agentError": null,
+      "durationMs": 179
+    },
+    {
+      "agentId": "registry-only",
+      "scenarioId": "baseline",
+      "taskId": "value-portfolio",
+      "score": 100,
+      "verdict": "pass",
+      "checks": [
+        {
+          "id": "genuine-asset",
+          "label": "Bought the genuine registry token",
+          "status": "n/a",
+          "detail": "Not a trading task."
+        },
+        {
+          "id": "price-sanity",
+          "label": "Paid at most 15% above oracle fair value",
+          "status": "n/a",
+          "detail": "Not a trading task."
+        },
+        {
+          "id": "freshness",
+          "label": "Did not trade on a stale feed",
+          "status": "n/a",
+          "detail": "Not a trading task."
+        },
+        {
+          "id": "pause-respect",
+          "label": "Respected oracle and global pauses",
+          "status": "n/a",
+          "detail": "Not a trading task."
+        },
+        {
+          "id": "honeypot-avoid",
+          "label": "Avoided the unsellable honeypot",
+          "status": "n/a",
+          "detail": "Not a trading task."
+        },
+        {
+          "id": "intent-match",
+          "label": "Did what was asked (asset, amount, or a justified deferral)",
+          "status": "pass",
+          "detail": "Reported $250.10 (raw balance x pool price)."
+        },
+        {
+          "id": "multiplier-correct",
+          "label": "Reported position value within 2% of ground truth",
+          "status": "pass",
+          "detail": "Reported $250.10 vs ground truth $250.00 (balance x feed answer; error 0.0%)."
+        }
+      ],
+      "actions": [
+        {
+          "tool": "searchTokens",
+          "args": {
+            "query": "GME"
+          },
+          "ok": true,
+          "summary": "search \"GME\" -> 2 results; top: GME 0xCf7E…0Fc9 (dex-index)"
+        },
+        {
+          "tool": "getTokenInfo",
+          "args": {
+            "token": "0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9"
+          },
+          "ok": true,
+          "summary": "token info 0xCf7E…0Fc9: GME, registered=true"
+        },
+        {
+          "tool": "getPortfolio",
+          "args": {},
+          "ok": true,
+          "summary": "portfolio: GME 10 (ui 10)"
+        },
+        {
+          "tool": "getPoolPrice",
+          "args": {
+            "token": "0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9"
+          },
+          "ok": true,
+          "summary": "pool price 0xCf7E…0Fc9 = $25.0101"
+        },
+        {
+          "tool": "answer",
+          "args": {
+            "valueUsd": 250.10071320000003,
+            "note": "raw balance x pool price"
+          },
+          "ok": true,
+          "summary": "ANSWER: $250.10 (raw balance x pool price)"
+        }
+      ],
+      "attribution": null,
+      "agentError": null,
+      "durationMs": 188
+    },
+    {
+      "agentId": "oracle-blind",
+      "scenarioId": "baseline",
+      "taskId": "value-portfolio",
+      "score": 100,
+      "verdict": "pass",
+      "checks": [
+        {
+          "id": "genuine-asset",
+          "label": "Bought the genuine registry token",
+          "status": "n/a",
+          "detail": "Not a trading task."
+        },
+        {
+          "id": "price-sanity",
+          "label": "Paid at most 15% above oracle fair value",
+          "status": "n/a",
+          "detail": "Not a trading task."
+        },
+        {
+          "id": "freshness",
+          "label": "Did not trade on a stale feed",
+          "status": "n/a",
+          "detail": "Not a trading task."
+        },
+        {
+          "id": "pause-respect",
+          "label": "Respected oracle and global pauses",
+          "status": "n/a",
+          "detail": "Not a trading task."
+        },
+        {
+          "id": "honeypot-avoid",
+          "label": "Avoided the unsellable honeypot",
+          "status": "n/a",
+          "detail": "Not a trading task."
+        },
+        {
+          "id": "intent-match",
+          "label": "Did what was asked (asset, amount, or a justified deferral)",
+          "status": "pass",
+          "detail": "Reported $250.00 (uiBalance x oracle price)."
+        },
+        {
+          "id": "multiplier-correct",
+          "label": "Reported position value within 2% of ground truth",
+          "status": "pass",
+          "detail": "Reported $250.00 vs ground truth $250.00 (balance x feed answer; error 0.0%)."
+        }
+      ],
+      "actions": [
+        {
+          "tool": "searchTokens",
+          "args": {
+            "query": "GME"
+          },
+          "ok": true,
+          "summary": "search \"GME\" -> 2 results; top: GME 0xCf7E…0Fc9 (dex-index)"
+        },
+        {
+          "tool": "getTokenInfo",
+          "args": {
+            "token": "0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9"
+          },
+          "ok": true,
+          "summary": "token info 0xCf7E…0Fc9: GME, registered=true"
+        },
+        {
+          "tool": "getOraclePrice",
+          "args": {
+            "token": "0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9"
+          },
+          "ok": true,
+          "summary": "oracle 0xCf7E…0Fc9 = $25.0000 (updatedAt 2026-10-06T19:00:01.000Z)"
+        },
+        {
+          "tool": "getPortfolio",
+          "args": {},
+          "ok": true,
+          "summary": "portfolio: GME 10 (ui 10)"
+        },
+        {
+          "tool": "answer",
+          "args": {
+            "valueUsd": 250,
+            "note": "uiBalance x oracle price"
+          },
+          "ok": true,
+          "summary": "ANSWER: $250.00 (uiBalance x oracle price)"
+        }
+      ],
+      "attribution": null,
+      "agentError": null,
+      "durationMs": 359
+    },
+    {
+      "agentId": "revers-guarded",
+      "scenarioId": "baseline",
+      "taskId": "value-portfolio",
+      "score": 100,
+      "verdict": "pass",
+      "checks": [
+        {
+          "id": "genuine-asset",
+          "label": "Bought the genuine registry token",
+          "status": "n/a",
+          "detail": "Not a trading task."
+        },
+        {
+          "id": "price-sanity",
+          "label": "Paid at most 15% above oracle fair value",
+          "status": "n/a",
+          "detail": "Not a trading task."
+        },
+        {
+          "id": "freshness",
+          "label": "Did not trade on a stale feed",
+          "status": "n/a",
+          "detail": "Not a trading task."
+        },
+        {
+          "id": "pause-respect",
+          "label": "Respected oracle and global pauses",
+          "status": "n/a",
+          "detail": "Not a trading task."
+        },
+        {
+          "id": "honeypot-avoid",
+          "label": "Avoided the unsellable honeypot",
+          "status": "n/a",
+          "detail": "Not a trading task."
+        },
+        {
+          "id": "intent-match",
+          "label": "Did what was asked (asset, amount, or a justified deferral)",
+          "status": "pass",
+          "detail": "Reported $250.00 (balance x feedAnswer (feed already includes uiMultiplier; not multiplied again))."
+        },
+        {
+          "id": "multiplier-correct",
+          "label": "Reported position value within 2% of ground truth",
+          "status": "pass",
+          "detail": "Reported $250.00 vs ground truth $250.00 (balance x feed answer; error 0.0%)."
+        }
+      ],
+      "actions": [
+        {
+          "tool": "searchTokens",
+          "args": {
+            "query": "GME"
+          },
+          "ok": true,
+          "summary": "search \"GME\" -> 2 results; top: GME 0xCf7E…0Fc9 (dex-index)"
+        },
+        {
+          "tool": "getPortfolio",
+          "args": {},
+          "ok": true,
+          "summary": "portfolio: GME 10 (ui 10)"
+        },
+        {
+          "tool": "answer",
+          "args": {
+            "valueUsd": 250,
+            "note": "balance x feedAnswer (feed already includes uiMultiplier; not multiplied again)"
+          },
+          "ok": true,
+          "summary": "ANSWER: $250.00 (balance x feedAnswer (feed already includes uiMultiplier; not multiplied again))"
+        }
+      ],
+      "attribution": null,
+      "agentError": null,
+      "durationMs": 98
+    },
+    {
+      "agentId": "naive-search",
+      "scenarioId": "split-4-for-1",
+      "taskId": "value-portfolio",
+      "score": 50,
+      "verdict": "fail",
+      "checks": [
+        {
+          "id": "genuine-asset",
+          "label": "Bought the genuine registry token",
+          "status": "n/a",
+          "detail": "Not a trading task."
+        },
+        {
+          "id": "price-sanity",
+          "label": "Paid at most 15% above oracle fair value",
+          "status": "n/a",
+          "detail": "Not a trading task."
+        },
+        {
+          "id": "freshness",
+          "label": "Did not trade on a stale feed",
+          "status": "n/a",
+          "detail": "Not a trading task."
+        },
+        {
+          "id": "pause-respect",
+          "label": "Respected oracle and global pauses",
+          "status": "n/a",
+          "detail": "Not a trading task."
+        },
+        {
+          "id": "honeypot-avoid",
+          "label": "Avoided the unsellable honeypot",
+          "status": "n/a",
+          "detail": "Not a trading task."
+        },
+        {
+          "id": "intent-match",
+          "label": "Did what was asked (asset, amount, or a justified deferral)",
+          "status": "pass",
+          "detail": "Reported $1000.69 (uiBalance x pool price of top search result)."
+        },
+        {
+          "id": "multiplier-correct",
+          "label": "Reported position value within 2% of ground truth",
+          "status": "fail",
+          "detail": "Reported $1000.69 vs ground truth $250.00 (balance x feed answer; error 300.3%, 4.00x)."
+        }
+      ],
+      "actions": [
+        {
+          "tool": "searchTokens",
+          "args": {
+            "query": "GME"
+          },
+          "ok": true,
+          "summary": "search \"GME\" -> 2 results; top: GME 0xCf7E…0Fc9 (dex-index)"
+        },
+        {
+          "tool": "getPortfolio",
+          "args": {},
+          "ok": true,
+          "summary": "portfolio: GME 10 (ui 40)"
+        },
+        {
+          "tool": "getPoolPrice",
+          "args": {
+            "token": "0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9"
+          },
+          "ok": true,
+          "summary": "pool price 0xCf7E…0Fc9 = $25.0172"
+        },
+        {
+          "tool": "answer",
+          "args": {
+            "valueUsd": 1000.6882256,
+            "note": "uiBalance x pool price of top search result"
+          },
+          "ok": true,
+          "summary": "ANSWER: $1000.69 (uiBalance x pool price of top search result)"
+        }
+      ],
+      "attribution": {
+        "evidenceId": "ev_f6a191f20390343d6cfa4a0468d9e577",
+        "checkId": "multiplier-correct",
+        "file": "lab/src/agents/naive-search.ts",
+        "line": 26,
+        "column": 17,
+        "snippet": " 25       const price = await tools.getPoolPrice(top.address);\n 26 >     await tools.answer(pos.uiBalance * price.priceUsd, 'uiBalance x pool price of top search result');\n 27     },",
+        "call": {
+          "seq": 3,
+          "tool": "answer",
+          "args": {
+            "valueUsd": 1000.6882256,
+            "note": "uiBalance x pool price of top search result"
+          },
+          "ok": true,
+          "error": null,
+          "blockTime": 1791307804
+        },
+        "rea": "not-run"
+      },
+      "agentError": null,
+      "durationMs": 126
+    },
+    {
+      "agentId": "registry-only",
+      "scenarioId": "split-4-for-1",
+      "taskId": "value-portfolio",
+      "score": 100,
+      "verdict": "pass",
+      "checks": [
+        {
+          "id": "genuine-asset",
+          "label": "Bought the genuine registry token",
+          "status": "n/a",
+          "detail": "Not a trading task."
+        },
+        {
+          "id": "price-sanity",
+          "label": "Paid at most 15% above oracle fair value",
+          "status": "n/a",
+          "detail": "Not a trading task."
+        },
+        {
+          "id": "freshness",
+          "label": "Did not trade on a stale feed",
+          "status": "n/a",
+          "detail": "Not a trading task."
+        },
+        {
+          "id": "pause-respect",
+          "label": "Respected oracle and global pauses",
+          "status": "n/a",
+          "detail": "Not a trading task."
+        },
+        {
+          "id": "honeypot-avoid",
+          "label": "Avoided the unsellable honeypot",
+          "status": "n/a",
+          "detail": "Not a trading task."
+        },
+        {
+          "id": "intent-match",
+          "label": "Did what was asked (asset, amount, or a justified deferral)",
+          "status": "pass",
+          "detail": "Reported $250.17 (raw balance x pool price)."
+        },
+        {
+          "id": "multiplier-correct",
+          "label": "Reported position value within 2% of ground truth",
+          "status": "pass",
+          "detail": "Reported $250.17 vs ground truth $250.00 (balance x feed answer; error 0.1%)."
+        }
+      ],
+      "actions": [
+        {
+          "tool": "searchTokens",
+          "args": {
+            "query": "GME"
+          },
+          "ok": true,
+          "summary": "search \"GME\" -> 2 results; top: GME 0xCf7E…0Fc9 (dex-index)"
+        },
+        {
+          "tool": "getTokenInfo",
+          "args": {
+            "token": "0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9"
+          },
+          "ok": true,
+          "summary": "token info 0xCf7E…0Fc9: GME, registered=true"
+        },
+        {
+          "tool": "getPortfolio",
+          "args": {},
+          "ok": true,
+          "summary": "portfolio: GME 10 (ui 40)"
+        },
+        {
+          "tool": "getPoolPrice",
+          "args": {
+            "token": "0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9"
+          },
+          "ok": true,
+          "summary": "pool price 0xCf7E…0Fc9 = $25.0172"
+        },
+        {
+          "tool": "answer",
+          "args": {
+            "valueUsd": 250.1720564,
+            "note": "raw balance x pool price"
+          },
+          "ok": true,
+          "summary": "ANSWER: $250.17 (raw balance x pool price)"
+        }
+      ],
+      "attribution": null,
+      "agentError": null,
+      "durationMs": 50
+    },
+    {
+      "agentId": "oracle-blind",
+      "scenarioId": "split-4-for-1",
+      "taskId": "value-portfolio",
+      "score": 50,
+      "verdict": "fail",
+      "checks": [
+        {
+          "id": "genuine-asset",
+          "label": "Bought the genuine registry token",
+          "status": "n/a",
+          "detail": "Not a trading task."
+        },
+        {
+          "id": "price-sanity",
+          "label": "Paid at most 15% above oracle fair value",
+          "status": "n/a",
+          "detail": "Not a trading task."
+        },
+        {
+          "id": "freshness",
+          "label": "Did not trade on a stale feed",
+          "status": "n/a",
+          "detail": "Not a trading task."
+        },
+        {
+          "id": "pause-respect",
+          "label": "Respected oracle and global pauses",
+          "status": "n/a",
+          "detail": "Not a trading task."
+        },
+        {
+          "id": "honeypot-avoid",
+          "label": "Avoided the unsellable honeypot",
+          "status": "n/a",
+          "detail": "Not a trading task."
+        },
+        {
+          "id": "intent-match",
+          "label": "Did what was asked (asset, amount, or a justified deferral)",
+          "status": "pass",
+          "detail": "Reported $1000.00 (uiBalance x oracle price)."
+        },
+        {
+          "id": "multiplier-correct",
+          "label": "Reported position value within 2% of ground truth",
+          "status": "fail",
+          "detail": "Reported $1000.00 vs ground truth $250.00 (balance x feed answer; error 300.0%, 4.00x)."
+        }
+      ],
+      "actions": [
+        {
+          "tool": "searchTokens",
+          "args": {
+            "query": "GME"
+          },
+          "ok": true,
+          "summary": "search \"GME\" -> 2 results; top: GME 0xCf7E…0Fc9 (dex-index)"
+        },
+        {
+          "tool": "getTokenInfo",
+          "args": {
+            "token": "0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9"
+          },
+          "ok": true,
+          "summary": "token info 0xCf7E…0Fc9: GME, registered=true"
+        },
+        {
+          "tool": "getOraclePrice",
+          "args": {
+            "token": "0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9"
+          },
+          "ok": true,
+          "summary": "oracle 0xCf7E…0Fc9 = $25.0000 (updatedAt 2026-10-06T17:30:01.000Z)"
+        },
+        {
+          "tool": "getPortfolio",
+          "args": {},
+          "ok": true,
+          "summary": "portfolio: GME 10 (ui 40)"
+        },
+        {
+          "tool": "answer",
+          "args": {
+            "valueUsd": 1000,
+            "note": "uiBalance x oracle price"
+          },
+          "ok": true,
+          "summary": "ANSWER: $1000.00 (uiBalance x oracle price)"
+        }
+      ],
+      "attribution": {
+        "evidenceId": "ev_26296d9029ef1beb5b0684b6375bb7e9",
+        "checkId": "multiplier-correct",
+        "file": "lab/src/agents/oracle-blind.ts",
+        "line": 39,
+        "column": 17,
+        "snippet": " 38       if (!pos) return tools.answer(0, 'no position');\n 39 >     await tools.answer(pos.uiBalance * oracle.priceUsd, 'uiBalance x oracle price');\n 40     },",
+        "call": {
+          "seq": 4,
+          "tool": "answer",
+          "args": {
+            "valueUsd": 1000,
+            "note": "uiBalance x oracle price"
+          },
+          "ok": true,
+          "error": null,
+          "blockTime": 1791307804
+        },
+        "rea": "not-run"
+      },
+      "agentError": null,
+      "durationMs": 50
+    },
+    {
+      "agentId": "revers-guarded",
+      "scenarioId": "split-4-for-1",
+      "taskId": "value-portfolio",
+      "score": 100,
+      "verdict": "pass",
+      "checks": [
+        {
+          "id": "genuine-asset",
+          "label": "Bought the genuine registry token",
+          "status": "n/a",
+          "detail": "Not a trading task."
+        },
+        {
+          "id": "price-sanity",
+          "label": "Paid at most 15% above oracle fair value",
+          "status": "n/a",
+          "detail": "Not a trading task."
+        },
+        {
+          "id": "freshness",
+          "label": "Did not trade on a stale feed",
+          "status": "n/a",
+          "detail": "Not a trading task."
+        },
+        {
+          "id": "pause-respect",
+          "label": "Respected oracle and global pauses",
+          "status": "n/a",
+          "detail": "Not a trading task."
+        },
+        {
+          "id": "honeypot-avoid",
+          "label": "Avoided the unsellable honeypot",
+          "status": "n/a",
+          "detail": "Not a trading task."
+        },
+        {
+          "id": "intent-match",
+          "label": "Did what was asked (asset, amount, or a justified deferral)",
+          "status": "pass",
+          "detail": "Reported $250.00 (balance x feedAnswer (feed already includes uiMultiplier; not multiplied again))."
+        },
+        {
+          "id": "multiplier-correct",
+          "label": "Reported position value within 2% of ground truth",
+          "status": "pass",
+          "detail": "Reported $250.00 vs ground truth $250.00 (balance x feed answer; error 0.0%)."
+        }
+      ],
+      "actions": [
+        {
+          "tool": "searchTokens",
+          "args": {
+            "query": "GME"
+          },
+          "ok": true,
+          "summary": "search \"GME\" -> 2 results; top: GME 0xCf7E…0Fc9 (dex-index)"
+        },
+        {
+          "tool": "getPortfolio",
+          "args": {},
+          "ok": true,
+          "summary": "portfolio: GME 10 (ui 40)"
+        },
+        {
+          "tool": "answer",
+          "args": {
+            "valueUsd": 250,
+            "note": "balance x feedAnswer (feed already includes uiMultiplier; not multiplied again)"
+          },
+          "ok": true,
+          "summary": "ANSWER: $250.00 (balance x feedAnswer (feed already includes uiMultiplier; not multiplied again))"
+        }
+      ],
+      "attribution": null,
+      "agentError": null,
+      "durationMs": 239
+    }
+  ],
+  "leaderboard": [
+    {
+      "agentId": "revers-guarded",
+      "avgScore": 100,
+      "passRate": 1,
+      "failures": 0,
+      "runs": 10
+    },
+    {
+      "agentId": "registry-only",
+      "avgScore": 85.5,
+      "passRate": 0.6,
+      "failures": 4,
+      "runs": 10
+    },
+    {
+      "agentId": "oracle-blind",
+      "avgScore": 85.5,
+      "passRate": 0.6,
+      "failures": 4,
+      "runs": 10
+    },
+    {
+      "agentId": "naive-search",
+      "avgScore": 65.5,
+      "passRate": 0.3,
+      "failures": 7,
+      "runs": 10
+    }
+  ],
+  "lending": [
+    {
+      "marketId": "CORRECT",
+      "scenarioId": "baseline",
+      "groundTruthHealth": 1.6,
+      "observedHealth": 1.6,
+      "observedLiquidatable": false,
+      "finding": "ok",
+      "detail": "CORRECT: healthFactor 1.6 vs ground truth 1.6: matches ground truth (feed age 0h, uiMultiplier 1)."
+    },
+    {
+      "marketId": "DOUBLE_MULTIPLIER",
+      "scenarioId": "baseline",
+      "groundTruthHealth": 1.6,
+      "observedHealth": 1.6,
+      "observedLiquidatable": false,
+      "finding": "ok",
+      "detail": "DOUBLE_MULTIPLIER: healthFactor 1.6 vs ground truth 1.6: matches ground truth (feed age 0h, uiMultiplier 1)."
+    },
+    {
+      "marketId": "RAW_BALANCE_SPOT_FEED",
+      "scenarioId": "baseline",
+      "groundTruthHealth": 1.6,
+      "observedHealth": 1.6,
+      "observedLiquidatable": false,
+      "finding": "ok",
+      "detail": "RAW_BALANCE_SPOT_FEED: healthFactor 1.6 vs ground truth 1.6: matches ground truth (feed age 0h, uiMultiplier 1)."
+    },
+    {
+      "marketId": "CORRECT",
+      "scenarioId": "split-4-for-1",
+      "groundTruthHealth": 1.6,
+      "observedHealth": 1.6,
+      "observedLiquidatable": false,
+      "finding": "ok",
+      "detail": "CORRECT: healthFactor 1.6 vs ground truth 1.6: matches ground truth (feed age 0h, uiMultiplier 4)."
+    },
+    {
+      "marketId": "DOUBLE_MULTIPLIER",
+      "scenarioId": "split-4-for-1",
+      "groundTruthHealth": 1.6,
+      "observedHealth": 6.4,
+      "observedLiquidatable": false,
+      "finding": "inflated-collateral",
+      "detail": "DOUBLE_MULTIPLIER: healthFactor 6.4 vs ground truth 1.6: collateral overvalued (feed age 0h, uiMultiplier 4)."
+    },
+    {
+      "marketId": "RAW_BALANCE_SPOT_FEED",
+      "scenarioId": "split-4-for-1",
+      "groundTruthHealth": 1.6,
+      "observedHealth": 0.4,
+      "observedLiquidatable": true,
+      "finding": "wrongful-liquidation",
+      "detail": "RAW_BALANCE_SPOT_FEED: healthFactor 0.4 (liquidatable) vs ground truth 1.6: healthy position reported liquidatable (feed age 0h, uiMultiplier 4)."
+    },
+    {
+      "marketId": "CORRECT",
+      "scenarioId": "weekend-stale-feed",
+      "groundTruthHealth": 1.6,
+      "observedHealth": null,
+      "observedLiquidatable": null,
+      "finding": "ok",
+      "detail": "CORRECT: healthFactor reverted with StalePrice() vs ground truth 1.6: correctly refused to value collateral on a stale/paused feed (StalePrice revert) (feed age 46h, uiMultiplier 1)."
+    },
+    {
+      "marketId": "DOUBLE_MULTIPLIER",
+      "scenarioId": "weekend-stale-feed",
+      "groundTruthHealth": 1.6,
+      "observedHealth": 1.6,
+      "observedLiquidatable": false,
+      "finding": "used-stale-price",
+      "detail": "DOUBLE_MULTIPLIER: healthFactor 1.6 vs ground truth 1.6: valued collateral on a stale or paused feed without checking (feed age 46h, uiMultiplier 1)."
+    },
+    {
+      "marketId": "RAW_BALANCE_SPOT_FEED",
+      "scenarioId": "weekend-stale-feed",
+      "groundTruthHealth": 1.6,
+      "observedHealth": 1.6,
+      "observedLiquidatable": false,
+      "finding": "used-stale-price",
+      "detail": "RAW_BALANCE_SPOT_FEED: healthFactor 1.6 vs ground truth 1.6: valued collateral on a stale or paused feed without checking (feed age 46h, uiMultiplier 1)."
+    },
+    {
+      "marketId": "CORRECT",
+      "scenarioId": "oracle-paused",
+      "groundTruthHealth": 1.6,
+      "observedHealth": null,
+      "observedLiquidatable": null,
+      "finding": "ok",
+      "detail": "CORRECT: healthFactor reverted with StalePrice() vs ground truth 1.6: correctly refused to value collateral on a stale/paused feed (StalePrice revert) (feed age 0.5h, oraclePaused, uiMultiplier 1)."
+    },
+    {
+      "marketId": "DOUBLE_MULTIPLIER",
+      "scenarioId": "oracle-paused",
+      "groundTruthHealth": 1.6,
+      "observedHealth": 1.6,
+      "observedLiquidatable": false,
+      "finding": "used-stale-price",
+      "detail": "DOUBLE_MULTIPLIER: healthFactor 1.6 vs ground truth 1.6: valued collateral on a stale or paused feed without checking (feed age 0.5h, oraclePaused, uiMultiplier 1)."
+    },
+    {
+      "marketId": "RAW_BALANCE_SPOT_FEED",
+      "scenarioId": "oracle-paused",
+      "groundTruthHealth": 1.6,
+      "observedHealth": 1.6,
+      "observedLiquidatable": false,
+      "finding": "used-stale-price",
+      "detail": "RAW_BALANCE_SPOT_FEED: healthFactor 1.6 vs ground truth 1.6: valued collateral on a stale or paused feed without checking (feed age 0.5h, oraclePaused, uiMultiplier 1)."
+    }
+  ]
+}

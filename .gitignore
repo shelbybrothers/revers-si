@@ -1,0 +1,25 @@
+# dependencies
+node_modules/
+
+# Next.js / Vercel
+.next/
+.vercel/
+next-env.d.ts
+*.tsbuildinfo
+
+# build output (contracts/out, lab/out, web/out)
+out/
+
+# Foundry
+contracts/cache/
+contracts/broadcast/
+broadcast/
+contracts/deployments/world.test.json
+
+# env / secrets
+.env
+.env.*
+
+# OS / editor
+.DS_Store
+*.log

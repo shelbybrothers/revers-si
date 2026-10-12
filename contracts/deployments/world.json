@@ -1,0 +1,57 @@
+{
+  "agents": [
+    "0x70997970C51812dc3A010C7d01b50e0d17dc79C8",
+    "0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC",
+    "0x90F79bf6EB2c4f870365E785982E1f101E93b906",
+    "0x15d34AAf54267DB7D7c367839AAf71A00a2C6A65",
+    "0x9965507D1a55bcC2695C58ba16FB37d819B0A4dc"
+  ],
+  "attestation": "0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0",
+  "chainId": 31337,
+  "counterfeits": {
+    "GME": {
+      "pool": "0x8f86403A4DE0BB5791fa46B8e795C547942fE4Cf",
+      "token": "0x0E801D84Fa97b50751Dbf25036d067dCf18858bF"
+    }
+  },
+  "deployTimestamp": 1791086400,
+  "deployer": "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266",
+  "honeypot": {
+    "pool": "0x5f3f1dBD7B74C6B46e8c44f98792A1dAf8d69154",
+    "quote": "0x9E545E3C0baAB3E08CdfD552C960A1050f373042",
+    "token": "0x1291Be112d480055DaFd8a610b7d1e203891C274"
+  },
+  "lending": {
+    "CORRECT": "0xD8a5a9b31c3C0232E196d518E89Fd8bF83AcAd43",
+    "DOUBLE_MULTIPLIER": "0xDC11f7E700A4c898AE5CAddB1082cFfa76512aDD",
+    "RAW_BALANCE_SPOT_FEED": "0x51A1ceB83B83F1985a81C295d1fF28Afef186E02"
+  },
+  "maxStalenessSec": 86400,
+  "mode": "replica",
+  "registry": "0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512",
+  "replicaOf": 4663,
+  "tokens": {
+    "GME": {
+      "feed": "0x5FC8d32690cc91D4c39d9d3abcBD16989F875707",
+      "pool": "0xa513E6E4b8f2a923D98304ec87F64353C4D5C853",
+      "token": "0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9"
+    },
+    "HIMS": {
+      "feed": "0x1613beB3B2C4f22Ee086B2b38C1476A3cE7f78E8",
+      "pool": "0xf5059a5D33d5853360D16C683c16e67980206f36",
+      "token": "0x9E545E3C0baAB3E08CdfD552C960A1050f373042"
+    },
+    "NVDA": {
+      "feed": "0x4A679253410272dd5232B3Ff7cF5dbB88f295319",
+      "pool": "0x09635F643e140090A9A8Dcd712eD6285858ceBef",
+      "token": "0x322813Fd9A801c5507c9de605d63CEA4f2CE6c44"
+    },
+    "TSLA": {
+      "feed": "0x0B306BF915C4d645ff596e518fAf3F9669b97016",
+      "pool": "0x9A9f2CCfdE556A7E9Ff0848998Aa4a0CFD8863AE",
+      "token": "0x0DCd1Bf9A1b36cE34237eEaFef220932846BCD82"
+    }
+  },
+  "usdg": "0x5FbDB2315678afecb367f032d93F642f64180aa3",
+  "version": "1"
+}

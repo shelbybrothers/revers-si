@@ -1,0 +1,27 @@
+{
+  "name": "@revers/lab",
+  "version": "0.1.0",
+  "private": true,
+  "description": "revers.si crash-test lab: replica Robinhood Chain world, market-event scenarios, reference trading agents, scoring and code-level attribution",
+  "type": "module",
+  "bin": {
+    "revers": "./bin/revers.mjs"
+  },
+  "scripts": {
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit",
+    "run": "tsx src/cli.ts run",
+    "list": "tsx src/cli.ts list"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.133.0",
+    "@revers/guard": "*",
+    "viem": "^2.57.4"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.0",
+    "tsx": "^4.20.0",
+    "typescript": "~5.9.3",
+    "vitest": "^5.0.3"
+  }
+}

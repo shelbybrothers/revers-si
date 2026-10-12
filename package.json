@@ -1,0 +1,14 @@
+{
+  "name": "revers-si",
+  "private": true,
+  "workspaces": [
+    "guard",
+    "lab"
+  ],
+  "scripts": {
+    "lab": "tsx lab/src/cli.ts run",
+    "lab:list": "tsx lab/src/cli.ts list",
+    "test:lab": "npm test -w @revers/lab",
+    "test:guard": "npm test -w @revers/guard"
+  }
+}
