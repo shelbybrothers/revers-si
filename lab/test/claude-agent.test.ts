@@ -9,14 +9,22 @@ import type { AgentTools } from '../src/tools.js';
 import type { LlmUsage } from '../src/agents/types.js';
 
 const create = vi.fn();
+const retrieve = vi.fn();
 vi.mock('@anthropic-ai/sdk', () => {
   class APIError extends Error {
     status?: number;
   }
+  class AuthenticationError extends APIError {}
+  class PermissionDeniedError extends APIError {}
+  class NotFoundError extends APIError {}
   return {
     default: class {
       static APIError = APIError;
+      static AuthenticationError = AuthenticationError;
+      static PermissionDeniedError = PermissionDeniedError;
+      static NotFoundError = NotFoundError;
       messages = { create };
+      models = { retrieve };
     },
   };
 });
@@ -67,6 +75,7 @@ describe('claude-haiku agent', () => {
     for (const k of ENV_KEYS) saved[k] = process.env[k];
     for (const k of ENV_KEYS) delete process.env[k];
     create.mockReset();
+    retrieve.mockReset();
     vi.resetModules();
     process.env.ANTHROPIC_API_KEY = 'test-key-not-real';
   });
@@ -157,6 +166,21 @@ describe('claude-haiku agent', () => {
     expect(String(err.message)).toMatch(/budget exhausted/);
     expect(create).toHaveBeenCalledTimes(1);
     expect(reported?.turns).toBe(1);
+  });
+
+  it('preflight skips the agent when the key is rejected, without any billed call', async () => {
+    const Sdk = (await import('@anthropic-ai/sdk')).default as unknown as { AuthenticationError: new (m: string) => Error };
+    retrieve.mockRejectedValueOnce(new Sdk.AuthenticationError('invalid x-api-key'));
+    const { claudeHaiku } = await load();
+    expect(await claudeHaiku.preflight?.()).toMatch(/credentials rejected \(401/);
+    expect(retrieve).toHaveBeenCalledWith('claude-haiku-5-5');
+    expect(create).not.toHaveBeenCalled();
+
+    retrieve.mockResolvedValueOnce({ id: 'claude-haiku-5-5' });
+    expect(await claudeHaiku.preflight?.()).toBeNull();
+
+    retrieve.mockRejectedValueOnce(new Error('ECONNRESET'));
+    expect(await claudeHaiku.preflight?.()).toBeNull(); // transient: let runs report it
   });
 
   it('rejects a malformed budget instead of silently disabling the cap', async () => {

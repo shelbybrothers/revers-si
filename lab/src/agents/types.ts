@@ -38,5 +38,7 @@ export interface TradingAgent {
   sourceFile: string;
   /** returns a reason string when the agent cannot run in this environment (status 'skipped') */
   unavailable?(): string | null;
+  /** async check run once before any run (e.g. a free credentials probe); a reason string skips the agent */
+  preflight?(): Promise<string | null>;
   run(task: Task, tools: AgentTools, ctx?: RunContext): Promise<void>;
 }

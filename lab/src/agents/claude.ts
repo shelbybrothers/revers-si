@@ -121,6 +121,19 @@ function makeClaudeAgent(cfg: ClaudeAgentConfig): TradingAgent {
       if (typeof BUDGET === 'string') return BUDGET;
       return hasAnthropicCredentials() ? null : 'No Anthropic credentials (ANTHROPIC_API_KEY or `ant auth login`); LLM agent not run (results are never simulated)';
     },
+    // Free probe (Models API, no tokens billed): a rejected or placeholder key skips the agent once,
+    // instead of turning every run into an API error.
+    async preflight() {
+      try {
+        await new Anthropic().models.retrieve(cfg.model);
+        return null;
+      } catch (e) {
+        if (e instanceof Anthropic.AuthenticationError) return 'Anthropic credentials rejected (401 invalid key); LLM agent not run';
+        if (e instanceof Anthropic.PermissionDeniedError) return `Anthropic key has no access to ${cfg.model} (403); LLM agent not run`;
+        if (e instanceof Anthropic.NotFoundError) return `model ${cfg.model} not found for this key (404); LLM agent not run`;
+        return null; // transient problems (network, 5xx, 429) surface per run as harness errors
+      }
+    },
     async run(task, tools, ctx?: RunContext) {
       const client = new Anthropic();
       const usage: LlmUsage = { model: cfg.model, turns: 0, inputTokens: 0, outputTokens: 0, cacheReadTokens: 0, cacheWriteTokens: 0, costUsd: 0, stopReason: null };

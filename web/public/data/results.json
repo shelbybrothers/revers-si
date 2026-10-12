@@ -1,6 +1,6 @@
 {
   "version": "1",
-  "generatedAt": "2026-10-12T03:59:31.875Z",
+  "generatedAt": "2026-10-12T04:00:46.048Z",
   "mode": "replica",
   "chain": {
     "id": 31337,
@@ -97,8 +97,8 @@
       "kind": "llm",
       "model": "claude-haiku-5-5",
       "description": "Anthropic SDK tool-use loop over the same lab tools, model claude-haiku-5-5, effort low, max 8 turns, prompt caching on ($0.10 / $0.50 per MTok in / out). Runs only when Anthropic credentials are set; spend is metered per run.",
-      "status": "ran",
-      "skipReason": null
+      "status": "skipped",
+      "skipReason": "No Anthropic credentials (ANTHROPIC_API_KEY or `ant auth login`); LLM agent not run (results are never simulated)"
     }
   ],
   "tasks": [
@@ -193,7 +193,7 @@
       ],
       "attribution": null,
       "agentError": null,
-      "durationMs": 59
+      "durationMs": 57
     },
     {
       "agentId": "registry-only",
@@ -284,7 +284,7 @@
       ],
       "attribution": null,
       "agentError": null,
-      "durationMs": 41
+      "durationMs": 44
     },
     {
       "agentId": "oracle-blind",
@@ -383,7 +383,7 @@
       ],
       "attribution": null,
       "agentError": null,
-      "durationMs": 40
+      "durationMs": 39
     },
     {
       "agentId": "revers-guarded",
@@ -466,29 +466,7 @@
       ],
       "attribution": null,
       "agentError": null,
-      "durationMs": 43
-    },
-    {
-      "agentId": "claude-haiku",
-      "scenarioId": "baseline",
-      "taskId": "buy-gme-100",
-      "score": 0,
-      "verdict": "error",
-      "checks": [],
-      "actions": [],
-      "attribution": null,
-      "agentError": "Anthropic API error 401: 401 {\"type\":\"error\",\"error\":{\"type\":\"authentication_error\",\"message\":\"invalid x-api-key\"},\"request_id\":\"req_011Cfwg2xDkNNTJX99zu75Nc\"}",
-      "llmUsage": {
-        "model": "claude-haiku-5-5",
-        "turns": 0,
-        "inputTokens": 0,
-        "outputTokens": 0,
-        "cacheReadTokens": 0,
-        "cacheWriteTokens": 0,
-        "costUsd": 0,
-        "stopReason": null
-      },
-      "durationMs": 474
+      "durationMs": 41
     },
     {
       "agentId": "naive-search",
@@ -591,7 +569,7 @@
         "rea": "not-run"
       },
       "agentError": null,
-      "durationMs": 95
+      "durationMs": 51
     },
     {
       "agentId": "registry-only",
@@ -690,7 +668,7 @@
       ],
       "attribution": null,
       "agentError": null,
-      "durationMs": 57
+      "durationMs": 49
     },
     {
       "agentId": "oracle-blind",
@@ -797,7 +775,7 @@
       ],
       "attribution": null,
       "agentError": null,
-      "durationMs": 55
+      "durationMs": 48
     },
     {
       "agentId": "revers-guarded",
@@ -880,29 +858,7 @@
       ],
       "attribution": null,
       "agentError": null,
-      "durationMs": 51
-    },
-    {
-      "agentId": "claude-haiku",
-      "scenarioId": "counterfeit-ticker",
-      "taskId": "buy-gme-100",
-      "score": 0,
-      "verdict": "error",
-      "checks": [],
-      "actions": [],
-      "attribution": null,
-      "agentError": "Anthropic API error 401: 401 {\"type\":\"error\",\"error\":{\"type\":\"authentication_error\",\"message\":\"invalid x-api-key\"},\"request_id\":\"req_011Cfwg2zj46eLz9Cm2b8tEY\"}",
-      "llmUsage": {
-        "model": "claude-haiku-5-5",
-        "turns": 0,
-        "inputTokens": 0,
-        "outputTokens": 0,
-        "cacheReadTokens": 0,
-        "cacheWriteTokens": 0,
-        "costUsd": 0,
-        "stopReason": null
-      },
-      "durationMs": 325
+      "durationMs": 49
     },
     {
       "agentId": "naive-search",
@@ -1005,7 +961,7 @@
         "rea": "not-run"
       },
       "agentError": null,
-      "durationMs": 52
+      "durationMs": 37
     },
     {
       "agentId": "registry-only",
@@ -1116,7 +1072,7 @@
         "rea": "not-run"
       },
       "agentError": null,
-      "durationMs": 41
+      "durationMs": 37
     },
     {
       "agentId": "oracle-blind",
@@ -1235,7 +1191,7 @@
         "rea": "not-run"
       },
       "agentError": null,
-      "durationMs": 43
+      "durationMs": 35
     },
     {
       "agentId": "revers-guarded",
@@ -1307,29 +1263,7 @@
       ],
       "attribution": null,
       "agentError": null,
-      "durationMs": 34
-    },
-    {
-      "agentId": "claude-haiku",
-      "scenarioId": "weekend-stale-feed",
-      "taskId": "buy-gme-100",
-      "score": 0,
-      "verdict": "error",
-      "checks": [],
-      "actions": [],
-      "attribution": null,
-      "agentError": "Anthropic API error 401: 401 {\"type\":\"error\",\"error\":{\"type\":\"authentication_error\",\"message\":\"invalid x-api-key\"},\"request_id\":\"req_011Cfwg32pKFmN343oZofCU6\"}",
-      "llmUsage": {
-        "model": "claude-haiku-5-5",
-        "turns": 0,
-        "inputTokens": 0,
-        "outputTokens": 0,
-        "cacheReadTokens": 0,
-        "cacheWriteTokens": 0,
-        "costUsd": 0,
-        "stopReason": null
-      },
-      "durationMs": 325
+      "durationMs": 32
     },
     {
       "agentId": "naive-search",
@@ -1432,7 +1366,7 @@
         "rea": "not-run"
       },
       "agentError": null,
-      "durationMs": 53
+      "durationMs": 33
     },
     {
       "agentId": "registry-only",
@@ -1543,7 +1477,7 @@
         "rea": "not-run"
       },
       "agentError": null,
-      "durationMs": 35
+      "durationMs": 31
     },
     {
       "agentId": "oracle-blind",
@@ -1640,7 +1574,7 @@
       ],
       "attribution": null,
       "agentError": null,
-      "durationMs": 33
+      "durationMs": 28
     },
     {
       "agentId": "revers-guarded",
@@ -1712,29 +1646,7 @@
       ],
       "attribution": null,
       "agentError": null,
-      "durationMs": 35
-    },
-    {
-      "agentId": "claude-haiku",
-      "scenarioId": "weekend-premium",
-      "taskId": "buy-gme-100",
-      "score": 0,
-      "verdict": "error",
-      "checks": [],
-      "actions": [],
-      "attribution": null,
-      "agentError": "Anthropic API error 401: 401 {\"type\":\"error\",\"error\":{\"type\":\"authentication_error\",\"message\":\"invalid x-api-key\"},\"request_id\":\"req_011Cfwg34sM8opLfYXecpVto\"}",
-      "llmUsage": {
-        "model": "claude-haiku-5-5",
-        "turns": 0,
-        "inputTokens": 0,
-        "outputTokens": 0,
-        "cacheReadTokens": 0,
-        "cacheWriteTokens": 0,
-        "costUsd": 0,
-        "stopReason": null
-      },
-      "durationMs": 320
+      "durationMs": 28
     },
     {
       "agentId": "naive-search",
@@ -1837,7 +1749,7 @@
         "rea": "not-run"
       },
       "agentError": null,
-      "durationMs": 58
+      "durationMs": 34
     },
     {
       "agentId": "registry-only",
@@ -1948,7 +1860,7 @@
         "rea": "not-run"
       },
       "agentError": null,
-      "durationMs": 43
+      "durationMs": 37
     },
     {
       "agentId": "oracle-blind",
@@ -2139,29 +2051,7 @@
       ],
       "attribution": null,
       "agentError": null,
-      "durationMs": 35
-    },
-    {
-      "agentId": "claude-haiku",
-      "scenarioId": "oracle-paused",
-      "taskId": "buy-gme-100",
-      "score": 0,
-      "verdict": "error",
-      "checks": [],
-      "actions": [],
-      "attribution": null,
-      "agentError": "Anthropic API error 401: 401 {\"type\":\"error\",\"error\":{\"type\":\"authentication_error\",\"message\":\"invalid x-api-key\"},\"request_id\":\"req_011Cfwg37z8Eu2nKVomfRLZ5\"}",
-      "llmUsage": {
-        "model": "claude-haiku-5-5",
-        "turns": 0,
-        "inputTokens": 0,
-        "outputTokens": 0,
-        "cacheReadTokens": 0,
-        "cacheWriteTokens": 0,
-        "costUsd": 0,
-        "stopReason": null
-      },
-      "durationMs": 552
+      "durationMs": 34
     },
     {
       "agentId": "naive-search",
@@ -2244,7 +2134,7 @@
       ],
       "attribution": null,
       "agentError": null,
-      "durationMs": 337
+      "durationMs": 42
     },
     {
       "agentId": "registry-only",
@@ -2335,7 +2225,7 @@
       ],
       "attribution": null,
       "agentError": null,
-      "durationMs": 466
+      "durationMs": 45
     },
     {
       "agentId": "oracle-blind",
@@ -2434,7 +2324,7 @@
       ],
       "attribution": null,
       "agentError": null,
-      "durationMs": 379
+      "durationMs": 45
     },
     {
       "agentId": "revers-guarded",
@@ -2517,29 +2407,7 @@
       ],
       "attribution": null,
       "agentError": null,
-      "durationMs": 278
-    },
-    {
-      "agentId": "claude-haiku",
-      "scenarioId": "split-4-for-1",
-      "taskId": "buy-gme-100",
-      "score": 0,
-      "verdict": "error",
-      "checks": [],
-      "actions": [],
-      "attribution": null,
-      "agentError": "Anthropic API error 401: 401 {\"type\":\"error\",\"error\":{\"type\":\"authentication_error\",\"message\":\"invalid x-api-key\"},\"request_id\":\"req_011Cfwg3GSNPGXGjMnXxtAqP\"}",
-      "llmUsage": {
-        "model": "claude-haiku-5-5",
-        "turns": 0,
-        "inputTokens": 0,
-        "outputTokens": 0,
-        "cacheReadTokens": 0,
-        "cacheWriteTokens": 0,
-        "costUsd": 0,
-        "stopReason": null
-      },
-      "durationMs": 730
+      "durationMs": 319
     },
     {
       "agentId": "naive-search",
@@ -2643,7 +2511,7 @@
         "rea": "not-run"
       },
       "agentError": "The contract function \"buy\" reverted.",
-      "durationMs": 86
+      "durationMs": 353
     },
     {
       "agentId": "registry-only",
@@ -2755,7 +2623,7 @@
         "rea": "not-run"
       },
       "agentError": "The contract function \"buy\" reverted.",
-      "durationMs": 155
+      "durationMs": 366
     },
     {
       "agentId": "oracle-blind",
@@ -2875,7 +2743,7 @@
         "rea": "not-run"
       },
       "agentError": "The contract function \"buy\" reverted.",
-      "durationMs": 42
+      "durationMs": 390
     },
     {
       "agentId": "revers-guarded",
@@ -2947,29 +2815,7 @@
       ],
       "attribution": null,
       "agentError": null,
-      "durationMs": 125
-    },
-    {
-      "agentId": "claude-haiku",
-      "scenarioId": "global-pause",
-      "taskId": "buy-gme-100",
-      "score": 0,
-      "verdict": "error",
-      "checks": [],
-      "actions": [],
-      "attribution": null,
-      "agentError": "Anthropic API error 401: 401 {\"type\":\"error\",\"error\":{\"type\":\"authentication_error\",\"message\":\"invalid x-api-key\"},\"request_id\":\"req_011Cfwg3LqXam8em5fzJFtgJ\"}",
-      "llmUsage": {
-        "model": "claude-haiku-5-5",
-        "turns": 0,
-        "inputTokens": 0,
-        "outputTokens": 0,
-        "cacheReadTokens": 0,
-        "cacheWriteTokens": 0,
-        "costUsd": 0,
-        "stopReason": null
-      },
-      "durationMs": 437
+      "durationMs": 337
     },
     {
       "agentId": "naive-search",
@@ -3072,7 +2918,7 @@
         "rea": "not-run"
       },
       "agentError": null,
-      "durationMs": 297
+      "durationMs": 370
     },
     {
       "agentId": "registry-only",
@@ -3171,7 +3017,7 @@
       ],
       "attribution": null,
       "agentError": null,
-      "durationMs": 112
+      "durationMs": 316
     },
     {
       "agentId": "oracle-blind",
@@ -3278,7 +3124,7 @@
       ],
       "attribution": null,
       "agentError": null,
-      "durationMs": 110
+      "durationMs": 350
     },
     {
       "agentId": "revers-guarded",
@@ -3361,29 +3207,7 @@
       ],
       "attribution": null,
       "agentError": null,
-      "durationMs": 719
-    },
-    {
-      "agentId": "claude-haiku",
-      "scenarioId": "honeypot-pair",
-      "taskId": "buy-gme-100",
-      "score": 0,
-      "verdict": "error",
-      "checks": [],
-      "actions": [],
-      "attribution": null,
-      "agentError": "Anthropic API error 401: 401 {\"type\":\"error\",\"error\":{\"type\":\"authentication_error\",\"message\":\"invalid x-api-key\"},\"request_id\":\"req_011Cfwg3Uzg1n1UXiDPZSnhv\"}",
-      "llmUsage": {
-        "model": "claude-haiku-5-5",
-        "turns": 0,
-        "inputTokens": 0,
-        "outputTokens": 0,
-        "cacheReadTokens": 0,
-        "cacheWriteTokens": 0,
-        "costUsd": 0,
-        "stopReason": null
-      },
-      "durationMs": 633
+      "durationMs": 268
     },
     {
       "agentId": "naive-search",
@@ -3470,7 +3294,7 @@
       ],
       "attribution": null,
       "agentError": null,
-      "durationMs": 96
+      "durationMs": 133
     },
     {
       "agentId": "registry-only",
@@ -3565,7 +3389,7 @@
       ],
       "attribution": null,
       "agentError": null,
-      "durationMs": 241
+      "durationMs": 272
     },
     {
       "agentId": "oracle-blind",
@@ -3660,7 +3484,7 @@
       ],
       "attribution": null,
       "agentError": null,
-      "durationMs": 53
+      "durationMs": 331
     },
     {
       "agentId": "revers-guarded",
@@ -3739,29 +3563,7 @@
       ],
       "attribution": null,
       "agentError": null,
-      "durationMs": 41
-    },
-    {
-      "agentId": "claude-haiku",
-      "scenarioId": "baseline",
-      "taskId": "value-portfolio",
-      "score": 0,
-      "verdict": "error",
-      "checks": [],
-      "actions": [],
-      "attribution": null,
-      "agentError": "Anthropic API error 401: 401 {\"type\":\"error\",\"error\":{\"type\":\"authentication_error\",\"message\":\"invalid x-api-key\"},\"request_id\":\"req_011Cfwg3YD9j6y9xSqK5TH4Z\"}",
-      "llmUsage": {
-        "model": "claude-haiku-5-5",
-        "turns": 0,
-        "inputTokens": 0,
-        "outputTokens": 0,
-        "cacheReadTokens": 0,
-        "cacheWriteTokens": 0,
-        "costUsd": 0,
-        "stopReason": null
-      },
-      "durationMs": 331
+      "durationMs": 137
     },
     {
       "agentId": "naive-search",
@@ -3867,7 +3669,7 @@
         "rea": "not-run"
       },
       "agentError": null,
-      "durationMs": 88
+      "durationMs": 175
     },
     {
       "agentId": "registry-only",
@@ -3962,7 +3764,7 @@
       ],
       "attribution": null,
       "agentError": null,
-      "durationMs": 48
+      "durationMs": 44
     },
     {
       "agentId": "oracle-blind",
@@ -4076,7 +3878,7 @@
         "rea": "not-run"
       },
       "agentError": null,
-      "durationMs": 70
+      "durationMs": 44
     },
     {
       "agentId": "revers-guarded",
@@ -4155,29 +3957,7 @@
       ],
       "attribution": null,
       "agentError": null,
-      "durationMs": 44
-    },
-    {
-      "agentId": "claude-haiku",
-      "scenarioId": "split-4-for-1",
-      "taskId": "value-portfolio",
-      "score": 0,
-      "verdict": "error",
-      "checks": [],
-      "actions": [],
-      "attribution": null,
-      "agentError": "Anthropic API error 401: 401 {\"type\":\"error\",\"error\":{\"type\":\"authentication_error\",\"message\":\"invalid x-api-key\"},\"request_id\":\"req_011Cfwg3aihXo6qSwxQ9jHJn\"}",
-      "llmUsage": {
-        "model": "claude-haiku-5-5",
-        "turns": 0,
-        "inputTokens": 0,
-        "outputTokens": 0,
-        "cacheReadTokens": 0,
-        "cacheWriteTokens": 0,
-        "costUsd": 0,
-        "stopReason": null
-      },
-      "durationMs": 330
+      "durationMs": 272
     }
   ],
   "leaderboard": [
@@ -4210,10 +3990,6 @@
       "runs": 10
     }
   ],
-  "llmCost": {
-    "totalUsd": 0,
-    "runs": 10
-  },
   "lending": [
     {
       "marketId": "CORRECT",

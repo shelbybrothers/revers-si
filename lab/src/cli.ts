@@ -58,7 +58,11 @@ async function main() {
   const t0 = Date.now();
   const world = await World.start({ forkUrl, log: (m) => console.log(`[world] ${m}`) });
   try {
-    const status = agents.map((agent) => ({ agent, skipReason: agent.unavailable?.() ?? null }));
+    const status: { agent: (typeof agents)[number]; skipReason: string | null }[] = [];
+    for (const agent of agents) {
+      const skipReason = agent.unavailable?.() ?? (await agent.preflight?.()) ?? null;
+      status.push({ agent, skipReason });
+    }
     for (const s of status) if (s.skipReason) console.log(`[skip] ${s.agent.id}: ${s.skipReason}`);
     const runnable = status.filter((s) => !s.skipReason).map((s) => s.agent);
 
