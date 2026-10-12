@@ -1,6 +1,6 @@
 {
   "version": "1",
-  "generatedAt": "2026-10-12T04:18:48.939Z",
+  "generatedAt": "2026-10-12T10:07:03.760Z",
   "mode": "replica",
   "chain": {
     "id": 31337,
@@ -193,7 +193,7 @@
       ],
       "attribution": null,
       "agentError": null,
-      "durationMs": 53
+      "durationMs": 62
     },
     {
       "agentId": "registry-only",
@@ -284,7 +284,7 @@
       ],
       "attribution": null,
       "agentError": null,
-      "durationMs": 41
+      "durationMs": 43
     },
     {
       "agentId": "oracle-blind",
@@ -383,7 +383,7 @@
       ],
       "attribution": null,
       "agentError": null,
-      "durationMs": 41
+      "durationMs": 40
     },
     {
       "agentId": "revers-guarded",
@@ -466,7 +466,7 @@
       ],
       "attribution": null,
       "agentError": null,
-      "durationMs": 45
+      "durationMs": 44
     },
     {
       "agentId": "naive-search",
@@ -566,10 +566,115 @@
           "error": null,
           "blockTime": 1791313223
         },
-        "rea": "not-run"
+        "rea": {
+          "status": "ran",
+          "tool": "rea-agents",
+          "version": "6.4.0",
+          "command": "rea analyze-javascript-application <dir with lab/src/agents/naive-search.ts> --json && rea trace-javascript-semantics {seed: naiveSearch.run, direction: ownership}",
+          "input": "lab/src/agents/naive-search.ts",
+          "graphId": "jsrg_813b108bc41711133fe77005cbd15656c705f89e0e9cc2484a49b69c187fbd69",
+          "queryId": "jsrq_2ceff69a37f36d33eb1b030e5c318622dcf950108648a63f0da9837dba7ff804",
+          "traceCoverage": "partial",
+          "reaEvidenceId": "ev_7b911ce3fd22b1e541a4d012fd61aa5ef5650cef7b956993f15f224a0bb8411e",
+          "function": {
+            "name": "naiveSearch.run",
+            "startLine": 12,
+            "endLine": 27
+          },
+          "summary": "naiveSearch.run: tools.searchTokens → results[0] → tools.getQuote → tools.buy",
+          "facts": [
+            {
+              "basis": "revers-projection",
+              "state": "inferred",
+              "resolution": "candidate",
+              "unknowns": [
+                "call-flow dynamic-call: tools.buy",
+                "data-flow unknown-value: task, tools, top, quote",
+                "object-flow ambiguous-target: top.address, task.intent.usd, tools.buy, quote.tokensOut"
+              ],
+              "text": "tools.buy(…) reads top.address, task.intent.usd, quote.tokensOut",
+              "line": 19
+            },
+            {
+              "basis": "rea",
+              "state": "inferred",
+              "resolution": "candidate",
+              "unknowns": [
+                "call-flow dynamic-call: tools.searchTokens",
+                "data-flow unknown-value: tools, symbol, results",
+                "object-flow ambiguous-target: tools.searchTokens"
+              ],
+              "text": "results ← tools.searchTokens(symbol)",
+              "line": 14
+            },
+            {
+              "basis": "revers-projection",
+              "state": "inferred",
+              "resolution": "candidate",
+              "unknowns": [
+                "data-flow unknown-value: results, top",
+                "object-flow ambiguous-target: results[0]"
+              ],
+              "text": "top ← results[0]",
+              "line": 15
+            },
+            {
+              "basis": "rea",
+              "state": "inferred",
+              "resolution": "candidate",
+              "unknowns": [
+                "call-flow dynamic-call: tools.getQuote",
+                "data-flow unknown-value: task, tools, top, quote",
+                "object-flow ambiguous-target: tools.getQuote, top.address, task.intent.usd"
+              ],
+              "text": "quote ← tools.getQuote(top.address, task.intent.usd)",
+              "line": 18
+            },
+            {
+              "basis": "revers-projection",
+              "state": "inferred",
+              "resolution": "candidate",
+              "unknowns": [
+                "call-flow dynamic-call: tools.searchTokens, tools.defer, tools.getQuote, tools.buy, tools.getPortfolio, tools.answer, tools.getPoolPrice",
+                "data-flow unknown-value: tools",
+                "object-flow ambiguous-target: tools.searchTokens, tools.defer, tools.getQuote, tools.buy, tools.getPortfolio, tools.answer, tools.getPoolPrice"
+              ],
+              "text": "naiveSearch.run calls tools.searchTokens, tools.defer, tools.getQuote, tools.buy, tools.getPortfolio, tools.answer, tools.getPoolPrice"
+            },
+            {
+              "basis": "rea",
+              "state": "unknown",
+              "text": "REA lists 46 unknowns in naiveSearch.run: 21 object-flow ambiguous-target, 10 data-flow unknown-value, 9 call-flow dynamic-call, 6 promise-ownership ambiguous-target"
+            },
+            {
+              "basis": "rea",
+              "state": "inferred",
+              "resolution": "resolved",
+              "unknowns": [
+                "promise-ownership ambiguous-target: awaits on lines 14, 18, 19, 22, 25, 26"
+              ],
+              "text": "naiveSearch.run awaits 6 expressions (REA ownership trace)"
+            },
+            {
+              "basis": "rea",
+              "state": "unknown",
+              "text": "REA rates the ownership trace of naiveSearch.run as partial coverage (15 relevant unknowns)"
+            },
+            {
+              "basis": "rea",
+              "state": "unknown",
+              "text": "REA leaves 9 member-call targets in naiveSearch.run unresolved (dynamic-call); the tools implementation is not part of this analysis"
+            },
+            {
+              "basis": "rea",
+              "state": "inferred",
+              "text": "imports ./types.js"
+            }
+          ]
+        }
       },
       "agentError": null,
-      "durationMs": 51
+      "durationMs": 53
     },
     {
       "agentId": "registry-only",
@@ -668,7 +773,7 @@
       ],
       "attribution": null,
       "agentError": null,
-      "durationMs": 51
+      "durationMs": 55
     },
     {
       "agentId": "oracle-blind",
@@ -775,7 +880,7 @@
       ],
       "attribution": null,
       "agentError": null,
-      "durationMs": 50
+      "durationMs": 51
     },
     {
       "agentId": "revers-guarded",
@@ -858,7 +963,7 @@
       ],
       "attribution": null,
       "agentError": null,
-      "durationMs": 49
+      "durationMs": 64
     },
     {
       "agentId": "naive-search",
@@ -958,10 +1063,115 @@
           "error": null,
           "blockTime": 1791741612
         },
-        "rea": "not-run"
+        "rea": {
+          "status": "ran",
+          "tool": "rea-agents",
+          "version": "6.4.0",
+          "command": "rea analyze-javascript-application <dir with lab/src/agents/naive-search.ts> --json && rea trace-javascript-semantics {seed: naiveSearch.run, direction: ownership}",
+          "input": "lab/src/agents/naive-search.ts",
+          "graphId": "jsrg_813b108bc41711133fe77005cbd15656c705f89e0e9cc2484a49b69c187fbd69",
+          "queryId": "jsrq_2ceff69a37f36d33eb1b030e5c318622dcf950108648a63f0da9837dba7ff804",
+          "traceCoverage": "partial",
+          "reaEvidenceId": "ev_7b911ce3fd22b1e541a4d012fd61aa5ef5650cef7b956993f15f224a0bb8411e",
+          "function": {
+            "name": "naiveSearch.run",
+            "startLine": 12,
+            "endLine": 27
+          },
+          "summary": "naiveSearch.run: tools.searchTokens → results[0] → tools.getQuote → tools.buy",
+          "facts": [
+            {
+              "basis": "revers-projection",
+              "state": "inferred",
+              "resolution": "candidate",
+              "unknowns": [
+                "call-flow dynamic-call: tools.buy",
+                "data-flow unknown-value: task, tools, top, quote",
+                "object-flow ambiguous-target: top.address, task.intent.usd, tools.buy, quote.tokensOut"
+              ],
+              "text": "tools.buy(…) reads top.address, task.intent.usd, quote.tokensOut",
+              "line": 19
+            },
+            {
+              "basis": "rea",
+              "state": "inferred",
+              "resolution": "candidate",
+              "unknowns": [
+                "call-flow dynamic-call: tools.searchTokens",
+                "data-flow unknown-value: tools, symbol, results",
+                "object-flow ambiguous-target: tools.searchTokens"
+              ],
+              "text": "results ← tools.searchTokens(symbol)",
+              "line": 14
+            },
+            {
+              "basis": "revers-projection",
+              "state": "inferred",
+              "resolution": "candidate",
+              "unknowns": [
+                "data-flow unknown-value: results, top",
+                "object-flow ambiguous-target: results[0]"
+              ],
+              "text": "top ← results[0]",
+              "line": 15
+            },
+            {
+              "basis": "rea",
+              "state": "inferred",
+              "resolution": "candidate",
+              "unknowns": [
+                "call-flow dynamic-call: tools.getQuote",
+                "data-flow unknown-value: task, tools, top, quote",
+                "object-flow ambiguous-target: tools.getQuote, top.address, task.intent.usd"
+              ],
+              "text": "quote ← tools.getQuote(top.address, task.intent.usd)",
+              "line": 18
+            },
+            {
+              "basis": "revers-projection",
+              "state": "inferred",
+              "resolution": "candidate",
+              "unknowns": [
+                "call-flow dynamic-call: tools.searchTokens, tools.defer, tools.getQuote, tools.buy, tools.getPortfolio, tools.answer, tools.getPoolPrice",
+                "data-flow unknown-value: tools",
+                "object-flow ambiguous-target: tools.searchTokens, tools.defer, tools.getQuote, tools.buy, tools.getPortfolio, tools.answer, tools.getPoolPrice"
+              ],
+              "text": "naiveSearch.run calls tools.searchTokens, tools.defer, tools.getQuote, tools.buy, tools.getPortfolio, tools.answer, tools.getPoolPrice"
+            },
+            {
+              "basis": "rea",
+              "state": "unknown",
+              "text": "REA lists 46 unknowns in naiveSearch.run: 21 object-flow ambiguous-target, 10 data-flow unknown-value, 9 call-flow dynamic-call, 6 promise-ownership ambiguous-target"
+            },
+            {
+              "basis": "rea",
+              "state": "inferred",
+              "resolution": "resolved",
+              "unknowns": [
+                "promise-ownership ambiguous-target: awaits on lines 14, 18, 19, 22, 25, 26"
+              ],
+              "text": "naiveSearch.run awaits 6 expressions (REA ownership trace)"
+            },
+            {
+              "basis": "rea",
+              "state": "unknown",
+              "text": "REA rates the ownership trace of naiveSearch.run as partial coverage (15 relevant unknowns)"
+            },
+            {
+              "basis": "rea",
+              "state": "unknown",
+              "text": "REA leaves 9 member-call targets in naiveSearch.run unresolved (dynamic-call); the tools implementation is not part of this analysis"
+            },
+            {
+              "basis": "rea",
+              "state": "inferred",
+              "text": "imports ./types.js"
+            }
+          ]
+        }
       },
       "agentError": null,
-      "durationMs": 42
+      "durationMs": 38
     },
     {
       "agentId": "registry-only",
@@ -1069,10 +1279,124 @@
           "error": null,
           "blockTime": 1791741612
         },
-        "rea": "not-run"
+        "rea": {
+          "status": "ran",
+          "tool": "rea-agents",
+          "version": "6.4.0",
+          "command": "rea analyze-javascript-application <dir with lab/src/agents/registry-only.ts> --json && rea trace-javascript-semantics {seed: registryOnly.run, direction: ownership}",
+          "input": "lab/src/agents/registry-only.ts",
+          "graphId": "jsrg_1a1699d546307b561ef4e384b5956610dcdbb26cfddacd2bc4c27993de7de198",
+          "queryId": "jsrq_49ee0ceb9999f27d9db5ce6c1ca51f064e9c3da09925a836513588dcb7758b65",
+          "traceCoverage": "partial",
+          "reaEvidenceId": "ev_a2d628ecd66a738df2b7a2db552cb9888abfbeb7aff5fe32f0a404a3af81e8df",
+          "function": {
+            "name": "registryOnly.run",
+            "startLine": 12,
+            "endLine": 34
+          },
+          "summary": "registryOnly.run: tools.searchTokens → tools.getQuote → tools.buy",
+          "facts": [
+            {
+              "basis": "revers-projection",
+              "state": "inferred",
+              "resolution": "candidate",
+              "unknowns": [
+                "call-flow dynamic-call: tools.buy",
+                "data-flow unknown-value: task, tools, token, quote",
+                "object-flow ambiguous-target: token.address, task.intent.usd, tools.buy, quote.tokensOut"
+              ],
+              "text": "tools.buy(…) reads token.address, task.intent.usd, quote.tokensOut",
+              "line": 26
+            },
+            {
+              "basis": "rea",
+              "state": "inferred",
+              "resolution": "candidate",
+              "unknowns": [
+                "call-flow dynamic-call: tools.searchTokens",
+                "data-flow unknown-value: tools, symbol, results",
+                "object-flow ambiguous-target: tools.searchTokens"
+              ],
+              "text": "results ← tools.searchTokens(symbol)",
+              "line": 14
+            },
+            {
+              "basis": "revers-projection",
+              "state": "inferred",
+              "resolution": "resolved",
+              "unknowns": [
+                "data-flow unknown-value: results, r"
+              ],
+              "text": "r ← results",
+              "line": 16
+            },
+            {
+              "basis": "revers-projection",
+              "state": "inferred",
+              "resolution": "resolved",
+              "unknowns": [
+                "data-flow unknown-value: token, r"
+              ],
+              "text": "token ← r",
+              "line": 19
+            },
+            {
+              "basis": "rea",
+              "state": "inferred",
+              "resolution": "candidate",
+              "unknowns": [
+                "call-flow dynamic-call: tools.getQuote",
+                "data-flow unknown-value: task, tools, token, quote",
+                "object-flow ambiguous-target: tools.getQuote, token.address, task.intent.usd"
+              ],
+              "text": "quote ← tools.getQuote(token.address, task.intent.usd)",
+              "line": 25
+            },
+            {
+              "basis": "revers-projection",
+              "state": "inferred",
+              "resolution": "candidate",
+              "unknowns": [
+                "call-flow dynamic-call: tools.searchTokens, tools.getTokenInfo, tools.defer, tools.getQuote, tools.buy, tools.getPortfolio, tools.answer, tools.getPoolPrice",
+                "data-flow unknown-value: tools",
+                "object-flow ambiguous-target: tools.searchTokens, tools.getTokenInfo, tools.defer, tools.getQuote, tools.buy, tools.getPortfolio, tools.answer, tools.getPoolPrice"
+              ],
+              "text": "registryOnly.run calls tools.searchTokens, tools.getTokenInfo, tools.defer, tools.getQuote, tools.buy, tools.getPortfolio, tools.answer, tools.getPoolPrice"
+            },
+            {
+              "basis": "rea",
+              "state": "unknown",
+              "text": "REA lists 54 unknowns in registryOnly.run: 25 object-flow ambiguous-target, 12 data-flow unknown-value, 10 call-flow dynamic-call, 7 promise-ownership ambiguous-target"
+            },
+            {
+              "basis": "rea",
+              "state": "inferred",
+              "resolution": "resolved",
+              "unknowns": [
+                "promise-ownership ambiguous-target: awaits on lines 14, 17, 25, 26, 29, 32, 33"
+              ],
+              "text": "registryOnly.run awaits 7 expressions (REA ownership trace)"
+            },
+            {
+              "basis": "rea",
+              "state": "unknown",
+              "text": "REA rates the ownership trace of registryOnly.run as partial coverage (17 relevant unknowns)"
+            },
+            {
+              "basis": "rea",
+              "state": "unknown",
+              "text": "REA leaves 10 member-call targets in registryOnly.run unresolved (dynamic-call); the tools implementation is not part of this analysis"
+            },
+            {
+              "basis": "rea",
+              "state": "inferred",
+              "text": "imports ./types.js"
+            }
+          ]
+        }
       },
       "agentError": null,
-      "durationMs": 42
+      "durationMs": 36
     },
     {
       "agentId": "oracle-blind",
@@ -1188,10 +1512,124 @@
           "error": null,
           "blockTime": 1791741612
         },
-        "rea": "not-run"
+        "rea": {
+          "status": "ran",
+          "tool": "rea-agents",
+          "version": "6.4.0",
+          "command": "rea analyze-javascript-application <dir with lab/src/agents/oracle-blind.ts> --json && rea trace-javascript-semantics {seed: oracleBlind.run, direction: ownership}",
+          "input": "lab/src/agents/oracle-blind.ts",
+          "graphId": "jsrg_3df06f2abe74230dac64852df4feae2c07c0d5b1f4f0afc4bc36101e6ce606ed",
+          "queryId": "jsrq_669b792c7a953e596df51b9be65e3c88ad0b2b598ffb46da2d3ff461f9cbd821",
+          "traceCoverage": "partial",
+          "reaEvidenceId": "ev_d296e5623297686882f096fab610fdc0e582fca40f91b458ace2f7ed2920d857",
+          "function": {
+            "name": "oracleBlind.run",
+            "startLine": 14,
+            "endLine": 40
+          },
+          "summary": "oracleBlind.run: tools.searchTokens → tools.getQuote → tools.buy",
+          "facts": [
+            {
+              "basis": "revers-projection",
+              "state": "inferred",
+              "resolution": "candidate",
+              "unknowns": [
+                "call-flow dynamic-call: tools.buy",
+                "data-flow unknown-value: task, tools, token, quote",
+                "object-flow ambiguous-target: token.address, task.intent.usd, tools.buy, quote.tokensOut"
+              ],
+              "text": "tools.buy(…) reads token.address, task.intent.usd, quote.tokensOut",
+              "line": 33
+            },
+            {
+              "basis": "rea",
+              "state": "inferred",
+              "resolution": "candidate",
+              "unknowns": [
+                "call-flow dynamic-call: tools.searchTokens",
+                "data-flow unknown-value: tools, symbol, results",
+                "object-flow ambiguous-target: tools.searchTokens"
+              ],
+              "text": "results ← tools.searchTokens(symbol)",
+              "line": 16
+            },
+            {
+              "basis": "revers-projection",
+              "state": "inferred",
+              "resolution": "resolved",
+              "unknowns": [
+                "data-flow unknown-value: results, r"
+              ],
+              "text": "r ← results",
+              "line": 18
+            },
+            {
+              "basis": "revers-projection",
+              "state": "inferred",
+              "resolution": "resolved",
+              "unknowns": [
+                "data-flow unknown-value: token, r"
+              ],
+              "text": "token ← r",
+              "line": 21
+            },
+            {
+              "basis": "rea",
+              "state": "inferred",
+              "resolution": "candidate",
+              "unknowns": [
+                "call-flow dynamic-call: tools.getQuote",
+                "data-flow unknown-value: task, tools, token, quote",
+                "object-flow ambiguous-target: token.address, tools.getQuote, task.intent.usd"
+              ],
+              "text": "quote ← tools.getQuote(token.address, task.intent.usd)",
+              "line": 28
+            },
+            {
+              "basis": "revers-projection",
+              "state": "inferred",
+              "resolution": "candidate",
+              "unknowns": [
+                "call-flow dynamic-call: tools.searchTokens, tools.getTokenInfo, tools.defer, tools.getOraclePrice, tools.getQuote, tools.buy, tools.getPortfolio, tools.answer",
+                "data-flow unknown-value: tools",
+                "object-flow ambiguous-target: tools.searchTokens, tools.getTokenInfo, tools.defer, tools.getOraclePrice, tools.getQuote, tools.buy, tools.getPortfolio, tools.answer"
+              ],
+              "text": "oracleBlind.run calls tools.searchTokens, tools.getTokenInfo, tools.defer, tools.getOraclePrice, tools.getQuote, tools.buy, tools.getPortfolio, tools.answer"
+            },
+            {
+              "basis": "rea",
+              "state": "unknown",
+              "text": "REA lists 65 unknowns in oracleBlind.run: 31 object-flow ambiguous-target, 14 call-flow dynamic-call, 13 data-flow unknown-value, 7 promise-ownership ambiguous-target"
+            },
+            {
+              "basis": "rea",
+              "state": "inferred",
+              "resolution": "resolved",
+              "unknowns": [
+                "promise-ownership ambiguous-target: awaits on lines 16, 19, 26, 28, 33, 36, 39"
+              ],
+              "text": "oracleBlind.run awaits 7 expressions (REA ownership trace)"
+            },
+            {
+              "basis": "rea",
+              "state": "unknown",
+              "text": "REA rates the ownership trace of oracleBlind.run as partial coverage (21 relevant unknowns)"
+            },
+            {
+              "basis": "rea",
+              "state": "unknown",
+              "text": "REA leaves 14 member-call targets in oracleBlind.run unresolved (dynamic-call); the tools implementation is not part of this analysis"
+            },
+            {
+              "basis": "rea",
+              "state": "inferred",
+              "text": "imports ./types.js"
+            }
+          ]
+        }
       },
       "agentError": null,
-      "durationMs": 37
+      "durationMs": 107
     },
     {
       "agentId": "revers-guarded",
@@ -1263,7 +1701,7 @@
       ],
       "attribution": null,
       "agentError": null,
-      "durationMs": 30
+      "durationMs": 72
     },
     {
       "agentId": "naive-search",
@@ -1363,10 +1801,115 @@
           "error": null,
           "blockTime": 1791741611
         },
-        "rea": "not-run"
+        "rea": {
+          "status": "ran",
+          "tool": "rea-agents",
+          "version": "6.4.0",
+          "command": "rea analyze-javascript-application <dir with lab/src/agents/naive-search.ts> --json && rea trace-javascript-semantics {seed: naiveSearch.run, direction: ownership}",
+          "input": "lab/src/agents/naive-search.ts",
+          "graphId": "jsrg_813b108bc41711133fe77005cbd15656c705f89e0e9cc2484a49b69c187fbd69",
+          "queryId": "jsrq_2ceff69a37f36d33eb1b030e5c318622dcf950108648a63f0da9837dba7ff804",
+          "traceCoverage": "partial",
+          "reaEvidenceId": "ev_7b911ce3fd22b1e541a4d012fd61aa5ef5650cef7b956993f15f224a0bb8411e",
+          "function": {
+            "name": "naiveSearch.run",
+            "startLine": 12,
+            "endLine": 27
+          },
+          "summary": "naiveSearch.run: tools.searchTokens → results[0] → tools.getQuote → tools.buy",
+          "facts": [
+            {
+              "basis": "revers-projection",
+              "state": "inferred",
+              "resolution": "candidate",
+              "unknowns": [
+                "call-flow dynamic-call: tools.buy",
+                "data-flow unknown-value: task, tools, top, quote",
+                "object-flow ambiguous-target: top.address, task.intent.usd, tools.buy, quote.tokensOut"
+              ],
+              "text": "tools.buy(…) reads top.address, task.intent.usd, quote.tokensOut",
+              "line": 19
+            },
+            {
+              "basis": "rea",
+              "state": "inferred",
+              "resolution": "candidate",
+              "unknowns": [
+                "call-flow dynamic-call: tools.searchTokens",
+                "data-flow unknown-value: tools, symbol, results",
+                "object-flow ambiguous-target: tools.searchTokens"
+              ],
+              "text": "results ← tools.searchTokens(symbol)",
+              "line": 14
+            },
+            {
+              "basis": "revers-projection",
+              "state": "inferred",
+              "resolution": "candidate",
+              "unknowns": [
+                "data-flow unknown-value: results, top",
+                "object-flow ambiguous-target: results[0]"
+              ],
+              "text": "top ← results[0]",
+              "line": 15
+            },
+            {
+              "basis": "rea",
+              "state": "inferred",
+              "resolution": "candidate",
+              "unknowns": [
+                "call-flow dynamic-call: tools.getQuote",
+                "data-flow unknown-value: task, tools, top, quote",
+                "object-flow ambiguous-target: tools.getQuote, top.address, task.intent.usd"
+              ],
+              "text": "quote ← tools.getQuote(top.address, task.intent.usd)",
+              "line": 18
+            },
+            {
+              "basis": "revers-projection",
+              "state": "inferred",
+              "resolution": "candidate",
+              "unknowns": [
+                "call-flow dynamic-call: tools.searchTokens, tools.defer, tools.getQuote, tools.buy, tools.getPortfolio, tools.answer, tools.getPoolPrice",
+                "data-flow unknown-value: tools",
+                "object-flow ambiguous-target: tools.searchTokens, tools.defer, tools.getQuote, tools.buy, tools.getPortfolio, tools.answer, tools.getPoolPrice"
+              ],
+              "text": "naiveSearch.run calls tools.searchTokens, tools.defer, tools.getQuote, tools.buy, tools.getPortfolio, tools.answer, tools.getPoolPrice"
+            },
+            {
+              "basis": "rea",
+              "state": "unknown",
+              "text": "REA lists 46 unknowns in naiveSearch.run: 21 object-flow ambiguous-target, 10 data-flow unknown-value, 9 call-flow dynamic-call, 6 promise-ownership ambiguous-target"
+            },
+            {
+              "basis": "rea",
+              "state": "inferred",
+              "resolution": "resolved",
+              "unknowns": [
+                "promise-ownership ambiguous-target: awaits on lines 14, 18, 19, 22, 25, 26"
+              ],
+              "text": "naiveSearch.run awaits 6 expressions (REA ownership trace)"
+            },
+            {
+              "basis": "rea",
+              "state": "unknown",
+              "text": "REA rates the ownership trace of naiveSearch.run as partial coverage (15 relevant unknowns)"
+            },
+            {
+              "basis": "rea",
+              "state": "unknown",
+              "text": "REA leaves 9 member-call targets in naiveSearch.run unresolved (dynamic-call); the tools implementation is not part of this analysis"
+            },
+            {
+              "basis": "rea",
+              "state": "inferred",
+              "text": "imports ./types.js"
+            }
+          ]
+        }
       },
       "agentError": null,
-      "durationMs": 32
+      "durationMs": 80
     },
     {
       "agentId": "registry-only",
@@ -1474,10 +2017,124 @@
           "error": null,
           "blockTime": 1791741611
         },
-        "rea": "not-run"
+        "rea": {
+          "status": "ran",
+          "tool": "rea-agents",
+          "version": "6.4.0",
+          "command": "rea analyze-javascript-application <dir with lab/src/agents/registry-only.ts> --json && rea trace-javascript-semantics {seed: registryOnly.run, direction: ownership}",
+          "input": "lab/src/agents/registry-only.ts",
+          "graphId": "jsrg_1a1699d546307b561ef4e384b5956610dcdbb26cfddacd2bc4c27993de7de198",
+          "queryId": "jsrq_49ee0ceb9999f27d9db5ce6c1ca51f064e9c3da09925a836513588dcb7758b65",
+          "traceCoverage": "partial",
+          "reaEvidenceId": "ev_a2d628ecd66a738df2b7a2db552cb9888abfbeb7aff5fe32f0a404a3af81e8df",
+          "function": {
+            "name": "registryOnly.run",
+            "startLine": 12,
+            "endLine": 34
+          },
+          "summary": "registryOnly.run: tools.searchTokens → tools.getQuote → tools.buy",
+          "facts": [
+            {
+              "basis": "revers-projection",
+              "state": "inferred",
+              "resolution": "candidate",
+              "unknowns": [
+                "call-flow dynamic-call: tools.buy",
+                "data-flow unknown-value: task, tools, token, quote",
+                "object-flow ambiguous-target: token.address, task.intent.usd, tools.buy, quote.tokensOut"
+              ],
+              "text": "tools.buy(…) reads token.address, task.intent.usd, quote.tokensOut",
+              "line": 26
+            },
+            {
+              "basis": "rea",
+              "state": "inferred",
+              "resolution": "candidate",
+              "unknowns": [
+                "call-flow dynamic-call: tools.searchTokens",
+                "data-flow unknown-value: tools, symbol, results",
+                "object-flow ambiguous-target: tools.searchTokens"
+              ],
+              "text": "results ← tools.searchTokens(symbol)",
+              "line": 14
+            },
+            {
+              "basis": "revers-projection",
+              "state": "inferred",
+              "resolution": "resolved",
+              "unknowns": [
+                "data-flow unknown-value: results, r"
+              ],
+              "text": "r ← results",
+              "line": 16
+            },
+            {
+              "basis": "revers-projection",
+              "state": "inferred",
+              "resolution": "resolved",
+              "unknowns": [
+                "data-flow unknown-value: token, r"
+              ],
+              "text": "token ← r",
+              "line": 19
+            },
+            {
+              "basis": "rea",
+              "state": "inferred",
+              "resolution": "candidate",
+              "unknowns": [
+                "call-flow dynamic-call: tools.getQuote",
+                "data-flow unknown-value: task, tools, token, quote",
+                "object-flow ambiguous-target: tools.getQuote, token.address, task.intent.usd"
+              ],
+              "text": "quote ← tools.getQuote(token.address, task.intent.usd)",
+              "line": 25
+            },
+            {
+              "basis": "revers-projection",
+              "state": "inferred",
+              "resolution": "candidate",
+              "unknowns": [
+                "call-flow dynamic-call: tools.searchTokens, tools.getTokenInfo, tools.defer, tools.getQuote, tools.buy, tools.getPortfolio, tools.answer, tools.getPoolPrice",
+                "data-flow unknown-value: tools",
+                "object-flow ambiguous-target: tools.searchTokens, tools.getTokenInfo, tools.defer, tools.getQuote, tools.buy, tools.getPortfolio, tools.answer, tools.getPoolPrice"
+              ],
+              "text": "registryOnly.run calls tools.searchTokens, tools.getTokenInfo, tools.defer, tools.getQuote, tools.buy, tools.getPortfolio, tools.answer, tools.getPoolPrice"
+            },
+            {
+              "basis": "rea",
+              "state": "unknown",
+              "text": "REA lists 54 unknowns in registryOnly.run: 25 object-flow ambiguous-target, 12 data-flow unknown-value, 10 call-flow dynamic-call, 7 promise-ownership ambiguous-target"
+            },
+            {
+              "basis": "rea",
+              "state": "inferred",
+              "resolution": "resolved",
+              "unknowns": [
+                "promise-ownership ambiguous-target: awaits on lines 14, 17, 25, 26, 29, 32, 33"
+              ],
+              "text": "registryOnly.run awaits 7 expressions (REA ownership trace)"
+            },
+            {
+              "basis": "rea",
+              "state": "unknown",
+              "text": "REA rates the ownership trace of registryOnly.run as partial coverage (17 relevant unknowns)"
+            },
+            {
+              "basis": "rea",
+              "state": "unknown",
+              "text": "REA leaves 10 member-call targets in registryOnly.run unresolved (dynamic-call); the tools implementation is not part of this analysis"
+            },
+            {
+              "basis": "rea",
+              "state": "inferred",
+              "text": "imports ./types.js"
+            }
+          ]
+        }
       },
       "agentError": null,
-      "durationMs": 36
+      "durationMs": 50
     },
     {
       "agentId": "oracle-blind",
@@ -1574,7 +2231,7 @@
       ],
       "attribution": null,
       "agentError": null,
-      "durationMs": 32
+      "durationMs": 63
     },
     {
       "agentId": "revers-guarded",
@@ -1646,7 +2303,7 @@
       ],
       "attribution": null,
       "agentError": null,
-      "durationMs": 31
+      "durationMs": 120
     },
     {
       "agentId": "naive-search",
@@ -1746,10 +2403,115 @@
           "error": null,
           "blockTime": 1791311401
         },
-        "rea": "not-run"
+        "rea": {
+          "status": "ran",
+          "tool": "rea-agents",
+          "version": "6.4.0",
+          "command": "rea analyze-javascript-application <dir with lab/src/agents/naive-search.ts> --json && rea trace-javascript-semantics {seed: naiveSearch.run, direction: ownership}",
+          "input": "lab/src/agents/naive-search.ts",
+          "graphId": "jsrg_813b108bc41711133fe77005cbd15656c705f89e0e9cc2484a49b69c187fbd69",
+          "queryId": "jsrq_2ceff69a37f36d33eb1b030e5c318622dcf950108648a63f0da9837dba7ff804",
+          "traceCoverage": "partial",
+          "reaEvidenceId": "ev_7b911ce3fd22b1e541a4d012fd61aa5ef5650cef7b956993f15f224a0bb8411e",
+          "function": {
+            "name": "naiveSearch.run",
+            "startLine": 12,
+            "endLine": 27
+          },
+          "summary": "naiveSearch.run: tools.searchTokens → results[0] → tools.getQuote → tools.buy",
+          "facts": [
+            {
+              "basis": "revers-projection",
+              "state": "inferred",
+              "resolution": "candidate",
+              "unknowns": [
+                "call-flow dynamic-call: tools.buy",
+                "data-flow unknown-value: task, tools, top, quote",
+                "object-flow ambiguous-target: top.address, task.intent.usd, tools.buy, quote.tokensOut"
+              ],
+              "text": "tools.buy(…) reads top.address, task.intent.usd, quote.tokensOut",
+              "line": 19
+            },
+            {
+              "basis": "rea",
+              "state": "inferred",
+              "resolution": "candidate",
+              "unknowns": [
+                "call-flow dynamic-call: tools.searchTokens",
+                "data-flow unknown-value: tools, symbol, results",
+                "object-flow ambiguous-target: tools.searchTokens"
+              ],
+              "text": "results ← tools.searchTokens(symbol)",
+              "line": 14
+            },
+            {
+              "basis": "revers-projection",
+              "state": "inferred",
+              "resolution": "candidate",
+              "unknowns": [
+                "data-flow unknown-value: results, top",
+                "object-flow ambiguous-target: results[0]"
+              ],
+              "text": "top ← results[0]",
+              "line": 15
+            },
+            {
+              "basis": "rea",
+              "state": "inferred",
+              "resolution": "candidate",
+              "unknowns": [
+                "call-flow dynamic-call: tools.getQuote",
+                "data-flow unknown-value: task, tools, top, quote",
+                "object-flow ambiguous-target: tools.getQuote, top.address, task.intent.usd"
+              ],
+              "text": "quote ← tools.getQuote(top.address, task.intent.usd)",
+              "line": 18
+            },
+            {
+              "basis": "revers-projection",
+              "state": "inferred",
+              "resolution": "candidate",
+              "unknowns": [
+                "call-flow dynamic-call: tools.searchTokens, tools.defer, tools.getQuote, tools.buy, tools.getPortfolio, tools.answer, tools.getPoolPrice",
+                "data-flow unknown-value: tools",
+                "object-flow ambiguous-target: tools.searchTokens, tools.defer, tools.getQuote, tools.buy, tools.getPortfolio, tools.answer, tools.getPoolPrice"
+              ],
+              "text": "naiveSearch.run calls tools.searchTokens, tools.defer, tools.getQuote, tools.buy, tools.getPortfolio, tools.answer, tools.getPoolPrice"
+            },
+            {
+              "basis": "rea",
+              "state": "unknown",
+              "text": "REA lists 46 unknowns in naiveSearch.run: 21 object-flow ambiguous-target, 10 data-flow unknown-value, 9 call-flow dynamic-call, 6 promise-ownership ambiguous-target"
+            },
+            {
+              "basis": "rea",
+              "state": "inferred",
+              "resolution": "resolved",
+              "unknowns": [
+                "promise-ownership ambiguous-target: awaits on lines 14, 18, 19, 22, 25, 26"
+              ],
+              "text": "naiveSearch.run awaits 6 expressions (REA ownership trace)"
+            },
+            {
+              "basis": "rea",
+              "state": "unknown",
+              "text": "REA rates the ownership trace of naiveSearch.run as partial coverage (15 relevant unknowns)"
+            },
+            {
+              "basis": "rea",
+              "state": "unknown",
+              "text": "REA leaves 9 member-call targets in naiveSearch.run unresolved (dynamic-call); the tools implementation is not part of this analysis"
+            },
+            {
+              "basis": "rea",
+              "state": "inferred",
+              "text": "imports ./types.js"
+            }
+          ]
+        }
       },
       "agentError": null,
-      "durationMs": 34
+      "durationMs": 94
     },
     {
       "agentId": "registry-only",
@@ -1857,10 +2619,124 @@
           "error": null,
           "blockTime": 1791311401
         },
-        "rea": "not-run"
+        "rea": {
+          "status": "ran",
+          "tool": "rea-agents",
+          "version": "6.4.0",
+          "command": "rea analyze-javascript-application <dir with lab/src/agents/registry-only.ts> --json && rea trace-javascript-semantics {seed: registryOnly.run, direction: ownership}",
+          "input": "lab/src/agents/registry-only.ts",
+          "graphId": "jsrg_1a1699d546307b561ef4e384b5956610dcdbb26cfddacd2bc4c27993de7de198",
+          "queryId": "jsrq_49ee0ceb9999f27d9db5ce6c1ca51f064e9c3da09925a836513588dcb7758b65",
+          "traceCoverage": "partial",
+          "reaEvidenceId": "ev_a2d628ecd66a738df2b7a2db552cb9888abfbeb7aff5fe32f0a404a3af81e8df",
+          "function": {
+            "name": "registryOnly.run",
+            "startLine": 12,
+            "endLine": 34
+          },
+          "summary": "registryOnly.run: tools.searchTokens → tools.getQuote → tools.buy",
+          "facts": [
+            {
+              "basis": "revers-projection",
+              "state": "inferred",
+              "resolution": "candidate",
+              "unknowns": [
+                "call-flow dynamic-call: tools.buy",
+                "data-flow unknown-value: task, tools, token, quote",
+                "object-flow ambiguous-target: token.address, task.intent.usd, tools.buy, quote.tokensOut"
+              ],
+              "text": "tools.buy(…) reads token.address, task.intent.usd, quote.tokensOut",
+              "line": 26
+            },
+            {
+              "basis": "rea",
+              "state": "inferred",
+              "resolution": "candidate",
+              "unknowns": [
+                "call-flow dynamic-call: tools.searchTokens",
+                "data-flow unknown-value: tools, symbol, results",
+                "object-flow ambiguous-target: tools.searchTokens"
+              ],
+              "text": "results ← tools.searchTokens(symbol)",
+              "line": 14
+            },
+            {
+              "basis": "revers-projection",
+              "state": "inferred",
+              "resolution": "resolved",
+              "unknowns": [
+                "data-flow unknown-value: results, r"
+              ],
+              "text": "r ← results",
+              "line": 16
+            },
+            {
+              "basis": "revers-projection",
+              "state": "inferred",
+              "resolution": "resolved",
+              "unknowns": [
+                "data-flow unknown-value: token, r"
+              ],
+              "text": "token ← r",
+              "line": 19
+            },
+            {
+              "basis": "rea",
+              "state": "inferred",
+              "resolution": "candidate",
+              "unknowns": [
+                "call-flow dynamic-call: tools.getQuote",
+                "data-flow unknown-value: task, tools, token, quote",
+                "object-flow ambiguous-target: tools.getQuote, token.address, task.intent.usd"
+              ],
+              "text": "quote ← tools.getQuote(token.address, task.intent.usd)",
+              "line": 25
+            },
+            {
+              "basis": "revers-projection",
+              "state": "inferred",
+              "resolution": "candidate",
+              "unknowns": [
+                "call-flow dynamic-call: tools.searchTokens, tools.getTokenInfo, tools.defer, tools.getQuote, tools.buy, tools.getPortfolio, tools.answer, tools.getPoolPrice",
+                "data-flow unknown-value: tools",
+                "object-flow ambiguous-target: tools.searchTokens, tools.getTokenInfo, tools.defer, tools.getQuote, tools.buy, tools.getPortfolio, tools.answer, tools.getPoolPrice"
+              ],
+              "text": "registryOnly.run calls tools.searchTokens, tools.getTokenInfo, tools.defer, tools.getQuote, tools.buy, tools.getPortfolio, tools.answer, tools.getPoolPrice"
+            },
+            {
+              "basis": "rea",
+              "state": "unknown",
+              "text": "REA lists 54 unknowns in registryOnly.run: 25 object-flow ambiguous-target, 12 data-flow unknown-value, 10 call-flow dynamic-call, 7 promise-ownership ambiguous-target"
+            },
+            {
+              "basis": "rea",
+              "state": "inferred",
+              "resolution": "resolved",
+              "unknowns": [
+                "promise-ownership ambiguous-target: awaits on lines 14, 17, 25, 26, 29, 32, 33"
+              ],
+              "text": "registryOnly.run awaits 7 expressions (REA ownership trace)"
+            },
+            {
+              "basis": "rea",
+              "state": "unknown",
+              "text": "REA rates the ownership trace of registryOnly.run as partial coverage (17 relevant unknowns)"
+            },
+            {
+              "basis": "rea",
+              "state": "unknown",
+              "text": "REA leaves 10 member-call targets in registryOnly.run unresolved (dynamic-call); the tools implementation is not part of this analysis"
+            },
+            {
+              "basis": "rea",
+              "state": "inferred",
+              "text": "imports ./types.js"
+            }
+          ]
+        }
       },
       "agentError": null,
-      "durationMs": 36
+      "durationMs": 234
     },
     {
       "agentId": "oracle-blind",
@@ -1976,10 +2852,124 @@
           "error": null,
           "blockTime": 1791311401
         },
-        "rea": "not-run"
+        "rea": {
+          "status": "ran",
+          "tool": "rea-agents",
+          "version": "6.4.0",
+          "command": "rea analyze-javascript-application <dir with lab/src/agents/oracle-blind.ts> --json && rea trace-javascript-semantics {seed: oracleBlind.run, direction: ownership}",
+          "input": "lab/src/agents/oracle-blind.ts",
+          "graphId": "jsrg_3df06f2abe74230dac64852df4feae2c07c0d5b1f4f0afc4bc36101e6ce606ed",
+          "queryId": "jsrq_669b792c7a953e596df51b9be65e3c88ad0b2b598ffb46da2d3ff461f9cbd821",
+          "traceCoverage": "partial",
+          "reaEvidenceId": "ev_d296e5623297686882f096fab610fdc0e582fca40f91b458ace2f7ed2920d857",
+          "function": {
+            "name": "oracleBlind.run",
+            "startLine": 14,
+            "endLine": 40
+          },
+          "summary": "oracleBlind.run: tools.searchTokens → tools.getQuote → tools.buy",
+          "facts": [
+            {
+              "basis": "revers-projection",
+              "state": "inferred",
+              "resolution": "candidate",
+              "unknowns": [
+                "call-flow dynamic-call: tools.buy",
+                "data-flow unknown-value: task, tools, token, quote",
+                "object-flow ambiguous-target: token.address, task.intent.usd, tools.buy, quote.tokensOut"
+              ],
+              "text": "tools.buy(…) reads token.address, task.intent.usd, quote.tokensOut",
+              "line": 33
+            },
+            {
+              "basis": "rea",
+              "state": "inferred",
+              "resolution": "candidate",
+              "unknowns": [
+                "call-flow dynamic-call: tools.searchTokens",
+                "data-flow unknown-value: tools, symbol, results",
+                "object-flow ambiguous-target: tools.searchTokens"
+              ],
+              "text": "results ← tools.searchTokens(symbol)",
+              "line": 16
+            },
+            {
+              "basis": "revers-projection",
+              "state": "inferred",
+              "resolution": "resolved",
+              "unknowns": [
+                "data-flow unknown-value: results, r"
+              ],
+              "text": "r ← results",
+              "line": 18
+            },
+            {
+              "basis": "revers-projection",
+              "state": "inferred",
+              "resolution": "resolved",
+              "unknowns": [
+                "data-flow unknown-value: token, r"
+              ],
+              "text": "token ← r",
+              "line": 21
+            },
+            {
+              "basis": "rea",
+              "state": "inferred",
+              "resolution": "candidate",
+              "unknowns": [
+                "call-flow dynamic-call: tools.getQuote",
+                "data-flow unknown-value: task, tools, token, quote",
+                "object-flow ambiguous-target: token.address, tools.getQuote, task.intent.usd"
+              ],
+              "text": "quote ← tools.getQuote(token.address, task.intent.usd)",
+              "line": 28
+            },
+            {
+              "basis": "revers-projection",
+              "state": "inferred",
+              "resolution": "candidate",
+              "unknowns": [
+                "call-flow dynamic-call: tools.searchTokens, tools.getTokenInfo, tools.defer, tools.getOraclePrice, tools.getQuote, tools.buy, tools.getPortfolio, tools.answer",
+                "data-flow unknown-value: tools",
+                "object-flow ambiguous-target: tools.searchTokens, tools.getTokenInfo, tools.defer, tools.getOraclePrice, tools.getQuote, tools.buy, tools.getPortfolio, tools.answer"
+              ],
+              "text": "oracleBlind.run calls tools.searchTokens, tools.getTokenInfo, tools.defer, tools.getOraclePrice, tools.getQuote, tools.buy, tools.getPortfolio, tools.answer"
+            },
+            {
+              "basis": "rea",
+              "state": "unknown",
+              "text": "REA lists 65 unknowns in oracleBlind.run: 31 object-flow ambiguous-target, 14 call-flow dynamic-call, 13 data-flow unknown-value, 7 promise-ownership ambiguous-target"
+            },
+            {
+              "basis": "rea",
+              "state": "inferred",
+              "resolution": "resolved",
+              "unknowns": [
+                "promise-ownership ambiguous-target: awaits on lines 16, 19, 26, 28, 33, 36, 39"
+              ],
+              "text": "oracleBlind.run awaits 7 expressions (REA ownership trace)"
+            },
+            {
+              "basis": "rea",
+              "state": "unknown",
+              "text": "REA rates the ownership trace of oracleBlind.run as partial coverage (21 relevant unknowns)"
+            },
+            {
+              "basis": "rea",
+              "state": "unknown",
+              "text": "REA leaves 14 member-call targets in oracleBlind.run unresolved (dynamic-call); the tools implementation is not part of this analysis"
+            },
+            {
+              "basis": "rea",
+              "state": "inferred",
+              "text": "imports ./types.js"
+            }
+          ]
+        }
       },
       "agentError": null,
-      "durationMs": 41
+      "durationMs": 166
     },
     {
       "agentId": "revers-guarded",
@@ -2051,7 +3041,7 @@
       ],
       "attribution": null,
       "agentError": null,
-      "durationMs": 32
+      "durationMs": 359
     },
     {
       "agentId": "naive-search",
@@ -2134,7 +3124,7 @@
       ],
       "attribution": null,
       "agentError": null,
-      "durationMs": 43
+      "durationMs": 273
     },
     {
       "agentId": "registry-only",
@@ -2225,7 +3215,7 @@
       ],
       "attribution": null,
       "agentError": null,
-      "durationMs": 38
+      "durationMs": 216
     },
     {
       "agentId": "oracle-blind",
@@ -2324,7 +3314,7 @@
       ],
       "attribution": null,
       "agentError": null,
-      "durationMs": 36
+      "durationMs": 137
     },
     {
       "agentId": "revers-guarded",
@@ -2407,7 +3397,7 @@
       ],
       "attribution": null,
       "agentError": null,
-      "durationMs": 359
+      "durationMs": 285
     },
     {
       "agentId": "naive-search",
@@ -2508,10 +3498,115 @@
           "error": "The contract function \"buy\" reverted.",
           "blockTime": 1791313217
         },
-        "rea": "not-run"
+        "rea": {
+          "status": "ran",
+          "tool": "rea-agents",
+          "version": "6.4.0",
+          "command": "rea analyze-javascript-application <dir with lab/src/agents/naive-search.ts> --json && rea trace-javascript-semantics {seed: naiveSearch.run, direction: ownership}",
+          "input": "lab/src/agents/naive-search.ts",
+          "graphId": "jsrg_813b108bc41711133fe77005cbd15656c705f89e0e9cc2484a49b69c187fbd69",
+          "queryId": "jsrq_2ceff69a37f36d33eb1b030e5c318622dcf950108648a63f0da9837dba7ff804",
+          "traceCoverage": "partial",
+          "reaEvidenceId": "ev_7b911ce3fd22b1e541a4d012fd61aa5ef5650cef7b956993f15f224a0bb8411e",
+          "function": {
+            "name": "naiveSearch.run",
+            "startLine": 12,
+            "endLine": 27
+          },
+          "summary": "naiveSearch.run: tools.searchTokens → results[0] → tools.getQuote → tools.buy",
+          "facts": [
+            {
+              "basis": "revers-projection",
+              "state": "inferred",
+              "resolution": "candidate",
+              "unknowns": [
+                "call-flow dynamic-call: tools.buy",
+                "data-flow unknown-value: task, tools, top, quote",
+                "object-flow ambiguous-target: top.address, task.intent.usd, tools.buy, quote.tokensOut"
+              ],
+              "text": "tools.buy(…) reads top.address, task.intent.usd, quote.tokensOut",
+              "line": 19
+            },
+            {
+              "basis": "rea",
+              "state": "inferred",
+              "resolution": "candidate",
+              "unknowns": [
+                "call-flow dynamic-call: tools.searchTokens",
+                "data-flow unknown-value: tools, symbol, results",
+                "object-flow ambiguous-target: tools.searchTokens"
+              ],
+              "text": "results ← tools.searchTokens(symbol)",
+              "line": 14
+            },
+            {
+              "basis": "revers-projection",
+              "state": "inferred",
+              "resolution": "candidate",
+              "unknowns": [
+                "data-flow unknown-value: results, top",
+                "object-flow ambiguous-target: results[0]"
+              ],
+              "text": "top ← results[0]",
+              "line": 15
+            },
+            {
+              "basis": "rea",
+              "state": "inferred",
+              "resolution": "candidate",
+              "unknowns": [
+                "call-flow dynamic-call: tools.getQuote",
+                "data-flow unknown-value: task, tools, top, quote",
+                "object-flow ambiguous-target: tools.getQuote, top.address, task.intent.usd"
+              ],
+              "text": "quote ← tools.getQuote(top.address, task.intent.usd)",
+              "line": 18
+            },
+            {
+              "basis": "revers-projection",
+              "state": "inferred",
+              "resolution": "candidate",
+              "unknowns": [
+                "call-flow dynamic-call: tools.searchTokens, tools.defer, tools.getQuote, tools.buy, tools.getPortfolio, tools.answer, tools.getPoolPrice",
+                "data-flow unknown-value: tools",
+                "object-flow ambiguous-target: tools.searchTokens, tools.defer, tools.getQuote, tools.buy, tools.getPortfolio, tools.answer, tools.getPoolPrice"
+              ],
+              "text": "naiveSearch.run calls tools.searchTokens, tools.defer, tools.getQuote, tools.buy, tools.getPortfolio, tools.answer, tools.getPoolPrice"
+            },
+            {
+              "basis": "rea",
+              "state": "unknown",
+              "text": "REA lists 46 unknowns in naiveSearch.run: 21 object-flow ambiguous-target, 10 data-flow unknown-value, 9 call-flow dynamic-call, 6 promise-ownership ambiguous-target"
+            },
+            {
+              "basis": "rea",
+              "state": "inferred",
+              "resolution": "resolved",
+              "unknowns": [
+                "promise-ownership ambiguous-target: awaits on lines 14, 18, 19, 22, 25, 26"
+              ],
+              "text": "naiveSearch.run awaits 6 expressions (REA ownership trace)"
+            },
+            {
+              "basis": "rea",
+              "state": "unknown",
+              "text": "REA rates the ownership trace of naiveSearch.run as partial coverage (15 relevant unknowns)"
+            },
+            {
+              "basis": "rea",
+              "state": "unknown",
+              "text": "REA leaves 9 member-call targets in naiveSearch.run unresolved (dynamic-call); the tools implementation is not part of this analysis"
+            },
+            {
+              "basis": "rea",
+              "state": "inferred",
+              "text": "imports ./types.js"
+            }
+          ]
+        }
       },
       "agentError": "The contract function \"buy\" reverted.",
-      "durationMs": 354
+      "durationMs": 239
     },
     {
       "agentId": "registry-only",
@@ -2620,10 +3715,124 @@
           "error": "The contract function \"buy\" reverted.",
           "blockTime": 1791313217
         },
-        "rea": "not-run"
+        "rea": {
+          "status": "ran",
+          "tool": "rea-agents",
+          "version": "6.4.0",
+          "command": "rea analyze-javascript-application <dir with lab/src/agents/registry-only.ts> --json && rea trace-javascript-semantics {seed: registryOnly.run, direction: ownership}",
+          "input": "lab/src/agents/registry-only.ts",
+          "graphId": "jsrg_1a1699d546307b561ef4e384b5956610dcdbb26cfddacd2bc4c27993de7de198",
+          "queryId": "jsrq_49ee0ceb9999f27d9db5ce6c1ca51f064e9c3da09925a836513588dcb7758b65",
+          "traceCoverage": "partial",
+          "reaEvidenceId": "ev_a2d628ecd66a738df2b7a2db552cb9888abfbeb7aff5fe32f0a404a3af81e8df",
+          "function": {
+            "name": "registryOnly.run",
+            "startLine": 12,
+            "endLine": 34
+          },
+          "summary": "registryOnly.run: tools.searchTokens → tools.getQuote → tools.buy",
+          "facts": [
+            {
+              "basis": "revers-projection",
+              "state": "inferred",
+              "resolution": "candidate",
+              "unknowns": [
+                "call-flow dynamic-call: tools.buy",
+                "data-flow unknown-value: task, tools, token, quote",
+                "object-flow ambiguous-target: token.address, task.intent.usd, tools.buy, quote.tokensOut"
+              ],
+              "text": "tools.buy(…) reads token.address, task.intent.usd, quote.tokensOut",
+              "line": 26
+            },
+            {
+              "basis": "rea",
+              "state": "inferred",
+              "resolution": "candidate",
+              "unknowns": [
+                "call-flow dynamic-call: tools.searchTokens",
+                "data-flow unknown-value: tools, symbol, results",
+                "object-flow ambiguous-target: tools.searchTokens"
+              ],
+              "text": "results ← tools.searchTokens(symbol)",
+              "line": 14
+            },
+            {
+              "basis": "revers-projection",
+              "state": "inferred",
+              "resolution": "resolved",
+              "unknowns": [
+                "data-flow unknown-value: results, r"
+              ],
+              "text": "r ← results",
+              "line": 16
+            },
+            {
+              "basis": "revers-projection",
+              "state": "inferred",
+              "resolution": "resolved",
+              "unknowns": [
+                "data-flow unknown-value: token, r"
+              ],
+              "text": "token ← r",
+              "line": 19
+            },
+            {
+              "basis": "rea",
+              "state": "inferred",
+              "resolution": "candidate",
+              "unknowns": [
+                "call-flow dynamic-call: tools.getQuote",
+                "data-flow unknown-value: task, tools, token, quote",
+                "object-flow ambiguous-target: tools.getQuote, token.address, task.intent.usd"
+              ],
+              "text": "quote ← tools.getQuote(token.address, task.intent.usd)",
+              "line": 25
+            },
+            {
+              "basis": "revers-projection",
+              "state": "inferred",
+              "resolution": "candidate",
+              "unknowns": [
+                "call-flow dynamic-call: tools.searchTokens, tools.getTokenInfo, tools.defer, tools.getQuote, tools.buy, tools.getPortfolio, tools.answer, tools.getPoolPrice",
+                "data-flow unknown-value: tools",
+                "object-flow ambiguous-target: tools.searchTokens, tools.getTokenInfo, tools.defer, tools.getQuote, tools.buy, tools.getPortfolio, tools.answer, tools.getPoolPrice"
+              ],
+              "text": "registryOnly.run calls tools.searchTokens, tools.getTokenInfo, tools.defer, tools.getQuote, tools.buy, tools.getPortfolio, tools.answer, tools.getPoolPrice"
+            },
+            {
+              "basis": "rea",
+              "state": "unknown",
+              "text": "REA lists 54 unknowns in registryOnly.run: 25 object-flow ambiguous-target, 12 data-flow unknown-value, 10 call-flow dynamic-call, 7 promise-ownership ambiguous-target"
+            },
+            {
+              "basis": "rea",
+              "state": "inferred",
+              "resolution": "resolved",
+              "unknowns": [
+                "promise-ownership ambiguous-target: awaits on lines 14, 17, 25, 26, 29, 32, 33"
+              ],
+              "text": "registryOnly.run awaits 7 expressions (REA ownership trace)"
+            },
+            {
+              "basis": "rea",
+              "state": "unknown",
+              "text": "REA rates the ownership trace of registryOnly.run as partial coverage (17 relevant unknowns)"
+            },
+            {
+              "basis": "rea",
+              "state": "unknown",
+              "text": "REA leaves 10 member-call targets in registryOnly.run unresolved (dynamic-call); the tools implementation is not part of this analysis"
+            },
+            {
+              "basis": "rea",
+              "state": "inferred",
+              "text": "imports ./types.js"
+            }
+          ]
+        }
       },
       "agentError": "The contract function \"buy\" reverted.",
-      "durationMs": 291
+      "durationMs": 153
     },
     {
       "agentId": "oracle-blind",
@@ -2740,10 +3949,124 @@
           "error": "The contract function \"buy\" reverted.",
           "blockTime": 1791313217
         },
-        "rea": "not-run"
+        "rea": {
+          "status": "ran",
+          "tool": "rea-agents",
+          "version": "6.4.0",
+          "command": "rea analyze-javascript-application <dir with lab/src/agents/oracle-blind.ts> --json && rea trace-javascript-semantics {seed: oracleBlind.run, direction: ownership}",
+          "input": "lab/src/agents/oracle-blind.ts",
+          "graphId": "jsrg_3df06f2abe74230dac64852df4feae2c07c0d5b1f4f0afc4bc36101e6ce606ed",
+          "queryId": "jsrq_669b792c7a953e596df51b9be65e3c88ad0b2b598ffb46da2d3ff461f9cbd821",
+          "traceCoverage": "partial",
+          "reaEvidenceId": "ev_d296e5623297686882f096fab610fdc0e582fca40f91b458ace2f7ed2920d857",
+          "function": {
+            "name": "oracleBlind.run",
+            "startLine": 14,
+            "endLine": 40
+          },
+          "summary": "oracleBlind.run: tools.searchTokens → tools.getQuote → tools.buy",
+          "facts": [
+            {
+              "basis": "revers-projection",
+              "state": "inferred",
+              "resolution": "candidate",
+              "unknowns": [
+                "call-flow dynamic-call: tools.buy",
+                "data-flow unknown-value: task, tools, token, quote",
+                "object-flow ambiguous-target: token.address, task.intent.usd, tools.buy, quote.tokensOut"
+              ],
+              "text": "tools.buy(…) reads token.address, task.intent.usd, quote.tokensOut",
+              "line": 33
+            },
+            {
+              "basis": "rea",
+              "state": "inferred",
+              "resolution": "candidate",
+              "unknowns": [
+                "call-flow dynamic-call: tools.searchTokens",
+                "data-flow unknown-value: tools, symbol, results",
+                "object-flow ambiguous-target: tools.searchTokens"
+              ],
+              "text": "results ← tools.searchTokens(symbol)",
+              "line": 16
+            },
+            {
+              "basis": "revers-projection",
+              "state": "inferred",
+              "resolution": "resolved",
+              "unknowns": [
+                "data-flow unknown-value: results, r"
+              ],
+              "text": "r ← results",
+              "line": 18
+            },
+            {
+              "basis": "revers-projection",
+              "state": "inferred",
+              "resolution": "resolved",
+              "unknowns": [
+                "data-flow unknown-value: token, r"
+              ],
+              "text": "token ← r",
+              "line": 21
+            },
+            {
+              "basis": "rea",
+              "state": "inferred",
+              "resolution": "candidate",
+              "unknowns": [
+                "call-flow dynamic-call: tools.getQuote",
+                "data-flow unknown-value: task, tools, token, quote",
+                "object-flow ambiguous-target: token.address, tools.getQuote, task.intent.usd"
+              ],
+              "text": "quote ← tools.getQuote(token.address, task.intent.usd)",
+              "line": 28
+            },
+            {
+              "basis": "revers-projection",
+              "state": "inferred",
+              "resolution": "candidate",
+              "unknowns": [
+                "call-flow dynamic-call: tools.searchTokens, tools.getTokenInfo, tools.defer, tools.getOraclePrice, tools.getQuote, tools.buy, tools.getPortfolio, tools.answer",
+                "data-flow unknown-value: tools",
+                "object-flow ambiguous-target: tools.searchTokens, tools.getTokenInfo, tools.defer, tools.getOraclePrice, tools.getQuote, tools.buy, tools.getPortfolio, tools.answer"
+              ],
+              "text": "oracleBlind.run calls tools.searchTokens, tools.getTokenInfo, tools.defer, tools.getOraclePrice, tools.getQuote, tools.buy, tools.getPortfolio, tools.answer"
+            },
+            {
+              "basis": "rea",
+              "state": "unknown",
+              "text": "REA lists 65 unknowns in oracleBlind.run: 31 object-flow ambiguous-target, 14 call-flow dynamic-call, 13 data-flow unknown-value, 7 promise-ownership ambiguous-target"
+            },
+            {
+              "basis": "rea",
+              "state": "inferred",
+              "resolution": "resolved",
+              "unknowns": [
+                "promise-ownership ambiguous-target: awaits on lines 16, 19, 26, 28, 33, 36, 39"
+              ],
+              "text": "oracleBlind.run awaits 7 expressions (REA ownership trace)"
+            },
+            {
+              "basis": "rea",
+              "state": "unknown",
+              "text": "REA rates the ownership trace of oracleBlind.run as partial coverage (21 relevant unknowns)"
+            },
+            {
+              "basis": "rea",
+              "state": "unknown",
+              "text": "REA leaves 14 member-call targets in oracleBlind.run unresolved (dynamic-call); the tools implementation is not part of this analysis"
+            },
+            {
+              "basis": "rea",
+              "state": "inferred",
+              "text": "imports ./types.js"
+            }
+          ]
+        }
       },
       "agentError": "The contract function \"buy\" reverted.",
-      "durationMs": 208
+      "durationMs": 272
     },
     {
       "agentId": "revers-guarded",
@@ -2815,7 +4138,7 @@
       ],
       "attribution": null,
       "agentError": null,
-      "durationMs": 302
+      "durationMs": 223
     },
     {
       "agentId": "naive-search",
@@ -2915,10 +4238,115 @@
           "error": null,
           "blockTime": 1791313241
         },
-        "rea": "not-run"
+        "rea": {
+          "status": "ran",
+          "tool": "rea-agents",
+          "version": "6.4.0",
+          "command": "rea analyze-javascript-application <dir with lab/src/agents/naive-search.ts> --json && rea trace-javascript-semantics {seed: naiveSearch.run, direction: ownership}",
+          "input": "lab/src/agents/naive-search.ts",
+          "graphId": "jsrg_813b108bc41711133fe77005cbd15656c705f89e0e9cc2484a49b69c187fbd69",
+          "queryId": "jsrq_2ceff69a37f36d33eb1b030e5c318622dcf950108648a63f0da9837dba7ff804",
+          "traceCoverage": "partial",
+          "reaEvidenceId": "ev_7b911ce3fd22b1e541a4d012fd61aa5ef5650cef7b956993f15f224a0bb8411e",
+          "function": {
+            "name": "naiveSearch.run",
+            "startLine": 12,
+            "endLine": 27
+          },
+          "summary": "naiveSearch.run: tools.searchTokens → results[0] → tools.getQuote → tools.buy",
+          "facts": [
+            {
+              "basis": "revers-projection",
+              "state": "inferred",
+              "resolution": "candidate",
+              "unknowns": [
+                "call-flow dynamic-call: tools.buy",
+                "data-flow unknown-value: task, tools, top, quote",
+                "object-flow ambiguous-target: top.address, task.intent.usd, tools.buy, quote.tokensOut"
+              ],
+              "text": "tools.buy(…) reads top.address, task.intent.usd, quote.tokensOut",
+              "line": 19
+            },
+            {
+              "basis": "rea",
+              "state": "inferred",
+              "resolution": "candidate",
+              "unknowns": [
+                "call-flow dynamic-call: tools.searchTokens",
+                "data-flow unknown-value: tools, symbol, results",
+                "object-flow ambiguous-target: tools.searchTokens"
+              ],
+              "text": "results ← tools.searchTokens(symbol)",
+              "line": 14
+            },
+            {
+              "basis": "revers-projection",
+              "state": "inferred",
+              "resolution": "candidate",
+              "unknowns": [
+                "data-flow unknown-value: results, top",
+                "object-flow ambiguous-target: results[0]"
+              ],
+              "text": "top ← results[0]",
+              "line": 15
+            },
+            {
+              "basis": "rea",
+              "state": "inferred",
+              "resolution": "candidate",
+              "unknowns": [
+                "call-flow dynamic-call: tools.getQuote",
+                "data-flow unknown-value: task, tools, top, quote",
+                "object-flow ambiguous-target: tools.getQuote, top.address, task.intent.usd"
+              ],
+              "text": "quote ← tools.getQuote(top.address, task.intent.usd)",
+              "line": 18
+            },
+            {
+              "basis": "revers-projection",
+              "state": "inferred",
+              "resolution": "candidate",
+              "unknowns": [
+                "call-flow dynamic-call: tools.searchTokens, tools.defer, tools.getQuote, tools.buy, tools.getPortfolio, tools.answer, tools.getPoolPrice",
+                "data-flow unknown-value: tools",
+                "object-flow ambiguous-target: tools.searchTokens, tools.defer, tools.getQuote, tools.buy, tools.getPortfolio, tools.answer, tools.getPoolPrice"
+              ],
+              "text": "naiveSearch.run calls tools.searchTokens, tools.defer, tools.getQuote, tools.buy, tools.getPortfolio, tools.answer, tools.getPoolPrice"
+            },
+            {
+              "basis": "rea",
+              "state": "unknown",
+              "text": "REA lists 46 unknowns in naiveSearch.run: 21 object-flow ambiguous-target, 10 data-flow unknown-value, 9 call-flow dynamic-call, 6 promise-ownership ambiguous-target"
+            },
+            {
+              "basis": "rea",
+              "state": "inferred",
+              "resolution": "resolved",
+              "unknowns": [
+                "promise-ownership ambiguous-target: awaits on lines 14, 18, 19, 22, 25, 26"
+              ],
+              "text": "naiveSearch.run awaits 6 expressions (REA ownership trace)"
+            },
+            {
+              "basis": "rea",
+              "state": "unknown",
+              "text": "REA rates the ownership trace of naiveSearch.run as partial coverage (15 relevant unknowns)"
+            },
+            {
+              "basis": "rea",
+              "state": "unknown",
+              "text": "REA leaves 9 member-call targets in naiveSearch.run unresolved (dynamic-call); the tools implementation is not part of this analysis"
+            },
+            {
+              "basis": "rea",
+              "state": "inferred",
+              "text": "imports ./types.js"
+            }
+          ]
+        }
       },
       "agentError": null,
-      "durationMs": 325
+      "durationMs": 294
     },
     {
       "agentId": "registry-only",
@@ -3017,7 +4445,7 @@
       ],
       "attribution": null,
       "agentError": null,
-      "durationMs": 325
+      "durationMs": 253
     },
     {
       "agentId": "oracle-blind",
@@ -3124,7 +4552,7 @@
       ],
       "attribution": null,
       "agentError": null,
-      "durationMs": 235
+      "durationMs": 336
     },
     {
       "agentId": "revers-guarded",
@@ -3207,7 +4635,7 @@
       ],
       "attribution": null,
       "agentError": null,
-      "durationMs": 240
+      "durationMs": 255
     },
     {
       "agentId": "naive-search",
@@ -3294,7 +4722,7 @@
       ],
       "attribution": null,
       "agentError": null,
-      "durationMs": 118
+      "durationMs": 113
     },
     {
       "agentId": "registry-only",
@@ -3389,7 +4817,7 @@
       ],
       "attribution": null,
       "agentError": null,
-      "durationMs": 147
+      "durationMs": 244
     },
     {
       "agentId": "oracle-blind",
@@ -3484,7 +4912,7 @@
       ],
       "attribution": null,
       "agentError": null,
-      "durationMs": 207
+      "durationMs": 339
     },
     {
       "agentId": "revers-guarded",
@@ -3563,7 +4991,7 @@
       ],
       "attribution": null,
       "agentError": null,
-      "durationMs": 77
+      "durationMs": 97
     },
     {
       "agentId": "naive-search",
@@ -3666,10 +5094,139 @@
           "error": null,
           "blockTime": 1791307804
         },
-        "rea": "not-run"
+        "rea": {
+          "status": "ran",
+          "tool": "rea-agents",
+          "version": "6.4.0",
+          "command": "rea analyze-javascript-application <dir with lab/src/agents/naive-search.ts> --json && rea trace-javascript-semantics {seed: naiveSearch.run, direction: ownership}",
+          "input": "lab/src/agents/naive-search.ts",
+          "graphId": "jsrg_813b108bc41711133fe77005cbd15656c705f89e0e9cc2484a49b69c187fbd69",
+          "queryId": "jsrq_2ceff69a37f36d33eb1b030e5c318622dcf950108648a63f0da9837dba7ff804",
+          "traceCoverage": "partial",
+          "reaEvidenceId": "ev_7b911ce3fd22b1e541a4d012fd61aa5ef5650cef7b956993f15f224a0bb8411e",
+          "function": {
+            "name": "naiveSearch.run",
+            "startLine": 12,
+            "endLine": 27
+          },
+          "summary": "naiveSearch.run: tools.searchTokens → results[0] → tools.getPortfolio → portfolio.positions.find → tools.getPoolPrice → tools.answer",
+          "facts": [
+            {
+              "basis": "revers-projection",
+              "state": "inferred",
+              "resolution": "candidate",
+              "unknowns": [
+                "call-flow dynamic-call: tools.answer",
+                "data-flow unknown-value: tools, pos, price",
+                "object-flow ambiguous-target: tools.answer, pos.uiBalance, price.priceUsd"
+              ],
+              "text": "tools.answer(…) reads pos.uiBalance, price.priceUsd",
+              "line": 26
+            },
+            {
+              "basis": "rea",
+              "state": "inferred",
+              "resolution": "candidate",
+              "unknowns": [
+                "call-flow dynamic-call: tools.searchTokens",
+                "data-flow unknown-value: tools, symbol, results",
+                "object-flow ambiguous-target: tools.searchTokens"
+              ],
+              "text": "results ← tools.searchTokens(symbol)",
+              "line": 14
+            },
+            {
+              "basis": "revers-projection",
+              "state": "inferred",
+              "resolution": "candidate",
+              "unknowns": [
+                "data-flow unknown-value: results, top",
+                "object-flow ambiguous-target: results[0]"
+              ],
+              "text": "top ← results[0]",
+              "line": 15
+            },
+            {
+              "basis": "rea",
+              "state": "inferred",
+              "resolution": "candidate",
+              "unknowns": [
+                "call-flow dynamic-call: tools.getPortfolio",
+                "data-flow unknown-value: tools, portfolio",
+                "object-flow ambiguous-target: tools.getPortfolio"
+              ],
+              "text": "portfolio ← tools.getPortfolio()",
+              "line": 22
+            },
+            {
+              "basis": "rea",
+              "state": "inferred",
+              "resolution": "candidate",
+              "unknowns": [
+                "call-flow dynamic-call: portfolio.positions.find",
+                "data-flow unknown-value: symbol, portfolio, pos, p",
+                "object-flow ambiguous-target: portfolio.positions.find, p.symbol"
+              ],
+              "text": "pos ← portfolio.positions.find(callback reading p.symbol, symbol)",
+              "line": 23
+            },
+            {
+              "basis": "rea",
+              "state": "inferred",
+              "resolution": "candidate",
+              "unknowns": [
+                "call-flow dynamic-call: tools.getPoolPrice",
+                "data-flow unknown-value: tools, top, price",
+                "object-flow ambiguous-target: top.address, tools.getPoolPrice"
+              ],
+              "text": "price ← tools.getPoolPrice(top.address)",
+              "line": 25
+            },
+            {
+              "basis": "revers-projection",
+              "state": "inferred",
+              "resolution": "candidate",
+              "unknowns": [
+                "call-flow dynamic-call: tools.searchTokens, tools.defer, tools.getQuote, tools.buy, tools.getPortfolio, tools.answer, tools.getPoolPrice",
+                "data-flow unknown-value: tools",
+                "object-flow ambiguous-target: tools.searchTokens, tools.defer, tools.getQuote, tools.buy, tools.getPortfolio, tools.answer, tools.getPoolPrice"
+              ],
+              "text": "naiveSearch.run calls tools.searchTokens, tools.defer, tools.getQuote, tools.buy, tools.getPortfolio, tools.answer, tools.getPoolPrice"
+            },
+            {
+              "basis": "rea",
+              "state": "unknown",
+              "text": "REA lists 46 unknowns in naiveSearch.run: 21 object-flow ambiguous-target, 10 data-flow unknown-value, 9 call-flow dynamic-call, 6 promise-ownership ambiguous-target"
+            },
+            {
+              "basis": "rea",
+              "state": "inferred",
+              "resolution": "resolved",
+              "unknowns": [
+                "promise-ownership ambiguous-target: awaits on lines 14, 18, 19, 22, 25, 26"
+              ],
+              "text": "naiveSearch.run awaits 6 expressions (REA ownership trace)"
+            },
+            {
+              "basis": "rea",
+              "state": "unknown",
+              "text": "REA rates the ownership trace of naiveSearch.run as partial coverage (15 relevant unknowns)"
+            },
+            {
+              "basis": "rea",
+              "state": "unknown",
+              "text": "REA leaves 9 member-call targets in naiveSearch.run unresolved (dynamic-call); the tools implementation is not part of this analysis"
+            },
+            {
+              "basis": "rea",
+              "state": "inferred",
+              "text": "imports ./types.js"
+            }
+          ]
+        }
       },
       "agentError": null,
-      "durationMs": 113
+      "durationMs": 162
     },
     {
       "agentId": "registry-only",
@@ -3764,7 +5321,7 @@
       ],
       "attribution": null,
       "agentError": null,
-      "durationMs": 42
+      "durationMs": 71
     },
     {
       "agentId": "oracle-blind",
@@ -3875,10 +5432,136 @@
           "error": null,
           "blockTime": 1791307804
         },
-        "rea": "not-run"
+        "rea": {
+          "status": "ran",
+          "tool": "rea-agents",
+          "version": "6.4.0",
+          "command": "rea analyze-javascript-application <dir with lab/src/agents/oracle-blind.ts> --json && rea trace-javascript-semantics {seed: oracleBlind.run, direction: ownership}",
+          "input": "lab/src/agents/oracle-blind.ts",
+          "graphId": "jsrg_3df06f2abe74230dac64852df4feae2c07c0d5b1f4f0afc4bc36101e6ce606ed",
+          "queryId": "jsrq_669b792c7a953e596df51b9be65e3c88ad0b2b598ffb46da2d3ff461f9cbd821",
+          "traceCoverage": "partial",
+          "reaEvidenceId": "ev_d296e5623297686882f096fab610fdc0e582fca40f91b458ace2f7ed2920d857",
+          "function": {
+            "name": "oracleBlind.run",
+            "startLine": 14,
+            "endLine": 40
+          },
+          "summary": "oracleBlind.run: tools.searchTokens → tools.getOraclePrice → tools.getPortfolio → portfolio.positions.find → tools.answer",
+          "facts": [
+            {
+              "basis": "revers-projection",
+              "state": "inferred",
+              "resolution": "candidate",
+              "unknowns": [
+                "call-flow dynamic-call: tools.answer",
+                "data-flow unknown-value: tools, oracle, pos",
+                "object-flow ambiguous-target: oracle.priceUsd, tools.answer, pos.uiBalance"
+              ],
+              "text": "tools.answer(…) reads pos.uiBalance, oracle.priceUsd",
+              "line": 39
+            },
+            {
+              "basis": "rea",
+              "state": "inferred",
+              "resolution": "candidate",
+              "unknowns": [
+                "call-flow dynamic-call: tools.searchTokens",
+                "data-flow unknown-value: tools, symbol, results",
+                "object-flow ambiguous-target: tools.searchTokens"
+              ],
+              "text": "results ← tools.searchTokens(symbol)",
+              "line": 16
+            },
+            {
+              "basis": "revers-projection",
+              "state": "inferred",
+              "resolution": "resolved",
+              "unknowns": [
+                "data-flow unknown-value: results, r"
+              ],
+              "text": "r ← results",
+              "line": 18
+            },
+            {
+              "basis": "revers-projection",
+              "state": "inferred",
+              "resolution": "resolved",
+              "unknowns": [
+                "data-flow unknown-value: token, r"
+              ],
+              "text": "token ← r",
+              "line": 21
+            },
+            {
+              "basis": "rea",
+              "state": "inferred",
+              "resolution": "candidate",
+              "unknowns": [
+                "call-flow dynamic-call: tools.getOraclePrice",
+                "data-flow unknown-value: tools, token, oracle",
+                "object-flow ambiguous-target: tools.getOraclePrice, token.address"
+              ],
+              "text": "oracle ← tools.getOraclePrice(token.address)",
+              "line": 26
+            },
+            {
+              "basis": "rea",
+              "state": "inferred",
+              "resolution": "candidate",
+              "unknowns": [
+                "call-flow dynamic-call: tools.getPortfolio",
+                "data-flow unknown-value: tools, portfolio",
+                "object-flow ambiguous-target: tools.getPortfolio"
+              ],
+              "text": "portfolio ← tools.getPortfolio()",
+              "line": 36
+            },
+            {
+              "basis": "revers-projection",
+              "state": "inferred",
+              "resolution": "candidate",
+              "unknowns": [
+                "call-flow dynamic-call: tools.searchTokens, tools.getTokenInfo, tools.defer, tools.getOraclePrice, tools.getQuote, tools.buy, tools.getPortfolio, tools.answer",
+                "data-flow unknown-value: tools",
+                "object-flow ambiguous-target: tools.searchTokens, tools.getTokenInfo, tools.defer, tools.getOraclePrice, tools.getQuote, tools.buy, tools.getPortfolio, tools.answer"
+              ],
+              "text": "oracleBlind.run calls tools.searchTokens, tools.getTokenInfo, tools.defer, tools.getOraclePrice, tools.getQuote, tools.buy, tools.getPortfolio, tools.answer"
+            },
+            {
+              "basis": "rea",
+              "state": "unknown",
+              "text": "REA lists 65 unknowns in oracleBlind.run: 31 object-flow ambiguous-target, 14 call-flow dynamic-call, 13 data-flow unknown-value, 7 promise-ownership ambiguous-target"
+            },
+            {
+              "basis": "rea",
+              "state": "inferred",
+              "resolution": "resolved",
+              "unknowns": [
+                "promise-ownership ambiguous-target: awaits on lines 16, 19, 26, 28, 33, 36, 39"
+              ],
+              "text": "oracleBlind.run awaits 7 expressions (REA ownership trace)"
+            },
+            {
+              "basis": "rea",
+              "state": "unknown",
+              "text": "REA rates the ownership trace of oracleBlind.run as partial coverage (21 relevant unknowns)"
+            },
+            {
+              "basis": "rea",
+              "state": "unknown",
+              "text": "REA leaves 14 member-call targets in oracleBlind.run unresolved (dynamic-call); the tools implementation is not part of this analysis"
+            },
+            {
+              "basis": "rea",
+              "state": "inferred",
+              "text": "imports ./types.js"
+            }
+          ]
+        }
       },
       "agentError": null,
-      "durationMs": 45
+      "durationMs": 51
     },
     {
       "agentId": "revers-guarded",
@@ -3957,7 +5640,7 @@
       ],
       "attribution": null,
       "agentError": null,
-      "durationMs": 211
+      "durationMs": 252
     }
   ],
   "leaderboard": [

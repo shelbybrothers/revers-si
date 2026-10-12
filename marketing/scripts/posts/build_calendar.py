@@ -63,13 +63,10 @@ CAT = load_catalogue()
 ALT_OVERRIDE: dict[str, str] = {}
 
 # Media that exists but is deliberately kept out of the X calendar (reason shown in calendar.json / .md).
-HELD = {
-    'out/screens/desktop-01-hero.png': 'Shows the live hero sentence "revers.si forks Robinhood Chain..."; every '
-    'published result is replica mode and fork mode is experimental. Hold until the site hero says replica, then '
-    're-run scripts/screens-capture.mjs.',
-    'out/screens/mobile-01-hero-4x5.png': 'Same hero sentence ("forks Robinhood Chain"). Held for the same reason.',
-    'out/screens/mobile-01b-hero-phone.png': 'Same hero sentence ("forks Robinhood Chain"). Held for the same reason.',
-}
+# The three hero screenshots were held while the site hero said "revers.si forks Robinhood Chain". The site now says
+# "revers.si replicates Robinhood Chain’s Stock Token mechanics, ..." (deployed 12 Oct 2026) and the heroes were
+# recaptured after the deploy, so nothing is held.
+HELD: dict[str, str] = {}
 SPARE = {
     'out/screens/mobile-11-docs-guard-4x5.png': 'Readable now (code wraps), but the 4:5 crop ends mid code block; F15 '
     'uses desktop-15-docs-guard-api.png instead.',
@@ -181,8 +178,8 @@ POSTS: list[dict] = [
                       f'Token. {NFA}'),
              'media': ['out/tutorial/step-08-check-the-revers-contract.png']},
             {'text': ('9/ Credit: we used REA (Reverse Engineer Anything), the open-source, MIT-licensed toolkit '
-                      'from @reatools, while building revers.si. Thank you. The lab\'s line-of-code attributions '
-                      'don\'t use REA yet.\n'
+                      'from @reatools, while building revers.si. Thank you. The lab now runs REA\'s static analysis '
+                      'on the agent file behind every failed reference-agent run.\n'
                       'github.com/morluto/rea'),
              'media': ['out/tutorial/credit-we-used-rea.png']},
         ],
@@ -192,8 +189,10 @@ POSTS: list[dict] = [
                   'Step 5 is the full fresh-clone sequence: npm run lab loads the compiled ABIs from contracts/out, '
                   'which is not in git, so forge build has to run first. The step-5 frame outlines that line.',
                   'Step 9 and its frame use the same REA wording as Q01 and banner 07: we used REA while building '
-                  'revers.si; the lab attributions don\'t use REA yet. The site footer line in the frame reads '
-                  '"Built with Reverse Engineer Anything (REA)".'],
+                  'revers.si, and the lab now runs REA\'s static analysis on every failed reference-agent run. The '
+                  'site footer line in the frame reads "Built with Reverse Engineer Anything (REA)".',
+                  'Post only after `node scripts/check-live-rea.mjs` passes against the deployed site, and after '
+                  'the step 4 and credit frames were re-captured from it.'],
     },
     {
         'id': 'F01-scanners-vs-agents', 'kind': 'single', 'topic': 'Problem: contract scanners vs agents',
@@ -211,12 +210,14 @@ POSTS: list[dict] = [
         'tweets': [{
             'text': ('We used REA from @reatools while building revers.si. Open source, MIT: agents that '
                      'reverse-engineer everything from EVM bytecode to native binaries. Thank you.\n\n'
-                     'To be clear: the lab\'s line-of-code attributions don\'t use REA yet.\n'
+                     'The lab now runs REA on the agent file behind every failed reference-agent run.\n'
                      'github.com/morluto/rea'),
             'media': ['out/banners/07-we-used-rea.png'],
         }],
         'notes': ['Same wording as banner 07 and the T01 credit post: "we used REA while building revers.si", plus '
-                  'the honest status that the lab attributions don\'t use it yet (Q02 covers rea: not-run).'],
+                  'what the lab does with it now (Q02 shows it in a run).',
+                  'Post only after `node scripts/check-live-rea.mjs` passes against the deployed site and banner 07 '
+                  'was re-rendered.'],
     },
     {
         'id': 'F02-four-reference-agents', 'kind': 'single', 'topic': 'Results: four reference agents, same sentence',
@@ -245,8 +246,8 @@ POSTS: list[dict] = [
         'id': 'R01-lab-walkthrough', 'kind': 'single', 'topic': 'Recording: lab walkthrough',
         'recording_slot': 'lab',
         'tweets': [{
-            'text': ('A walk through the lab: leaderboard, agent x scenario matrix, then one failing run down to its '
-                     'checks, its agent calls and the file:line that made the bad trade.\n\n'
+            'text': ('A walk through the lab: leaderboard, agent x scenario matrix, then two failing runs down to '
+                     'their checks, agent calls and the file:line that made the bad trade.\n\n'
                      'Replica mode, reference agents written for the lab, Claude agent not run yet.\n'
                      'revers.si/lab'),
             'media': ['REC:lab|out/screens/desktop-10-lab-leaderboard.png|out/screens/desktop-12-lab-run-detail-failing.png'],
@@ -287,10 +288,12 @@ POSTS: list[dict] = [
             'media': ['REC:terminal|out/screens/desktop-16-docs-run-locally.png'],
         }],
         'notes': ['"About 10 s once built" comes from one real run captured in '
-                  'out/recordings/raw/lab-run-capture.json: 9.5 s on an already-built checkout (contracts compiled), '
-                  'exit 0, 40 scored runs + 12 lending checks. A fresh clone also needs npm install and forge build '
-                  'first (see T01 post 5). If the recording is a re-rendered replay of that capture, it should say so '
-                  'on screen.'],
+                  'out/recordings/raw/lab-run-capture.json (12 Oct 2026, 08:44 UTC): 10.8 s on an already-built '
+                  'checkout (contracts compiled), exit 0, 40 scored runs + 12 lending checks; an earlier run the same '
+                  'day took 9.5 s. A fresh clone also needs npm install and forge build first (see T01 post 5).',
+                  'The video is a re-rendered replay of that capture, and says so on screen ("Terminal replay · real '
+                  'run", plus a footer with the capture date and real speed). Every output line is verbatim; the only '
+                  'change is the local repo path, shown as "…/".'],
     },
     {
         'id': 'F06-lending-drill', 'kind': 'single', 'topic': 'Lending drill: same collateral, three answers',
@@ -317,23 +320,31 @@ POSTS: list[dict] = [
                       'address; if that can\'t be read, the CREATE2 address is computed in your browser. Verdicts: '
                       'Genuine, Not a Robinhood Stock Token, Unknown.\n\n'
                       'Independent project, not affiliated with Robinhood.'),
-             'media': ['out/banners/05-wallet-check.png', 'out/screens/desktop-14-wallet-cards.png']},
+             'media': ['out/banners/05-wallet-check.png', 'out/screens/desktop-13-wallet-check.png',
+                       'out/screens/desktop-14-wallet-cards.png']},
         ],
-        'notes': ['If the recording shows a connected wallet or a checked address, it must be labelled on screen '
-                  'as a demo (for example, a public contract address, not a user\'s wallet). The stills show the '
-                  'real disconnected state; no verdict is shown in them.'],
+        'notes': ['The recording uses a simulated wallet, not a user\'s: an injected demo provider whose one address is '
+                  'a public GME/USDG pool contract (0xe2b46c905e12ab8e2f864e4821a4325884c1b126), with every read sent '
+                  'to the public Robinhood Chain RPC. It says so on screen the whole time: "Demo wallet (simulated '
+                  'provider) · real Robinhood Chain reads". The demo refuses signing; the site only asked it for '
+                  'eth_requestAccounts, eth_chainId, eth_getBalance, eth_call and eth_getCode.',
+                  'The stills in post 2 show the real disconnected state; no verdict is shown in them.'],
     },
     {
-        'id': 'Q02-rea-attribution-next', 'kind': 'quote', 'topic': 'REA quote 2: attribution today vs next',
+        'id': 'Q02-rea-attribution-next', 'kind': 'quote', 'topic': 'REA quote 2: REA in every failed run',
         'quote_url': None,
         'tweets': [{
-            'text': ('Honest status: every attribution in our lab today comes from stack traces, and each record '
-                     'says rea: not-run. The lab has an optional hook for REA from @reatools; it hasn\'t run yet.\n\n'
-                     'Next: REA-powered attribution of agent code. We\'ll show it when it\'s real.'),
+            'text': ('Every failed reference-agent run in our replica lab now carries REA\'s static analysis of the '
+                     'agent file (REA from @reatools): the function behind the failing line, a data-flow path we '
+                     'read from REA\'s graph, and the unknowns REA reports. The line still comes from the stack '
+                     'trace.'),
             'media': ['out/screens/mobile-07-run-detail-header-4x5.png',
                       'out/screens/mobile-07b-run-detail-checks-4x5.png',
                       'out/screens/mobile-08-run-attribution-4x5.png'],
         }],
+        'notes': ['Post only after `node scripts/check-live-rea.mjs` passes against the deployed site and '
+                  'mobile-08 was re-captured from it (it now ends on the REA summary line). The data-flow path is '
+                  'the lab\'s reading of REA\'s graph ("revers projection" on the site), so the copy says "we read".'],
     },
     {
         'id': 'F07-how-it-works', 'kind': 'single', 'topic': 'How it works: Fork, Stage, Run, Trace, Score',
@@ -398,7 +409,7 @@ POSTS: list[dict] = [
                      'browser: phone browsers can\'t talk to wallet apps directly. The sheet links MetaMask, Coinbase '
                      'Wallet and Trust Wallet, with steps for Robinhood Wallet.\n\n'
                      'Still read-only.'),
-            'media': ['out/screens/mobile-06-lab-leaderboard-4x5.png', 'out/screens/mobile-03-scenarios-4x5.png',
+            'media': ['out/screens/mobile-01b-hero-phone.png', 'out/screens/mobile-06-lab-leaderboard-4x5.png',
                       'out/screens/mobile-09-wallet-disconnected-phone.png',
                       'out/screens/mobile-10-wallet-picker-sheet-phone.png'],
         }],
@@ -421,7 +432,7 @@ POSTS: list[dict] = [
                      '8 scenarios · 4 reference agents · 40 scored runs · Claude agent not run yet.\n\n'
                      'Replica-mode results, open source, research preview.\n'
                      'revers.si/lab'),
-            'media': ['out/banners/01-master-crash-test.png'],
+            'media': ['out/banners/01-master-crash-test.png', 'out/screens/desktop-01-hero.png'],
         }],
     },
     {
@@ -446,7 +457,7 @@ POSTS: list[dict] = [
                      'before the market does.\n\n'
                      'DM us to get it into the lab. Same sentence, same tools, same eight scenarios as the '
                      'reference agents.'),
-            'media': ['out/video/revers-promo-16x9-poster.png', 'out/screens/desktop-15-docs-guard-api.png'],
+            'media': ['out/screens/mobile-01-hero-4x5.png', 'out/screens/mobile-03-scenarios-4x5.png'],
         }],
     },
     {
@@ -594,6 +605,8 @@ def validate_tweet(pid: str, idx: int, tw: dict, post: dict) -> None:
             ERRORS.append(f'{where}: claims revers.si runs on / is built with REA')
         if re.search(r'\binspired by\b', low):
             ERRORS.append(f'{where}: REA wording must be "we used REA while building revers.si", not "inspired by"')
+        if re.search(r"(don't|don’t|do not) use rea yet|rea: ?not-run|hasn't run yet", low):
+            ERRORS.append(f'{where}: stale REA status (the lab runs REA now; see scripts/check-live-rea.mjs)')
     if '$REVERS' in text and NFA not in text:
         ERRORS.append(f'{where}: $REVERS promoted without "{NFA}"')
     if REVERS_CA[:10] in text and REVERS_CA not in text:
@@ -650,6 +663,19 @@ for p in POSTS:
     if p['kind'] == 'thread' and len(p['tweets']) < 2:
         ERRORS.append(f'{p["id"]}: thread with one tweet')
     p['mentions_revers'] = any('$REVERS' in t['text'] for t in p['tweets'])
+
+# Recordings must carry their on-screen honesty labels (checked against what each manifest says is on screen).
+REC_LABELS = {
+    'wallet': ['Demo wallet (simulated provider) · real Robinhood Chain reads', 'not a person\'s wallet'],
+    'terminal': ['Terminal replay · real run', 'verbatim'],
+}
+for slot, needles in REC_LABELS.items():
+    rec = RECS.get(slot)
+    if rec:
+        shows = rec.get('what_it_shows', '') or ''
+        for nd in needles:
+            if nd not in shows:
+                ERRORS.append(f'recording {rec["path"]}: manifest does not confirm the on-screen label / note "{nd}"')
 
 # $REVERS frequency: at most 1 in 4 posts, and never two within any window of 4 consecutive posts.
 rev_idx = [i for i, p in enumerate(POSTS) if p['mentions_revers']]
@@ -710,23 +736,38 @@ for p, a, b in zip(POSTS, sched_a, sched_b):
 
 DEST.mkdir(parents=True, exist_ok=True)
 
+if all(RECS.values()):
+    REC_REVIEW = (
+        'Recordings. R01, R02 and R03 carry the screen recordings (out/recordings/MANIFEST.json): the lab walkthrough on '
+        'the live site (code blocks wrap via capture-only CSS, as in the screenshots); a terminal replay of one real '
+        'captured npm run lab, labelled "Terminal replay · real run" on screen; and the wallet check with a simulated '
+        'wallet whose address is a public GME/USDG pool contract, with real chain reads, labelled "Demo wallet '
+        '(simulated provider) · real Robinhood Chain reads" for the whole video. Each first frame shows the page (no '
+        'black frame); X Media Studio can still set a custom thumbnail.')
+else:
+    REC_REVIEW = (
+        'Recordings. Posts whose recording is missing from out/recordings carry 1600x900 fallback stills (see their '
+        'flags). Re-run `python3 scripts/posts/build_calendar.py` once the recordings exist. A wallet recording that '
+        'shows a checked address or holdings must say on screen that it is a demo using a public contract address.')
+
 REVIEW = [
-    'REA wording, one version everywhere (banner 07, the T01 credit post and frame, Q01, the promo video): "We used REA '
-    '(open source, MIT, @reatools) while building revers.si. The lab\'s line-of-code attributions don\'t use REA yet." '
-    'Q02 keeps the rea: not-run status. The site footer itself still reads "Built with Reverse Engineer Anything (REA)" '
-    '(visible in desktop-09 and the credit frame); change it on the site if you want the exact same words there.',
+    'REA wording, one version everywhere (banner 07, the T01 credit post and frame, Q01): "We used REA (open source, '
+    'MIT, @reatools) while building revers.si. The lab now runs REA\'s static analysis on the agent file behind every '
+    'failed reference-agent run." Q02 shows it in a run. HOLD all four until the deployed site shows it: '
+    '`node scripts/check-live-rea.mjs` must exit 0 (it reads https://revers.si/data/results.json and checks '
+    'rea.status "ran" on every failed reference-agent run). Then re-run scripts/screens-capture.mjs (desktop-12, '
+    'mobile-08 and desktop-16 changed), scripts/screens-tutorial.mjs (step 4 and the credit frame changed) and the '
+    'banner render (07), and this script. The promo video only says "We used it while building revers.si", which '
+    'stays true. The site footer still reads "Built with Reverse Engineer Anything (REA)" (visible in desktop-09 and '
+    'the credit frame).',
     'Quote targets. Q01, Q02 and Q03 need specific @reatools post URLs (quote_url is null). Pick posts that are '
     'about REA itself; if none fits, post them as normal posts, they already mention @reatools.',
-    'Recordings. R01, R02 and R03 carry 1600x900 fallback stills because out/recordings has no videos yet (its '
-    'MANIFEST.json lists only raw/lab-run-capture.json). Re-run `python3 scripts/posts/build_calendar.py` once they '
-    'exist. A wallet recording that shows a checked address or holdings must say on screen that it is a demo using a '
-    'public contract address.',
-    'Hero copy. The site hero says "revers.si forks Robinhood Chain"; every published result is replica mode and fork '
-    'mode is experimental. The three hero screenshots are held out of the calendar (see held_media) and tutorial step 1 '
-    'is framed on the results section instead. Suggested site fix: "revers.si stages a replica of Robinhood Chain Stock '
-    'Token mechanics, throws splits, ...", then re-run scripts/screens-capture.mjs and scripts/screens-tutorial.mjs. '
-    'The how-it-works image (F07) says "fork Robinhood Chain, or deploy a faithful replica"; the F07 copy says fork '
-    'mode is experimental.',
+    REC_REVIEW,
+    'Hero copy. The site hero now says "revers.si replicates Robinhood Chain’s Stock Token mechanics, throws splits, '
+    '..." (deployed 12 Oct 2026). The three hero screenshots were recaptured after the deploy and are back in the '
+    'calendar: desktop-01 in F14, mobile-01b in F12, mobile-01 in F15. Tutorial step 1 never showed the hero and is '
+    'unchanged. The how-it-works image (F07) still says "fork Robinhood Chain, or deploy a faithful replica"; the F07 '
+    'copy says fork mode is experimental.',
     'Run-it-yourself steps (T01 post 5, step-05 frame) were checked against the repo: a fresh clone needs Node and '
     'Foundry, and forge build before npm run lab (contracts/out is gitignored and the lab loads ABIs from it).',
     'Sourced figures (361 contracts, $213.0M, 64,394 wallets: Bitquery; 24/5 feeds: Chainlink docs) are copied from '
@@ -748,12 +789,17 @@ calendar = {
     'honesty_rules_applied': [
         'Lab numbers always say replica / replica mode; reference agents are described as written for the lab.',
         'The Claude agent is always described as not run / skipped, never simulated.',
-        'REA is credited as open source we used while building revers.si; the copy says the lab\'s line-of-code '
-        'attributions don\'t use REA yet (rea: not-run), and never that revers.si runs on REA.',
+        'REA is credited as open source we used while building revers.si; the copy says the lab now runs REA\'s '
+        'static analysis on every failed reference-agent run (posted only once the deployed results.json shows it, '
+        'scripts/check-live-rea.mjs), calls the data-flow path the lab\'s reading of REA\'s graph, and never says '
+        'revers.si runs on REA.',
         f'$REVERS appears in the text of {len(rev_idx)} of {n} posts, never closer than 4 posts apart, always with the '
         f'full contract address and "{NFA}"; no price or return language. The promo video (P01, F16) shows $REVERS on '
         f'its end card with a large "Not investment advice." held about 4 s, and both post texts say "{NFA}".',
         'Full names: "Robinhood Chain", "Stock Tokens".',
+        'Recordings: the wallet video says on screen for its whole length that it uses a simulated wallet with real '
+        'Robinhood Chain reads (the address is a public pool contract, not a user\'s wallet); the terminal video says '
+        'on screen that it is a replay of a real captured run, with every output line verbatim.',
     ],
     'review_before_posting': REVIEW,
     'profile_setup': [
@@ -976,7 +1022,7 @@ md.append('Every banner, screenshot, tutorial frame and promo video is used at l
 md.append('')
 md.append('Held (do not post until the reason is fixed):')
 md.append('')
-md.extend(f'- `{k}`: {v}' for k, v in sorted(HELD.items()))
+md.extend([f'- `{k}`: {v}' for k, v in sorted(HELD.items())] or ['- none'])
 md.append('')
 md.append('Spare (fine to use, not in this calendar):')
 md.append('')

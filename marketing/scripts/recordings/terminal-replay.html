@@ -1,0 +1,163 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>npm run lab: terminal replay</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@300;400;500&family=JetBrains+Mono:wght@400;500&display=block" rel="stylesheet">
+<style>
+  /* Replays one REAL captured `npm run lab` (out/recordings/raw/lab-run-capture.json, injected as window.__REPLAY).
+     Every output line is printed verbatim at its captured time offset; the only change is the local repo path,
+     shortened to "…/" (shown as such). Colour on verdict words and file:line is added by this page; the captured
+     output itself is plain text (NO_COLOR). */
+  :root {
+    --band: #0f2a1e; --band-2: #143426; --term: #0b2017; --hair: rgba(255,255,255,.12);
+    --text: rgba(255,255,255,.90); --muted: rgba(255,255,255,.62); --faint: rgba(255,255,255,.42);
+    --accent: #bfdfb4; --pass: #9ad09a; --fail: #ff8f85; --defer: #f2c46d;
+    --mono: 'JetBrains Mono', ui-monospace, Menlo, monospace; --sans: 'Inter Tight', 'Helvetica Neue', Arial, sans-serif;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { width: 1920px; height: 1080px; overflow: hidden; background: var(--band); color: var(--text); }
+  body {
+    font-family: var(--sans); -webkit-font-smoothing: antialiased;
+    background:
+      radial-gradient(1200px 700px at 85% -10%, rgba(191,223,180,.10), transparent 60%),
+      radial-gradient(900px 600px at -10% 110%, rgba(1,105,56,.22), transparent 60%),
+      var(--band);
+  }
+  .top { position: absolute; left: 64px; right: 64px; top: 30px; height: 56px; display: flex; align-items: center; gap: 16px; }
+  .top img { width: 40px; height: 40px; border-radius: 9px; }
+  .top .brand { font: 500 24px/1 var(--mono); color: #fff; }
+  .top .brand i { font-style: normal; color: var(--accent); }
+  .top .chip { margin-left: auto; font: 500 16px/1 var(--mono); letter-spacing: .12em; text-transform: uppercase; color: var(--accent);
+    border: 1.5px solid rgba(191,223,180,.55); border-radius: 999px; padding: 10px 18px; }
+  .win { position: absolute; left: 64px; right: 64px; top: 104px; bottom: 96px; background: var(--term); border: 1px solid var(--hair);
+    border-radius: 16px; box-shadow: 0 30px 80px rgba(0,0,0,.35); overflow: hidden; }
+  .bar { height: 48px; display: flex; align-items: center; gap: 10px; padding: 0 20px; border-bottom: 1px solid var(--hair);
+    background: rgba(255,255,255,.03); font: 400 16px/1 var(--mono); color: var(--muted); }
+  .bar .dot { width: 13px; height: 13px; border-radius: 50%; background: rgba(255,255,255,.16); }
+  .bar .title { margin-left: 12px; }
+  .bar .clock { margin-left: auto; color: var(--accent); font-variant-numeric: tabular-nums; }
+  .screen { position: absolute; left: 0; right: 0; top: 48px; bottom: 0; }
+  .clip { position: absolute; left: 28px; right: 28px; top: 16px; overflow: hidden; }
+  .lines { font: 400 17px/26px var(--mono); white-space: pre; will-change: transform; }
+  .ln { height: 26px; }
+  .prompt { color: var(--accent); }
+  .cmd { color: #fff; }
+  .caret { display: inline-block; width: 10px; height: 20px; background: rgba(255,255,255,.85); vertical-align: -4px; margin-left: 1px; }
+  .caret.blink { animation: blink 1s steps(1) infinite; }
+  @keyframes blink { 50% { opacity: 0; } }
+  .tag { color: var(--faint); }
+  .pass { color: var(--pass); } .fail { color: var(--fail); } .deferred { color: var(--defer); }
+  .loc { color: var(--accent); }
+  .skip { color: var(--defer); }
+  .note { color: var(--faint); }
+  .foot { position: absolute; left: 64px; right: 64px; bottom: 34px; font: 400 19px/1.35 var(--sans); color: var(--muted); white-space: nowrap; }
+  .foot b { color: #fff; font-weight: 500; }
+  .foot code { font-family: var(--mono); font-size: .92em; color: var(--accent); }
+</style>
+</head>
+<body>
+  <div class="top">
+    <img src="../banners/assets/revers-128.png" alt="">
+    <span class="brand">revers<i>.</i>si</span>
+    <span class="chip">Terminal replay · real run</span>
+  </div>
+  <div class="win">
+    <div class="bar"><span class="dot"></span><span class="dot"></span><span class="dot"></span>
+      <span class="title">revers-si: npm run lab</span><span class="clock" id="clock"></span></div>
+    <div class="screen" id="screen"><div class="clip" id="clip"><div class="lines" id="lines"></div></div></div>
+  </div>
+  <div class="foot" id="foot"></div>
+<script>
+(() => {
+  const R = window.__REPLAY;
+  const linesEl = document.getElementById('lines');
+  const screen = document.getElementById('screen');
+  const clock = document.getElementById('clock');
+  const LH = 26;
+  const esc = (s) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+  const ease = (t) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2);
+
+  // Display form of a captured line: the text is unchanged except the local repo path prefix, shown as "…/".
+  const shown = (text) => (R.cwd ? text.split(R.cwd + '/').join('…/') : text);
+  function render(text) {
+    let h = esc(shown(text));
+    h = h.replace(/^(\[(?:world|run|lending)\])/, '<span class="tag">$1</span>');
+    if (/^\[skip\]/.test(text)) return `<span class="skip">${h}</span>`;
+    h = h.replace(/(\s)(pass|fail|deferred)(\s+\d)/, '$1<span class="$2">$2</span>$3');
+    h = h.replace(/(@ )(lab\/src\/[\w./-]+:\d+)/, '$1<span class="loc">$2</span>');
+    h = h.replace(/(\s)(inflated-collateral|wrongful-liquidation|used-stale-price)(\s)/, '$1<span class="fail">$2</span>$3');
+    return h;
+  }
+  let offset = 0; // scroll offset in lines
+  const ROWS = Math.floor((screen.clientHeight - 32) / LH);
+  document.getElementById('clip').style.height = `${ROWS * LH}px`; // whole rows only: no half-cut line at the edges
+  const visible = () => ROWS;
+  const count = () => linesEl.children.length;
+  function setOffset(o) { offset = o; linesEl.style.transform = `translateY(${-o * LH}px)`; }
+  function follow() { setOffset(Math.max(0, count() - visible())); }
+  function add(html, cls = 'ln') { const d = document.createElement('div'); d.className = cls; d.innerHTML = html || ' '; linesEl.appendChild(d); follow(); return d; }
+  function scrollLines(to, ms) {
+    const from = offset; const t0 = performance.now();
+    to = Math.max(0, Math.min(count() - visible(), to));
+    return new Promise((done) => {
+      const step = (now) => { const k = Math.min(1, (now - t0) / ms); setOffset(from + (to - from) * ease(k)); if (k < 1) requestAnimationFrame(step); else done(); };
+      requestAnimationFrame(step);
+    });
+  }
+
+  document.getElementById('foot').innerHTML = R.foot;
+
+  window.__play = async () => {
+    const P = '<span class="prompt">$</span> ';
+    const first = add(P + '<span class="cmd"></span><span class="caret blink"></span>');
+    clock.textContent = '';
+    await sleep(R.idleMs);
+    // type the command
+    const cmd = first.querySelector('.cmd');
+    const caret = first.querySelector('.caret');
+    caret.classList.remove('blink');
+    for (let i = 1; i <= R.command.length; i++) {
+      cmd.textContent = R.command.slice(0, i);
+      await sleep(R.typeMs + (R.command[i - 1] === ' ' ? 25 : 0));
+    }
+    caret.classList.add('blink');
+    await sleep(450);
+    caret.remove();
+    // replay the captured lines at their captured offsets (scaled by R.speed; 1 = real time)
+    const t0 = performance.now();
+    let raf = true;
+    const tick = () => { if (!raf) return; clock.textContent = `${((performance.now() - t0) / 1000 * R.speed).toFixed(1)} s`; requestAnimationFrame(tick); };
+    requestAnimationFrame(tick);
+    for (const l of R.lines) {
+      const due = l.t / R.speed;
+      const wait = due - (performance.now() - t0);
+      if (wait > 0) await sleep(wait);
+      add(render(l.text));
+    }
+    const endWait = R.durationMs / R.speed - (performance.now() - t0);
+    if (endWait > 0) await sleep(endWait);
+    raf = false;
+    clock.textContent = `exit ${R.exitCode} · ${(R.durationMs / 1000).toFixed(1)} s`;
+    add(P + '<span class="caret blink"></span>');
+    await sleep(R.holdEndMs);
+    // read back through the scored runs, then return to the leaderboard
+    const all = Array.from(linesEl.children).map((d) => d.textContent);
+    const skip = all.findIndex((t) => t.startsWith('[skip]'));
+    await scrollLines(skip - 1, 1300);
+    await sleep(R.holdRunsMs);
+    const lend = all.findIndex((t) => t.startsWith('[lending]'));
+    await scrollLines(lend + 2 - visible() + 1, 1100);
+    await sleep(R.holdRuns2Ms);
+    await scrollLines(count(), 1000);
+    await sleep(R.holdFinalMs);
+    return true;
+  };
+  window.__ready = document.fonts.ready.then(() => true);
+})();
+</script>
+</body>
+</html>

@@ -1,10 +1,85 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { formatUsd, runKeyOf, TASK_LABEL, type Results, type Run } from '@/lib/results';
+import { formatUsd, runKeyOf, TASK_LABEL, type ReaInfo, type Results, type Run } from '@/lib/results';
+import { SITE } from '@/lib/site';
 
 type VerdictFilter = 'all' | 'fail' | 'pass' | 'deferred' | 'error';
 const key = runKeyOf;
+
+const shortId = (id: string) => (id.length > 22 ? `${id.slice(0, id.indexOf('_') + 9)}…` : id);
+
+/** REA's static analysis of the attributed agent code path (or why it is absent). */
+function ReaBlock({ rea }: { rea: ReaInfo }) {
+  if (rea.status === 'not-run') return null;
+  if (rea.status === 'error')
+    return (
+      <div className="rea">
+        <h3>
+          REA static analysis <span className="chip chip-fail">error</span>
+        </h3>
+        <p className="muted small" style={{ margin: 0, overflowWrap: 'anywhere' }}>
+          rea-agents{rea.version ? ` ${rea.version}` : ''}: {rea.message}
+        </p>
+      </div>
+    );
+  return (
+    <div className="rea">
+      <h3>
+        <a href={SITE.reaGithub} target="_blank" rel="noopener noreferrer">
+          REA
+        </a>{' '}
+        static analysis
+      </h3>
+      <p className="rea-sum">
+        {rea.summary}
+        <span className="rea-basis"> revers projection</span>
+      </p>
+      <div className="loc">
+        <span title={`REA semantic graph id ${rea.graphId}`}>graph {shortId(rea.graphId)}</span>
+        {rea.queryId && <span title={`REA ownership trace query id ${rea.queryId}`}>trace {shortId(rea.queryId)}</span>}
+        {rea.traceCoverage && <span>trace coverage: {rea.traceCoverage}</span>}
+        <span>rea-agents {rea.version}</span>
+        {rea.fn && (
+          <span>
+            {rea.fn.name} (lines {rea.fn.startLine}–{rea.fn.endLine})
+          </span>
+        )}
+        <span title={`REA Evidence id ${rea.reaEvidenceId}. It hashes REA's absolute input path, so it is specific to the machine and checkout that ran the lab.`}>
+          REA evidence {shortId(rea.reaEvidenceId)} (machine-local)
+        </span>
+      </div>
+      {rea.facts.length > 0 && (
+        <ul className="rea-facts">
+          {rea.facts.map((f, i) => (
+            <li key={i}>
+              <span className="rea-tags">
+                <span className={`chip ${f.state === 'observed' ? 'chip-pass' : f.state === 'inferred' ? 'chip-na' : 'chip-deferred'}`}>{f.state}</span>
+                {f.resolution === 'candidate' && <span className="chip chip-na">candidate</span>}
+              </span>
+              <span className="t">
+                {f.text}
+                {f.line !== null && <span className="muted"> · line {f.line}</span>}
+                <span className="rea-basis">{f.basis === 'rea' ? ' REA' : ' revers projection'}</span>
+                {f.unknowns.length > 0 && (
+                  <span className="rea-unk">
+                    REA unknowns: {f.unknowns.join('; ')}
+                  </span>
+                )}
+              </span>
+            </li>
+          ))}
+        </ul>
+      )}
+      <p className="muted small" style={{ margin: '10px 0 0' }}>
+        REA parses the agent file without running it. &ldquo;REA&rdquo; facts restate REA&apos;s output; &ldquo;revers
+        projection&rdquo; facts and the summary are the lab&apos;s reading of REA&apos;s graph by source position. Labels are
+        REA&apos;s: <i>inferred</i> and <i>candidate</i> relations are static, not proof that a path ran, and REA&apos;s own
+        unknowns are listed under each fact.
+      </p>
+    </div>
+  );
+}
 
 function Chip({ status }: { status: string }) {
   const cls = status === 'pass' ? 'chip-pass' : status === 'fail' || status === 'error' ? 'chip-fail' : status === 'deferred' ? 'chip-deferred' : 'chip-na';
@@ -400,7 +475,7 @@ export function LabClient({ data }: { data: Results }) {
                         {sel.attribution.line !== null ? `:${sel.attribution.line}` : ''}
                       </b>
                       {sel.attribution.evidenceId && <span>{sel.attribution.evidenceId}</span>}
-                      <span>rea: {sel.attribution.rea}</span>
+                      {sel.attribution.rea.status === 'not-run' && <span>rea: {sel.attribution.rea.note}</span>}
                     </div>
                     {sel.attribution.snippet && (
                       <pre className="code snippet" tabIndex={0}>
@@ -413,6 +488,7 @@ export function LabClient({ data }: { data: Results }) {
                         </code>
                       </pre>
                     )}
+                    <ReaBlock rea={sel.attribution.rea} />
                   </div>
                 )}
                 {!sel.attribution && sel.verdict === 'fail' && <p className="muted small" style={{ marginTop: 16 }}>No attribution recorded for this run.</p>}

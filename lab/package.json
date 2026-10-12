@@ -20,6 +20,7 @@
   },
   "devDependencies": {
     "@types/node": "^24.0.0",
+    "rea-agents": "6.4.0",
     "tsx": "^4.20.0",
     "typescript": "~5.9.3",
     "vitest": "^5.0.3"

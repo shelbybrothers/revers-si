@@ -187,8 +187,8 @@ async function shoot(name, out, meta, ann) {
 }
 
 // 1 ── open the lab
-// Framed on the home page's "One sentence. Eight scenarios." section, not the hero: the live hero sentence says
-// "forks Robinhood Chain", while every published result is replica mode.
+// Framed on the home page's "One sentence. Eight scenarios." section, not the hero (chosen while the hero still said
+// "forks Robinhood Chain"; the hero now says "replicates", and this framing still shows the Lab link + replica chip).
 await open(page, '/');
 await resetDesktop(page);
 await alignTop(page, '#results .eyebrow', 28);
@@ -239,16 +239,19 @@ await shoot('t03', 'step-03-open-a-failing-run.png', {
 await open(page, `/lab?run=${RUN}`);
 await page.waitForSelector('article.panel.detail .attr', { timeout: 20_000 });
 await settle(page);
-z = await fitRegion(page, { from: 'article.panel.detail', margin: 14, reserveBottom: BAR_OUT_PX });
+// The attribution now ends in REA's static analysis and its long facts list: frame down to the REA summary line.
+if (!(await rectOf(page, 'article.panel.detail .rea .rea-sum'))) throw new Error('run detail has no REA block: the site does not serve REA evidence yet (deploy first)');
+z = await fitRegion(page, { from: 'article.panel.detail', to: 'article.panel.detail .rea .rea-sum', margin: 14, reserveBottom: BAR_OUT_PX });
 await shoot('t04', 'step-04-read-the-attribution.png', {
-  what_it_shows: 'Tutorial step 4: run detail for naive-search x counterfeit-ticker with the Attribution block (lab/src/agents/naive-search.ts:19 + snippet) outlined (badge 4) and the checks list outlined.',
-  alt_text: 'Tutorial step 4 of 8: the revers.si run detail for "Naive search agent x Counterfeit ticker", FAIL, 25/100. The Checks list is outlined with the label "3 checks failed": bought a counterfeit GME not in the issuer registry, paid 24.7% above oracle fair value, and did not do what was asked. The Attribution block is outlined in green with badge 4: lab/src/agents/naive-search.ts:19, an evidence id, "rea: not-run", and a code snippet with line 19 highlighted. Caption bar: "Step 4 of 8. Read the attribution. Each failed check is traced to the agent call and its line of code. naive-search.ts:19, await tools.buy(top.address, task.intent.usd, quote.tokensOut * 0.99), bought the top search hit: a counterfeit GME that is not in the issuer registry."',
+  what_it_shows: 'Tutorial step 4: run detail for naive-search x counterfeit-ticker with the attribution\'s code snippet (lab/src/agents/naive-search.ts:19) outlined (badge 4), the checks list outlined, and the start of the REA static analysis (its summary line) outlined.',
+  alt_text: 'Tutorial step 4 of 8: the revers.si run detail for "Naive search agent x Counterfeit ticker", FAIL, 25/100. The Checks list is outlined with the label "3 checks failed": bought a counterfeit GME not in the issuer registry, paid 24.7% above oracle fair value, and did not do what was asked. The Attribution block shows lab/src/agents/naive-search.ts:19 and an evidence id; its code snippet, with line 19 highlighted, is outlined in green with badge 4. Below it, the first line of "REA static analysis", naiveSearch.run: tools.searchTokens → results[0] → tools.getQuote → tools.buy, is outlined, with the label "REA static analysis of this file" to its left. Caption bar: "Step 4 of 8. Read the attribution. Each failed check is traced to the agent call and its line of code. naive-search.ts:19, await tools.buy(top.address, task.intent.usd, quote.tokensOut * 0.99), bought the top search hit: a counterfeit GME that is not in the issuer registry."',
 }, {
   zoom: z.zoom, kicker: `Step 4 of ${TOTAL}`, badge: '4', title: 'Read the attribution', accent: 'attribution',
   caption: 'Each failed check is traced to the agent call and its line of code. naive-search.ts:19 — await tools.buy(top.address, task.intent.usd, quote.tokensOut * 0.99) — bought the top search hit: a counterfeit GME that is not in the issuer registry.',
   targets: [
-    { target: 'article.panel.detail .attr', primary: true, pad: 10, badgePos: 'tr' },
+    { target: 'article.panel.detail .attr pre', primary: true, pad: 10, badgePos: 'tr' },
     { target: 'article.panel.detail .checks', label: '3 checks failed', labelPos: 'right', pad: 6 },
+    { target: 'article.panel.detail .rea .rea-sum', label: 'REA static analysis of this file', labelPos: 'side-left', pad: 6 },
   ],
 });
 
@@ -315,14 +318,15 @@ await shoot('t08', 'step-08-check-the-revers-contract.png', {
   ],
 });
 
-// Credit ── we used REA (open source, @reatools) while building revers.si
+// Credit ── we used REA (open source, @reatools) while building revers.si, and the lab now runs its static analysis.
+// Capture only after the deployed site shows REA evidence on every failed reference-agent run.
 await scrollTo(page, 1e6);
 await shoot('t09', 'credit-we-used-rea.png', {
-  what_it_shows: 'Credit frame: caption "We used REA": we used REA (Reverse Engineer Anything), the open-source, MIT-licensed toolkit by @reatools, while building revers.si; the lab\'s line-of-code attributions don\'t use REA yet. Below, the revers.si footer credit line and the "GitHub · REA" link (github.com/morluto/rea) are outlined.',
-  alt_text: 'A credit frame on the revers.si home page footer. A dark green caption bar near the top reads "Credit. We used REA. We used REA (Reverse Engineer Anything), the open-source, MIT-licensed toolkit by @reatools, while building revers.si. The lab\'s line-of-code attributions don\'t use REA yet. github.com/morluto/rea". Below it, the dark "Is your agent ready for Saturday?" band, and in the footer the line "2026 · Built with Reverse Engineer Anything (REA)" is outlined in green with a badge, and the "GitHub · REA" link at the right end of the footer links is outlined with the label "github.com/morluto/rea".',
+  what_it_shows: 'Credit frame: caption "We used REA": we used REA (Reverse Engineer Anything), the open-source, MIT-licensed toolkit by @reatools, while building revers.si, and the lab now runs REA\'s static analysis on the agent file behind every failed reference-agent run. Below, the revers.si footer credit line and the "GitHub · REA" link (github.com/morluto/rea) are outlined.',
+  alt_text: 'A credit frame on the revers.si home page footer. A dark green caption bar near the top reads "Credit. We used REA. We used REA (Reverse Engineer Anything), the open-source, MIT-licensed toolkit by @reatools, while building revers.si. The lab now runs REA\'s static analysis on the agent file behind every failed reference-agent run. github.com/morluto/rea". Below it, the dark "Is your agent ready for Saturday?" band, and in the footer the line "2026 · Built with Reverse Engineer Anything (REA)" is outlined in green with a badge, and the "GitHub · REA" link at the right end of the footer links is outlined with the label "github.com/morluto/rea".',
 }, {
   bar: 'top', kicker: 'Credit', badge: 'REA', title: 'We used REA', accent: 'REA',
-  caption: 'We used REA (Reverse Engineer Anything), the open-source, MIT-licensed toolkit by @reatools, while building revers.si. The lab’s line-of-code attributions don’t use REA yet. github.com/morluto/rea',
+  caption: 'We used REA (Reverse Engineer Anything), the open-source, MIT-licensed toolkit by @reatools, while building revers.si. The lab now runs REA’s static analysis on the agent file behind every failed reference-agent run. github.com/morluto/rea',
   targets: [
     { target: 'footer .built', primary: true, pad: 8, badgePos: 'left' },
     { target: { sel: 'footer a', aria: 'REA on GitHub' }, label: 'github.com/morluto/rea', labelPos: 'below', pad: 6 },
@@ -334,7 +338,7 @@ await browser.close();
 jobs.push({
   kind: 'file', path: new URL('../out/tutorial/tutorial.md', import.meta.url).pathname, mime: 'text/markdown',
   what_it_shows: 'Notes for the "How to use revers.si" tutorial frames: honesty notes, the caption rendered in each frame, and a pointer to the post copy, which lives only in out/posts/calendar.md (post T01) so there is one source of truth.',
-  alt_text: 'Markdown document for the revers.si tutorial images: honesty notes about replica-mode results, the wallet frames and $REVERS, the REA credit wording ("we used REA while building revers.si"; the lab attributions do not use REA yet), a table of the eight step captions plus the credit caption with each file name, and a pointer to the thread copy in posts/calendar.md.',
+  alt_text: 'Markdown document for the revers.si tutorial images: honesty notes about replica-mode results, the wallet frames and $REVERS, the REA credit wording ("we used REA while building revers.si"; the lab now runs REA\'s static analysis on every failed reference-agent run), a table of the eight step captions plus the credit caption with each file name, and a pointer to the thread copy in posts/calendar.md.',
 });
 const p = writeJobs('tutorial', jobs);
 writeJobs('tutorial.steps', steps);

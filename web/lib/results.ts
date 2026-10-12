@@ -10,7 +10,23 @@ export interface Task { id: string; prompt: string }
 export interface Check { id: string; label: string; status: CheckStatus; detail: string }
 export interface Action { tool: string; args: Record<string, unknown>; ok: boolean; summary: string }
 export interface SnippetLine { n: number | null; hit: boolean; code: string }
-export interface Attribution { evidenceId: string; file: string; line: number | null; snippet: string; lines: SnippetLine[]; rea: string }
+export type ReaState = 'observed' | 'inferred' | 'unknown';
+/** 'rea': restates REA output; 'revers-projection': the lab relates REA items by source position. */
+export type ReaBasis = 'rea' | 'revers-projection';
+export interface ReaFact { basis: ReaBasis; state: ReaState; resolution: string | null; unknowns: string[]; text: string; line: number | null }
+/** attribution.rea from the lab: REA's static analysis of the agent code path, an error, or why it did not run. */
+export type ReaInfo =
+  | {
+      status: 'ran'; version: string; command: string; input: string;
+      /** REA's semantic graph id (content-addressed) */
+      graphId: string; queryId: string | null; traceCoverage: string | null;
+      /** REA's Evidence id: machine-local (it hashes REA's absolute input path) */
+      reaEvidenceId: string;
+      fn: { name: string; startLine: number; endLine: number } | null; summary: string; facts: ReaFact[];
+    }
+  | { status: 'error'; version: string | null; message: string }
+  | { status: 'not-run'; note: string };
+export interface Attribution { evidenceId: string; file: string; line: number | null; snippet: string; lines: SnippetLine[]; rea: ReaInfo }
 export interface LlmUsage { model: string; turns: number; inputTokens: number; outputTokens: number; cacheReadTokens: number; cacheWriteTokens: number; costUsd: number }
 export interface Run {
   agentId: string; scenarioId: string; taskId: string; score: number; verdict: Verdict;
@@ -67,6 +83,39 @@ export function parseSnippet(snippet: string, line: number | null): SnippetLine[
   });
 }
 
+/** Accepts the lab's string form ("not-run", "not-run (REA_ENABLE=0)") and the REA record object. */
+export function normRea(v: unknown): ReaInfo {
+  if (typeof v === 'string') return { status: 'not-run', note: v || 'not-run' };
+  if (!isObj(v)) return { status: 'not-run', note: 'not-run' };
+  if (v.status === 'error') return { status: 'error', version: typeof v.version === 'string' ? v.version : null, message: str(v.message, 'REA failed') };
+  if (v.status !== 'ran' || typeof v.summary !== 'string') return { status: 'not-run', note: 'not-run' };
+  const f = isObj(v.function) ? v.function : null;
+  return {
+    status: 'ran',
+    version: str(v.version),
+    command: str(v.command),
+    input: str(v.input),
+    graphId: str(v.graphId),
+    queryId: typeof v.queryId === 'string' ? v.queryId : null,
+    traceCoverage: typeof v.traceCoverage === 'string' ? v.traceCoverage : null,
+    reaEvidenceId: str(v.reaEvidenceId),
+    fn: f && typeof f.name === 'string' ? { name: f.name, startLine: num(f.startLine) ?? 0, endLine: num(f.endLine) ?? 0 } : null,
+    summary: v.summary,
+    facts: arr(v.facts)
+      .filter(isObj)
+      .map((x) => ({
+        // anything not marked as a plain REA restatement is shown as the lab's projection
+        basis: (x.basis === 'rea' ? 'rea' : 'revers-projection') as ReaBasis,
+        state: (x.state === 'observed' || x.state === 'inferred' ? x.state : 'unknown') as ReaState,
+        resolution: typeof x.resolution === 'string' && x.resolution ? x.resolution : null,
+        unknowns: arr(x.unknowns).filter((u): u is string => typeof u === 'string' && !!u),
+        text: str(x.text),
+        line: num(x.line),
+      }))
+      .filter((x) => x.text),
+  };
+}
+
 function normAttribution(v: unknown): Attribution | null {
   if (!isObj(v)) return null;
   const file = str(v.file);
@@ -78,7 +127,7 @@ function normAttribution(v: unknown): Attribution | null {
     line,
     snippet: str(v.snippet),
     lines: parseSnippet(str(v.snippet), line),
-    rea: typeof v.rea === 'string' ? v.rea : v.rea ? 'attached' : 'not-run',
+    rea: normRea(v.rea),
   };
 }
 

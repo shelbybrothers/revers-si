@@ -1,5 +1,6 @@
 // Builds results.json (schema in SPEC.md) and writes it to lab/out/results.json and web/public/data/results.json.
 import { mkdirSync, writeFileSync } from 'node:fs';
+import { homedir } from 'node:os';
 import { dirname, join } from 'node:path';
 import type { TradingAgent } from './agents/types.js';
 import { LENDING_FINDINGS, type LendingResult } from './lending.js';
@@ -102,6 +103,59 @@ export function writeResults(results: ResultsJson, outPath = DEFAULT_OUT, copyTo
   return written;
 }
 
+const REA_STATES = ['observed', 'inferred', 'unknown'];
+const REA_BASES = ['rea', 'revers-projection'];
+
+/** attribution.rea: a "not-run…" string, or a REA record ({status:'ran'|'error'}) free of machine paths. */
+export function reaProblem(rea: unknown): string | null {
+  if (typeof rea === 'string') return rea.startsWith('not-run') ? null : 'string must be "not-run…"';
+  if (typeof rea !== 'object' || rea === null) return 'must be a string or an object';
+  const o = rea as Record<string, unknown>;
+  if (o.tool !== 'rea-agents') return 'tool must be "rea-agents"';
+  if (typeof o.input !== 'string' || !o.input || o.input.startsWith('/') || /^[A-Za-z]:[\\/]/.test(o.input)) return 'input must be a repo-relative path';
+  const json = JSON.stringify(o);
+  const home = homedir();
+  if (json.includes(REPO_ROOT) || (home.length > 1 && json.includes(home))) return 'contains an absolute path';
+  if (o.status === 'error') return typeof o.message === 'string' && o.message ? null : 'error without message';
+  if (o.status !== 'ran') return 'status must be ran|error';
+  if (typeof o.version !== 'string' || !o.version) return 'version missing';
+  if (typeof o.command !== 'string' || !o.command) return 'command missing';
+  if (!/^jsrg_[0-9a-f]{64}$/.test(String(o.graphId))) return 'graphId must be REA jsrg_<sha256>';
+  if (o.queryId !== null && !/^jsrq_[0-9a-f]{64}$/.test(String(o.queryId))) return 'queryId must be null or REA jsrq_<sha256>';
+  if (o.traceCoverage !== null && (typeof o.traceCoverage !== 'string' || !o.traceCoverage)) return 'traceCoverage must be null or a string';
+  if (!/^ev_[0-9a-f]{64}$/.test(String(o.reaEvidenceId))) return 'reaEvidenceId must be REA ev_<sha256>';
+  if (typeof o.summary !== 'string' || !o.summary) return 'summary missing';
+  const f = o.function as Record<string, unknown> | null;
+  if (f !== null && (typeof f !== 'object' || typeof f.name !== 'string' || typeof f.startLine !== 'number' || typeof f.endLine !== 'number')) return 'function invalid';
+  const factOk = (x: Record<string, unknown>) =>
+    REA_BASES.includes(x?.basis as string) &&
+    REA_STATES.includes(x?.state as string) &&
+    typeof x.text === 'string' &&
+    !!x.text &&
+    (x.resolution === undefined || (typeof x.resolution === 'string' && !!x.resolution)) &&
+    (x.unknowns === undefined || (Array.isArray(x.unknowns) && x.unknowns.length > 0 && x.unknowns.every((u) => typeof u === 'string' && u))) &&
+    (x.line === undefined || typeof x.line === 'number');
+  if (!Array.isArray(o.facts) || !o.facts.every(factOk))
+    return 'facts must be [{basis: rea|revers-projection, state: observed|inferred|unknown, resolution?, unknowns?: string[], text, line?}]';
+  return null;
+}
+
+/** Failed reference-agent runs whose attribution carries no REA evidence (rea.status !== 'ran'). The site states that
+ *  every failed reference-agent run has REA analysis, so the published results.json must have none (cli.ts refuses to
+ *  write web/public/data/results.json otherwise, unless --allow-rea-errors). */
+export function reaCoverageProblems(r: Pick<ResultsJson, 'agents' | 'runs'>): string[] {
+  const kind = new Map(r.agents.map((a) => [a.id, a.kind]));
+  const out: string[] = [];
+  for (const run of r.runs) {
+    if (kind.get(run.agentId) !== 'reference' || (run.verdict !== 'fail' && !run.attribution)) continue;
+    const rea = run.attribution?.rea;
+    if (rea && typeof rea === 'object' && rea.status === 'ran') continue;
+    const why = !run.attribution ? 'no attribution' : typeof rea === 'string' ? rea : rea ? `error: ${rea.message}` : 'no rea field';
+    out.push(`${run.agentId}/${run.scenarioId}/${run.taskId}: ${why}`);
+  }
+  return out;
+}
+
 /** Structural validation against the SPEC results.json schema. Returns a list of problems (empty = valid). */
 export function validateResults(r: unknown): string[] {
   const errs: string[] = [];
@@ -136,6 +190,10 @@ export function validateResults(r: unknown): string[] {
       const at = run.attribution as Record<string, unknown> | null;
       if (at !== null && (typeof at !== 'object' || !/^ev_[0-9a-f]+$/.test(String(at.evidenceId)) || typeof at.file !== 'string' || typeof at.line !== 'number' || typeof at.snippet !== 'string'))
         errs.push(`run ${id} attribution invalid`);
+      else if (at) {
+        const p = reaProblem(at.rea);
+        if (p) errs.push(`run ${id} attribution.rea invalid: ${p}`);
+      }
       if (run.verdict === 'fail' && at === null) errs.push(`run ${id} failed without attribution`);
       const u = run.llmUsage as Record<string, unknown> | null | undefined;
       if (

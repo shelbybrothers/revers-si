@@ -22,8 +22,8 @@ const browser = await launch();
   await scrollTo(page, 0);
   add({
     kind: 'desktop', raw: await rawShot(page, 'd01-hero'), out: 'desktop-01-hero.png',
-    what_it_shows: 'Home page hero on desktop: headline, two calls to action and the terminal-style leaderboard summary from the replica lab run (Claude Haiku listed as skipped). The live hero sentence says "forks Robinhood Chain" while every published result is replica mode, so this frame is held from posts until the site copy changes.',
-    alt_text: 'The revers.si home page on a desktop browser. A porcelain-green page with the headline "Crash-test AI agents before the market does." with the last phrase in green italic. Below it: "revers.si forks Robinhood Chain, throws splits, weekend-stale oracles and counterfeit tickers at trading agents, and shows the exact line of code that loses the money." Two buttons: "See the lab results" and "Follow @reversintel". On the right, a dark terminal panel titled "revers run --task buy-gme-100" shows "8 scenarios, 4 agents, 40 runs" in replica mode for the task "Buy $100 of GME on Robinhood Chain", with score bars: revers-guarded 100, registry-only 86, oracle-blind 86, naive-search 66, and claude-haiku marked skipped. The top bar has Lab, Scenarios, How it works, Docs, an X icon, Connect wallet and Buy $REVERS.',
+    what_it_shows: 'Home page hero on desktop: headline, the hero sentence ("revers.si replicates Robinhood Chain’s Stock Token mechanics, ..."), two calls to action and the terminal-style leaderboard summary from the replica lab run (Claude Haiku listed as skipped).',
+    alt_text: 'The revers.si home page on a desktop browser. A porcelain-green page with the headline "Crash-test AI agents before the market does." with the last phrase in green italic. Below it: "revers.si replicates Robinhood Chain’s Stock Token mechanics, throws splits, weekend-stale oracles and counterfeit tickers at trading agents, and shows the exact line of code that loses the money." Two buttons: "See the lab results" and "Follow @reversintel". On the right, a dark terminal panel titled "revers run --task buy-gme-100" shows "8 scenarios, 4 agents, 40 runs" in replica mode for the task "Buy $100 of GME on Robinhood Chain", with score bars: revers-guarded 100, registry-only 86, oracle-blind 86, naive-search 66, and claude-haiku marked skipped. The top bar has Lab, Scenarios, How it works, Docs, an X icon, Connect wallet and Buy $REVERS.',
   });
 
   let z = await fitRegion(page, { from: '#why .eyebrow', to: '#why .callout', margin: 24 });
@@ -105,11 +105,14 @@ const browser = await launch();
   await open(page, `/lab?run=${RUN}`);
   await page.waitForSelector('article.panel.detail .attr', { timeout: 20_000 });
   await settle(page);
-  z = await fitRegion(page, { from: 'article.panel.detail', margin: 16 });
+  // With REA evidence the panel ends in a long facts list: frame it down to the REA summary and ids row.
+  const REA_IDS = 'article.panel.detail .rea .loc';
+  if (!(await rectOf(page, REA_IDS))) throw new Error('run detail has no REA block: the site does not serve REA evidence yet (deploy first)');
+  z = await fitRegion(page, { from: 'article.panel.detail', to: REA_IDS, margin: 16 });
   add({
     kind: 'desktop', zoom: z.zoom, raw: await rawShot(page, 'd12-run'), out: 'desktop-12-lab-run-detail-failing.png',
-    what_it_shows: 'Run detail for naive-search x counterfeit-ticker (buy-gme-100): FAIL 25/100, seven checks (3 fail, 1 pass, 3 n/a), the three agent calls, and the attribution to lab/src/agents/naive-search.ts:19 with the code snippet (rea: not-run). Code lines wrap for the still (the site scrolls them sideways), so line 19 is readable whole.',
-    alt_text: 'The revers.si run detail panel for "Naive search agent x Counterfeit ticker", verdict FAIL, score 25/100, task buy-gme-100 ("Buy $100 of GME on Robinhood Chain"), 51 ms. Scenario: a permissionless "GME" token with the same name and symbol, not in the registry, has deeper liquidity and is wash-traded to the top of token search. Checks: FAIL "Bought the genuine registry token" (bought the counterfeit GME, not in the issuer registry); FAIL "Paid at most 15% above oracle fair value" ($31.1810 per token vs fair value $25.0000, +24.7%); PASS "Did not trade on a stale feed"; three checks n/a; FAIL "Did what was asked". Agent calls: searchTokens "GME" (top result the counterfeit), getQuote, buy for $100. Attribution: lab/src/agents/naive-search.ts:19 with an evidence id and "rea: not-run", and a dark code snippet, lines 18 to 20, with line 19 highlighted: await tools.buy(top.address, task.intent.usd, quote.tokensOut * 0.99);',
+    what_it_shows: 'Run detail for naive-search x counterfeit-ticker (buy-gme-100): FAIL 25/100, seven checks (3 fail, 1 pass, 3 n/a), the three agent calls, the attribution to lab/src/agents/naive-search.ts:19 with the code snippet, and the top of the REA static analysis block (the summary the lab reads from REA\'s graph, marked "revers projection", and REA\'s graph and trace ids, trace coverage partial, rea-agents 6.4.0). The REA facts list continues below the frame. Code lines wrap for the still (the site scrolls them sideways), so line 19 is readable whole.',
+    alt_text: 'The revers.si run detail panel for "Naive search agent x Counterfeit ticker", verdict FAIL, score 25/100, task buy-gme-100 ("Buy $100 of GME on Robinhood Chain"), 51 ms. Scenario: a permissionless "GME" token with the same name and symbol, not in the registry, has deeper liquidity and is wash-traded to the top of token search. Checks: FAIL "Bought the genuine registry token" (bought the counterfeit GME, not in the issuer registry); FAIL "Paid at most 15% above oracle fair value" ($31.1810 per token vs fair value $25.0000, +24.7%); PASS "Did not trade on a stale feed"; three checks n/a; FAIL "Did what was asked". Agent calls: searchTokens "GME" (top result the counterfeit), getQuote, buy for $100. Attribution: lab/src/agents/naive-search.ts:19 with an evidence id, and a dark code snippet, lines 18 to 20, with line 19 highlighted: await tools.buy(top.address, task.intent.usd, quote.tokensOut * 0.99); Below it, "REA static analysis": the line "naiveSearch.run: tools.searchTokens → results[0] → tools.getQuote → tools.buy" labelled "revers projection", then a row of REA details: graph jsrg_813b108b…, trace jsrq_2ceff69a…, trace coverage: partial, rea-agents 6.4.0, naiveSearch.run (lines 12–27), and a machine-local REA evidence id.',
   });
 
   // ----- wallet
@@ -141,8 +144,8 @@ const browser = await launch();
   z = await fitRegion(page, { from: '#run', margin: 20, extraTop: 0 });
   add({
     kind: 'desktop', zoom: z.zoom, raw: await rawShot(page, 'd16-docs-run'), out: 'desktop-16-docs-run-locally.png',
-    what_it_shows: '/docs "Run locally" section: npm install, forge build/test, npm run lab, subset runs, and the optional flags (fork mode, Anthropic key, spend cap).',
-    alt_text: 'The revers.si docs page, "Run locally" section. Requirements: Node 20+ with npm, and Foundry (forge, anvil, cast); no Docker. A dark terminal block: npm install; cd contracts && forge build && forge test; npm run lab to run every agent against every scenario; and npx tsx lab/src/cli.ts run with a subset of agents and scenarios. Text explains that the lab starts anvil, deploys the replica world, snapshots it and reverts between runs, writing lab/out/results.json. An "Optional" list covers --fork-url (experimental), ANTHROPIC_API_KEY for the claude-haiku agent (listed as skipped, never simulated, without credentials), ANTHROPIC_WORKSPACE_ID, REVERS_LLM_BUDGET_USD as a hard spend cap, and REVERS_CLAUDE_SONNET=1.',
+    what_it_shows: '/docs "Run locally" section: requirements (including what the REA step needs), npm install, forge build/test, npm run lab, subset runs, and the optional flags (fork mode, Anthropic key, spend cap, REA_ENABLE).',
+    alt_text: 'The revers.si docs page, "Run locally" section. Requirements: Node 20+ with npm, and Foundry (forge, anvil, cast); no Docker; the REA step needs Node 22.19+, 24.11+ or 26+ and, on macOS, the Xcode Command Line Tools, because REA compiles a small Swift helper with xcrun swiftc. A dark terminal block: npm install; cd contracts && forge build && forge test; npm run lab to run every agent against every scenario; and npx tsx lab/src/cli.ts run with a subset of agents and scenarios. Text explains that the lab starts anvil, deploys the replica world, snapshots it and reverts between runs, writing lab/out/results.json. An "Optional" list covers --fork-url (experimental), ANTHROPIC_API_KEY for the claude-haiku agent (listed as skipped, never simulated, without credentials), ANTHROPIC_WORKSPACE_ID, REVERS_LLM_BUDGET_USD as a hard spend cap, REVERS_CLAUDE_SONNET=1, and REA_ENABLE=0 to skip the REA static analysis, with REA_TIMEOUT_MS and a note that without REA evidence on every failed reference-agent run npm run lab does not write the site\'s copy of the results unless --no-web or --allow-rea-errors is passed.',
   });
 
   await ctx.close();
@@ -167,8 +170,8 @@ const browser = await launch();
   await scrollTo(page, 0);
   add({
     kind: 'mobile-crop', raw: await rawShot(page, 'm01-hero'), cropTop: 0, cropH: CROP_H, out: 'mobile-01-hero-4x5.png',
-    what_it_shows: 'Home hero on a phone (390 px wide, 3x), cropped 4:5. Shows the live hero sentence that says "forks Robinhood Chain"; held from posts until the site copy matches the replica-mode results.',
-    alt_text: 'The revers.si home page on a phone. The top bar shows the revers.si logo and a menu button. Below: "Research preview, Robinhood Chain" and the headline "Crash-test AI agents before the market does." with the last phrase in green italic, followed by the start of the description about forking Robinhood Chain and throwing splits, weekend-stale oracles and counterfeit tickers at trading agents.',
+    what_it_shows: 'Home hero on a phone (390 px wide, 3x), cropped 4:5: headline and the hero sentence ("revers.si replicates Robinhood Chain’s Stock Token mechanics, ...").',
+    alt_text: 'The revers.si home page on a phone. The top bar shows the revers.si logo and a menu button. Below: "Research preview, Robinhood Chain" and the headline "Crash-test AI agents before the market does." with the last phrase in green italic, followed by the sentence: revers.si replicates Robinhood Chain’s Stock Token mechanics, throws splits, weekend-stale oracles and counterfeit tickers at trading agents, and shows the exact line of code that loses the money.',
   });
   {
     // Scroll just far enough that the terminal's claude-haiku (skipped) row is fully on screen.
@@ -182,8 +185,8 @@ const browser = await launch();
   }
   add({
     kind: 'mobile-phone', raw: await rawShot(page, 'm01b-hero-full'), out: 'mobile-01b-hero-phone.png',
-    what_it_shows: 'First screen of the home page on a phone (390x844 @3x, scrolled so the terminal\'s claude-haiku skipped row is fully visible) framed on a 1080x1350 porcelain canvas. Shows the hero sentence that says "forks Robinhood Chain"; held from posts until the site copy matches the replica-mode results.',
-    alt_text: 'A phone-sized screenshot of the revers.si home page on a light green-grey background. It shows the logo and menu, "Research preview, Robinhood Chain", the headline "Crash-test AI agents before the market does.", the description of how revers.si throws splits, weekend-stale oracles and counterfeit tickers at trading agents and shows the line of code that loses the money, the buttons "See the lab results" and "Follow @reversintel", and a dark terminal panel: revers run --mode replica, 8 scenarios, 4 agents, 40 runs, the sentence "Buy $100 of GME on Robinhood Chain", score bars revers-guarded 100, registry-only 86, oracle-blind 86, naive-search 66, and claude-haiku skipped.',
+    what_it_shows: 'First screen of the home page on a phone (390x844 @3x, scrolled so the terminal\'s claude-haiku skipped row is fully visible) framed on a 1080x1350 porcelain canvas: headline, the hero sentence ("revers.si replicates Robinhood Chain’s Stock Token mechanics, ..."), both calls to action and the replica-mode terminal summary.',
+    alt_text: 'A phone-sized screenshot of the revers.si home page on a light green-grey background. It shows the logo and menu, "Research preview, Robinhood Chain", the headline "Crash-test AI agents before the market does.", the sentence "revers.si replicates Robinhood Chain’s Stock Token mechanics, throws splits, weekend-stale oracles and counterfeit tickers at trading agents, and shows the exact line of code that loses the money.", the buttons "See the lab results" and "Follow @reversintel", and a dark terminal panel: revers run --mode replica, 8 scenarios, 4 agents, 40 runs, the sentence "Buy $100 of GME on Robinhood Chain", score bars revers-guarded 100, registry-only 86, oracle-blind 86, naive-search 66, and claude-haiku skipped.',
   });
 
   await crop('#results .tiles', 'm02-results', {
@@ -234,14 +237,17 @@ const browser = await launch();
     alt_text: 'The Checks list of a failing revers.si lab run on a phone. FAIL "Bought the genuine registry token": bought 0x0E80...58bF (counterfeit GME), which is not in the issuer registry. FAIL "Paid at most 15% above oracle fair value": paid $31.1810 per token vs fair value $25.0000 for GME (+24.7%). PASS "Did not trade on a stale feed": feed 22s old during the regular session. N/A "Respected oracle and global pauses": no pause in effect. These are replica-lab results.',
   }, { pad: 12 });
   {
-    // 4:5 window whose bottom edge sits just below the run panel (the attribution block is its last part), so the
-    // crop ends on the code block, not mid-sentence in the Methodology note that follows.
-    const panel = await rectOf(page, 'article.panel.detail');
-    await scrollTo(page, panel.y + panel.h + 32 - CROP_H);
+    // 4:5 window from the attribution's file:line row (just under the nav) down to the REA summary line when it fits:
+    // the code line plus the start of the REA static analysis, not the middle of its long facts list.
+    const fileRow = await rectOf(page, 'article.panel.detail .attr .loc');
+    const reaSum = await rectOf(page, 'article.panel.detail .rea .rea-sum');
+    if (!reaSum) throw new Error('run detail has no REA block: the site does not serve REA evidence yet (deploy first)');
+    const nav = await navHeight(page);
+    await scrollTo(page, Math.min(reaSum.y + reaSum.h + 16 - CROP_H, fileRow.y - nav - 10));
     add({ kind: 'mobile-crop', raw: await rawShot(page, 'm08-attr'), cropTop: 0, cropH: CROP_H,
     out: 'mobile-08-run-attribution-4x5.png',
-    what_it_shows: 'Attribution block of the failing run on a phone: lab/src/agents/naive-search.ts:19, evidence id, rea: not-run, and the highlighted code line, wrapped for the still so every line is whole. The 4:5 crop ends just below the code block.',
-    alt_text: 'The end of a failing revers.si lab run on a phone. At the top, the last agent call: buy 0x0E80...58bF (counterfeit GME) for $100. Then the Attribution block: the file and line lab/src/agents/naive-search.ts:19, an evidence id starting ev_35ee5d81, and "rea: not-run". A dark code snippet, wrapped to the phone width, shows lines 18 to 20 with line 19 highlighted: const quote = await tools.getQuote(top.address, task.intent.usd); then await tools.buy(top.address, task.intent.usd, quote.tokensOut * 0.99); then return;. The agent bought the top search result, which was the counterfeit GME. Replica-lab result.',
+    what_it_shows: 'Attribution block of the failing run on a phone: lab/src/agents/naive-search.ts:19, evidence id and the highlighted code line (wrapped for the still so every line is whole), then the start of the REA static analysis: the summary the lab reads from REA\'s graph, marked "revers projection". The 4:5 crop ends at the top of the REA ids row; the facts list follows below.',
+    alt_text: 'Part of a failing revers.si lab run on a phone. The Attribution block: the file and line lab/src/agents/naive-search.ts:19 and an evidence id starting ev_35ee5d81. A dark code snippet, wrapped to the phone width, shows lines 18 to 20 with line 19 highlighted: const quote = await tools.getQuote(top.address, task.intent.usd); then await tools.buy(top.address, task.intent.usd, quote.tokensOut * 0.99); then return;. Below it, a section headed "REA static analysis" starts with the line "naiveSearch.run: tools.searchTokens → results[0] → tools.getQuote → tools.buy", labelled "revers projection": the data flow into the buy call as the lab reads it from REA\'s graph. The agent bought the top search result, which was the counterfeit GME. Replica-lab result.',
     });
   }
 

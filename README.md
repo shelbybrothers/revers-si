@@ -92,6 +92,42 @@ valuation modes: `CORRECT`, `DOUBLE_MULTIPLIER`, `RAW_BALANCE_SPOT_FEED`), `Reve
    "safe"); an agent that crashes before its first tool call gets verdict `error` and is left out of the leaderboard.
 5. Maps each failed check to the agent call that caused it, then to the `file:line` and a three-line snippet of
    the agent's source, with an `ev_` evidence id.
+6. For a reference agent, adds a [REA](https://github.com/morluto/rea) static analysis of that agent file (see
+   below).
+
+**REA in the lab.** `rea-agents` (REA, Reverse Engineer Anything, MIT) is pinned as a dev dependency of the lab
+(`6.4.0`) and is used only as a CLI; its `setup` is never run. For each reference-agent file that has a failed run,
+the lab runs, once per file per lab run and with a 60 s timeout per command:
+
+- `rea analyze-javascript-application <dir> --json` on a directory holding only that file. REA parses it as inert
+  text (it never executes it) and returns an Evidence record with a content-addressed semantic graph of functions,
+  call sites, bindings, property reads, their relations and REA's own unknowns.
+- `rea trace-javascript-semantics` with an `ownership` query seeded at the function containing the attributed line.
+
+`attribution.rea` then holds REA's ids (`graphId` `jsrg_...`, `queryId` `jsrq_...`, `reaEvidenceId` `ev_...`), REA's
+coverage status for the trace (`traceCoverage`, `partial` today), the version and commands, and the lab's reading of
+REA's graph: a summary of the data flow into the attributed call, for example
+`naiveSearch.run: tools.searchTokens → results[0] → tools.getQuote → tools.buy`, and a list of facts (what the call
+reads, where those values come from, which `tools` members the function calls, what REA left unresolved). Each fact
+says what it rests on: `basis` is `rea` when it restates REA output (an `aliases` relation, the trace's awaits,
+REA's unknowns) and `revers-projection` when the lab relates REA items by source position (REA has no relation, e.g.
+`top ← results[0]`); `state` is the weakest REA evidence state of the items it uses; `resolution` is `candidate`
+when REA marks a relation it uses as a candidate (static, not proof of execution); `unknowns` lists REA's own
+unknowns on those items (for `top ← results[0]`: REA has no value for `results` or `top`, and `results[0]` is an
+ambiguous target). The stack-trace `file:line` stays the primary pointer. If REA is missing, fails or times out the
+record says so (`"not-run (...)"` or `{"status": "error", "message": ...}` with REA's cause); it is never filled in by
+hand, and `npm run lab` then does not write `web/public/data/results.json` (it writes `lab/out/results.json` and exits
+1; `--no-web` or `--allow-rea-errors` overrides that), so the published results always carry REA evidence on every
+failed reference-agent run. LLM agents are attributed to their transcript and are not analysed. `REA_ENABLE=0` turns
+the step off; `REA_TIMEOUT_MS` changes the timeout. REA needs Node 22.19+, 24.11+ or 26+ and, on macOS, the Xcode
+Command Line Tools: every analysis compiles a small Swift helper with `xcrun swiftc` (REA's process ownership check).
+Without them the lab records `not-run (xcrun swiftc unavailable)` or `not-run (Xcode Command Line Tools not found)`.
+REA gets an allowlisted environment (`PATH`, `HOME`, `LANG`, `LC_*`, `DEVELOPER_DIR`, `SDKROOT`) and a private
+`TMPDIR` under `node_modules/.cache/revers-lab-rea`, removed after each command. The analysis runs in the background
+while later runs continue, so it adds little to `npm run lab`. On one checkout, REA's output depends only on the file
+and the REA version, so repeated runs write identical records. `graphId` and `queryId` did not change when the same
+file was analysed from another directory on the same machine (not yet compared across machines); `reaEvidenceId`
+hashes REA's absolute input path, so it is machine-local.
 
 A separate lending drill opens a position in each of the three `LendingMarket` variants and compares the observed
 health factor with ground truth.
@@ -166,8 +202,13 @@ in `lab/src/agents/`.
   1-second block interval, so results and evidence ids do not depend on when the lab is started.
 - **No exchange holiday calendar.** The session logic covers regular (09:30 to 16:00 ET) and extended hours on
   weekdays, with DST handled. A weekday market holiday counts as a normal trading day.
-- **The REA hook is optional and not integrated.** With `REA_ENABLE=1` the lab only checks for a locally installed
-  `rea-agents` binary and never downloads anything. Attribution records always say `rea: "not-run"`.
+- **REA evidence is static and partial.** REA reads the agent source without running it. Its relations are static
+  inferences (most are `candidate`), not proof that a path executed; it rates the ownership trace `partial` and lists
+  dozens of unknowns per agent function, and it does not resolve member calls such as `tools.buy`, so the tools
+  implementation (`lab/src/tools.ts`) is not part of the analysis. The summary and the `revers-projection` facts are
+  the lab's reading of REA's graph by source position, limited to single-line initializers. The summary follows data
+  flow only: a registry check that only gates control flow (as in `registry-only`) shows up in the list of `tools`
+  calls, not in the arrow chain. LLM agents get no REA analysis.
 - **The Claude agent has not run** unless Anthropic credentials are set. It is shown as skipped, not simulated.
   Cost figures are estimates from token usage and public prices, not an invoice.
 - Deferral reasons are matched with word-boundary patterns per scenario hazard. This is still text matching and

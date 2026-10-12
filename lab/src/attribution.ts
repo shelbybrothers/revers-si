@@ -1,10 +1,12 @@
 // Maps a failed check to the agent call that caused it, and that call's JS stack frame to file:line plus a
 // 3-line snippet of the agent source. Evidence ids are content hashes so they are stable across identical runs.
+// attachRea() then adds REA's static analysis of the agent code path behind that line (see rea.ts).
 import { createHash } from 'node:crypto';
 import { existsSync, readFileSync } from 'node:fs';
-import { join, relative, sep } from 'node:path';
+import { relative, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import type { Check } from './scoring.js';
+import { defaultReaAnalyzer, findReaInstall, reaMode, reaNotRunReason, type ReaAnalyzer, type ReaEvidence } from './rea.js';
 import type { CallRecord } from './tools.js';
 import { REPO_ROOT } from './world.js';
 
@@ -16,7 +18,8 @@ export interface Attribution {
   column: number | null;
   snippet: string;
   call: { seq: number; tool: string; args: Record<string, unknown>; ok: boolean; error: string | null; blockTime: number };
-  rea: 'not-run' | string;
+  /** REA static analysis of the agent code path (object), or why it did not run (string, e.g. "not-run (REA_ENABLE=0)") */
+  rea: string | ReaEvidence;
   /** LLM agents: the transcript position of the decision (file/line then point at the transcript, not the harness). */
   transcript?: { turn: number; toolUseId: string; excerpt: string };
 }
@@ -70,11 +73,18 @@ export function evidenceId(parts: unknown): string {
   return 'ev_' + createHash('sha256').update(JSON.stringify(parts)).digest('hex').slice(0, 32);
 }
 
+/** Placeholder until attachRea() runs; also what stays in the record when REA is off for the whole run. */
 function reaStatus(): string {
-  if (process.env.REA_ENABLE !== '1') return 'not-run';
-  const bin = join(REPO_ROOT, 'node_modules', '.bin', 'rea-agents');
-  // Never downloads anything: only a locally installed rea-agents binary would be used.
-  return existsSync(bin) ? 'not-run (rea-agents present; integration not implemented in v0)' : 'not-run (rea-agents not installed)';
+  return reaNotRunReason(reaMode(process.env, findReaInstall()));
+}
+
+const AGENT_SOURCE = /^lab\/src\/agents\/[^/]+\.(?:ts|mts|cts|js|mjs|cjs)$/;
+
+/** Adds REA's static analysis of the attributed agent source line. LLM (transcript) attributions keep their reason. */
+export async function attachRea(a: Attribution | null, analyzer: ReaAnalyzer | null = defaultReaAnalyzer()): Promise<Attribution | null> {
+  if (!a || !analyzer || a.transcript) return a;
+  if (!AGENT_SOURCE.test(a.file)) return { ...a, rea: 'not-run (not an agent source file)' };
+  return { ...a, rea: await analyzer.explain(a.file, a.line) };
 }
 
 export function attribute(
@@ -97,7 +107,7 @@ export function attribute(
       column: null,
       snippet: `turn ${turn} · tool_use ${toolUseId}\n${excerpt}`.trim(),
       call: callOutLlm,
-      rea: 'not-run',
+      rea: 'not-run (LLM transcript attribution)',
       transcript: { turn, toolUseId, excerpt },
     };
   }

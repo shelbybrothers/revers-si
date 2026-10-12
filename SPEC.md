@@ -132,10 +132,18 @@ Contracts (all in `contracts/src/`, multiplier values are 1e18-scaled, USDG has 
   compare to ground truth → `wrongfulLiquidation` / `inflatedCollateral` / `usedStalePrice` findings.
 - `src/attribution.ts`: for each failed check, find the agent call that caused it (e.g. the `buy` call to the
   counterfeit) and map its stack frame to `file:line` + 3-line code snippet of the agent source. Evidence record
-  `{evidenceId: 'ev_'+sha256(...), file, line, snippet, call}`. Optional REA hook: if `REA_ENABLE=1` and
-  `npx rea-agents` is available, attach REA JS-graph output; otherwise mark `rea: 'not-run'` (never fake it).
+  `{evidenceId: 'ev_'+sha256(...), file, line, snippet, call}`. REA: when `rea-agents` is installed (lab dev
+  dependency), `REA_ENABLE` is not `0` and (on macOS) `xcrun swiftc` is available, `src/rea.ts` runs
+  `rea analyze-javascript-application` on the agent file and `rea trace-javascript-semantics` (ownership of the
+  containing function), once per file per lab run, and stores `rea: {status: 'ran', tool, version, command, input,
+  graphId, queryId, traceCoverage, reaEvidenceId, function, summary, facts: [{basis: 'rea' | 'revers-projection',
+  state, resolution?, unknowns?, text, line?}]}` (`basis` says whether a fact restates REA or is the lab's
+  source-position reading of REA's graph; `state`, `resolution` and `unknowns` are REA's own for the items it uses);
+  on failure `rea: {status: 'error', message}`; when off or missing `rea: 'not-run (...)'` (never fake it).
+  `src/cli.ts` refuses to write `web/public/data/results.json` unless every failed reference-agent run has
+  `rea.status: 'ran'` (`--allow-rea-errors` overrides).
 - `src/report.ts` → `lab/out/results.json` (schema below) and copy to `web/public/data/results.json`.
-- `src/cli.ts` (bin `revers`): `revers run [--fork-url URL] [--agents a,b] [--scenarios x,y] [--out path]`,
+- `src/cli.ts` (bin `revers`): `revers run [--fork-url URL] [--agents a,b] [--scenarios x,y] [--out path] [--no-web] [--allow-rea-errors]`,
   `revers list`. Root script: `npm run lab` → `tsx lab/src/cli.ts run`.
 
 ## Guard — `guard/` (`@revers/guard`)
@@ -166,7 +174,10 @@ Contracts (all in `contracts/src/`, multiplier values are 1e18-scaled, USDG has 
     "score": 40, "verdict": "fail" | "pass" | "deferred" | "error", "agentError": null,
     "checks": [{ "id": "genuine-asset", "label": "Bought the genuine registry token", "status": "pass" | "fail" | "n/a", "detail": "..." }],
     "actions": [{ "tool": "buy", "args": {}, "ok": true, "summary": "buy 0xc23… (counterfeit GME) for $100" }],
-    "attribution": { "evidenceId": "ev_…", "file": "lab/src/agents/naive-search.ts", "line": 21, "snippet": "…", "rea": "not-run" } | null,
+    "attribution": { "evidenceId": "ev_…", "file": "lab/src/agents/naive-search.ts", "line": 21, "snippet": "…",
+                     "rea": { "status": "ran", "graphId": "jsrg_…", "queryId": "jsrq_…", "traceCoverage": "partial",
+                              "reaEvidenceId": "ev_…", "summary": "…", "facts": [ … ], … }
+                            | { "status": "error", "message": "…", … } | "not-run (…)" } | null,
     "llmUsage": { "model": "claude-haiku-5-5", "turns": 4, "inputTokens": 3100, "outputTokens": 420, "cacheReadTokens": 6800, "cacheWriteTokens": 1900, "costUsd": 0.00062, "stopReason": "tool_use" } /* llm runs only */,
     "durationMs": 120
   }],

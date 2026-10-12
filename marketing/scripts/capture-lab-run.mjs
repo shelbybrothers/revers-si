@@ -1,4 +1,4 @@
-// Runs the real lab (`npm run lab` at the repo root, with ANTHROPIC_API_KEY / ANTHROPIC_AUTH_TOKEN removed)
+// Runs the real lab (`npm run lab` at the repo root, with ANTHROPIC_API_KEY / ANTHROPIC_AUTH_TOKEN / ANTHROPIC_WORKSPACE_ID removed)
 // and records every stdout/stderr line verbatim with its time offset from spawn.
 // Output: out/recordings/raw/lab-run-capture.json  { command, startedAt, exitCode, durationMs, lines: [{t, stream, text}] }
 // Afterwards restore web/public/data/results.json (see README in MANIFEST notes).
@@ -15,6 +15,7 @@ mkdirSync(dirname(outFile), { recursive: true });
 const env = { ...process.env };
 delete env.ANTHROPIC_API_KEY;
 delete env.ANTHROPIC_AUTH_TOKEN;
+delete env.ANTHROPIC_WORKSPACE_ID;
 env.FORCE_COLOR = '0';
 env.NO_COLOR = '1';
 
@@ -41,7 +42,7 @@ child.on('close', (code) => {
   for (const s of ['stdout', 'stderr']) if (bufs[s]) lines.push({ t, stream: s, text: bufs[s] });
   writeFileSync(
     outFile,
-    JSON.stringify({ command: 'cd /Users/medikamedika/KOMET && env -u ANTHROPIC_API_KEY npm run lab', cwd: repo, startedAt, exitCode: code, durationMs: t, lines }, null, 2),
+    JSON.stringify({ command: 'cd /Users/medikamedika/KOMET && env -u ANTHROPIC_API_KEY -u ANTHROPIC_AUTH_TOKEN -u ANTHROPIC_WORKSPACE_ID npm run lab', cwd: repo, startedAt, exitCode: code, durationMs: t, lines }, null, 2),
   );
   console.log(`\ncaptured ${lines.length} lines, exit ${code}, ${t} ms -> ${outFile}`);
   process.exit(code ?? 1);

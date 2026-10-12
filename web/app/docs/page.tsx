@@ -52,7 +52,18 @@ const SCHEMA = `{
     "agentError": string | null,
     "checks": [{ "id", "label", "status": "pass" | "fail" | "n/a", "detail" }],
     "actions": [{ "tool", "args", "ok", "summary" }],
-    "attribution": { "evidenceId", "file", "line", "snippet", "rea" } | null,
+    "attribution": { "evidenceId", "file", "line", "snippet", "call",
+      "rea": "not-run (reason)"
+           | { "status": "ran", "tool": "rea-agents", "version", "command", "input",
+               "graphId": "jsrg_…", "queryId": "jsrq_…" | null,
+               "traceCoverage": string | null, "reaEvidenceId": "ev_…",
+               "function": { "name", "startLine", "endLine" } | null,
+               "summary", "facts": [{ "basis": "rea" | "revers-projection",
+                                      "state": "observed" | "inferred" | "unknown",
+                                      "resolution"?, "unknowns"?: [string],
+                                      "text", "line"? }] }
+           | { "status": "error", "tool": "rea-agents", "version", "input", "message" }
+    } | null,
     "llmUsage"?: { "model", "turns", "inputTokens", "outputTokens",
                    "cacheReadTokens", "cacheWriteTokens", "costUsd", "stopReason" },
     "durationMs"
@@ -103,6 +114,9 @@ export default function DocsPage() {
             <h2>Run locally</h2>
             <p>
               Requirements: Node 20+ with npm, and Foundry (<code>forge</code>, <code>anvil</code>, <code>cast</code>). No Docker.
+              The <a href="#rea">REA step</a> needs Node 22.19+, 24.11+ or 26+ (the <code>rea-agents</code> requirement) and, on
+              macOS, the Xcode Command Line Tools (<code>xcode-select --install</code>): REA compiles a small Swift helper with{' '}
+              <code>xcrun swiftc</code> for every analysis.
             </p>
             <pre className="code" tabIndex={0}>
               <code>
@@ -147,6 +161,13 @@ export default function DocsPage() {
               <li>
                 <code>REVERS_CLAUDE_SONNET=1</code>: also run <code>claude-sonnet</code> (Claude Sonnet 5.5, about 20x the Haiku
                 price).
+              </li>
+              <li>
+                <code>REA_ENABLE=0</code>: skip the <a href="#rea">REA static analysis</a> of failing agent files (on by default
+                when <code>rea-agents</code> is installed by <code>npm install</code>). <code>REA_TIMEOUT_MS</code> changes the
+                60&nbsp;s per-command timeout. Without REA evidence on every failed reference-agent run, <code>npm run lab</code>{' '}
+                does not write <code>web/public/data/results.json</code> (it writes <code>lab/out/results.json</code> and exits
+                1); <code>--no-web</code> or <code>--allow-rea-errors</code> overrides that.
               </li>
             </ul>
           </section>
@@ -212,6 +233,71 @@ export default function DocsPage() {
               Attribution: for each failed check the lab finds the agent call that caused it and maps its stack frame to a{' '}
               <code>file:line</code> plus a 3-line snippet, with an evidence id <code>ev_…</code>. For LLM agents it cites the
               transcript turn and <code>tool_use</code> id instead of the harness line that dispatched the call.
+            </p>
+            <h3 id="rea">REA static analysis</h3>
+            <p>
+              When the attributed line is in a reference agent&apos;s source (<code>lab/src/agents/</code>), the lab also runs{' '}
+              <a href={SITE.reaGithub} target="_blank" rel="noopener noreferrer">
+                REA (Reverse Engineer Anything)
+              </a>
+              , the <code>rea-agents</code> CLI pinned as a dev dependency of the lab, on that agent file. REA parses the file as
+              inert text and never runs it. Two commands, once per agent file per lab run (60&nbsp;s timeout each):
+            </p>
+            <ol>
+              <li>
+                <code>rea analyze-javascript-application &lt;dir&gt; --json</code> on a directory holding only the agent file. It
+                returns an Evidence record with a content-addressed semantic graph: functions, call sites, bindings, property
+                reads and the relations between them.
+              </li>
+              <li>
+                <code>rea trace-javascript-semantics</code> with an <code>ownership</code> query seeded at the function that
+                contains the attributed line.
+              </li>
+            </ol>
+            <p>
+              The record keeps REA&apos;s ids: <code>graphId</code> (<code>jsrg_…</code>, REA&apos;s content-addressed semantic
+              graph) and <code>queryId</code> (<code>jsrq_…</code>, the ownership trace), REA&apos;s own coverage status for the
+              trace (<code>traceCoverage</code>, <code>partial</code> for every agent today), and <code>reaEvidenceId</code>{' '}
+              (<code>ev_…</code>, REA&apos;s Evidence id; unrelated to the attribution&apos;s own <code>evidenceId</code>). The{' '}
+              <code>summary</code> and <code>facts</code> are the lab&apos;s reading of REA&apos;s graph: the function, the data
+              flow into the attributed call (for example{' '}
+              <code>naiveSearch.run: tools.searchTokens → results[0] → tools.getQuote → tools.buy</code>), the{' '}
+              <code>tools</code> members the function calls, and REA&apos;s unknowns. Each fact says what it rests on:
+            </p>
+            <ul>
+              <li>
+                <code>basis</code>: <code>rea</code> when the fact restates REA (an <code>aliases</code> relation from a call to
+                a binding, the awaits in the ownership trace, REA&apos;s unknowns and coverage, the imports);{' '}
+                <code>revers-projection</code> when the lab relates REA items by source position and REA has no relation for
+                it (which reads sit inside the attributed call, <code>top ← results[0]</code> from a declarator and the reads in
+                its own initializer, the list of <code>tools</code> calls).
+              </li>
+              <li>
+                <code>state</code>: the weakest REA evidence state among the REA nodes and relations the fact uses (
+                <code>observed</code> parsed syntax, <code>inferred</code> static inference, <code>unknown</code>).
+              </li>
+              <li>
+                <code>resolution</code>: <code>candidate</code> when REA marks any relation the fact uses as a candidate, which
+                REA describes as a conservative static candidate that does not prove runtime execution or causal flow.
+              </li>
+              <li>
+                <code>unknowns</code>: REA&apos;s own unknowns on the bindings, properties, call sites and awaits the fact uses,
+                for example <code>data-flow unknown-value: results, top</code>. REA does not know the value of{' '}
+                <code>top</code>; the arrow only says where it is assigned from.
+              </li>
+            </ul>
+            <p>
+              The stack-trace line stays the primary pointer. If REA fails or times out the record says{' '}
+              <code>{'{ "status": "error" }'}</code> with REA&apos;s reason; it is never filled in by hand, and{' '}
+              <code>npm run lab</code> then refuses to write the site&apos;s copy of the results. LLM agents are not analysed
+              (their attribution is the transcript). <code>REA_ENABLE=0</code> turns it off.
+            </p>
+            <p>
+              Determinism: on one checkout REA&apos;s output depends only on the file and the REA version, so a second lab run
+              writes identical records. <code>graphId</code> and <code>queryId</code> did not change when the same file was
+              analysed from another directory on the same machine; they have not been compared across machines.{' '}
+              <code>reaEvidenceId</code> hashes REA&apos;s absolute input path, so it is machine-local and differs between
+              checkouts.
             </p>
           </section>
 
