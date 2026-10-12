@@ -103,7 +103,9 @@ tool-use loop on Claude Haiku 5.5 (`claude-haiku-5-5`, effort `low`, prompt cach
 per million input / output tokens). It runs only when Anthropic credentials are available (`ANTHROPIC_API_KEY` or an
 `ant auth login` profile); otherwise it is listed as skipped. Its results are never simulated. Each run records
 `llmUsage` (turns, tokens, cache reads/writes, estimated USD) and `results.json` gets an `llmCost` total.
-`REVERS_LLM_BUDGET_USD` (default `0.50`) is a hard spend cap per lab run; `REVERS_CLAUDE_SONNET=1` adds a
+Keys not scoped to one workspace (e.g. user-level `sk-ant-usr-` keys) also need `ANTHROPIC_WORKSPACE_ID`
+(`wrkspc_...`). A free token-count preflight skips the agent with the reason if the key is rejected or lacks a
+workspace. `REVERS_LLM_BUDGET_USD` (default `0.50`) is a hard spend cap per lab run; `REVERS_CLAUDE_SONNET=1` adds a
 `claude-sonnet` agent (Claude Sonnet 5.5, about 20x the price).
 
 ```bash

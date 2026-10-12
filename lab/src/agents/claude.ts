@@ -26,6 +26,12 @@ function parseBudget(raw: string | undefined): number | string {
   return Number.isFinite(v) && v >= 0 ? v : `REVERS_LLM_BUDGET_USD must be a non-negative number of USD, got "${raw}"`;
 }
 const BUDGET = parseBudget(process.env.REVERS_LLM_BUDGET_USD);
+
+/**
+ * Keys that can act on more than one workspace (e.g. user-level `sk-ant-usr-` keys) must name the workspace to bill
+ * on every request. Workspace-scoped keys can leave this unset.
+ */
+const WORKSPACE = process.env.ANTHROPIC_WORKSPACE_ID?.trim() ? { workspace_id: process.env.ANTHROPIC_WORKSPACE_ID.trim() } : {};
 let spentUsd = 0;
 
 export function costUsd(model: string, u: Pick<LlmUsage, 'inputTokens' | 'outputTokens' | 'cacheReadTokens' | 'cacheWriteTokens'>): number {
@@ -121,16 +127,21 @@ function makeClaudeAgent(cfg: ClaudeAgentConfig): TradingAgent {
       if (typeof BUDGET === 'string') return BUDGET;
       return hasAnthropicCredentials() ? null : 'No Anthropic credentials (ANTHROPIC_API_KEY or `ant auth login`); LLM agent not run (results are never simulated)';
     },
-    // Free probe (Models API, no tokens billed): a rejected or placeholder key skips the agent once,
+    // Free probe (token counting is not billed) through the same auth + workspace path as real requests:
+    // a rejected key, a key without a workspace, or no model access skips the agent once with the reason,
     // instead of turning every run into an API error.
     async preflight() {
       try {
-        await new Anthropic().models.retrieve(cfg.model);
+        await new Anthropic().messages.countTokens({ model: cfg.model, messages: [{ role: 'user', content: 'ping' }], ...WORKSPACE });
         return null;
       } catch (e) {
         if (e instanceof Anthropic.AuthenticationError) return 'Anthropic credentials rejected (401 invalid key); LLM agent not run';
         if (e instanceof Anthropic.PermissionDeniedError) return `Anthropic key has no access to ${cfg.model} (403); LLM agent not run`;
         if (e instanceof Anthropic.NotFoundError) return `model ${cfg.model} not found for this key (404); LLM agent not run`;
+        if (e instanceof Anthropic.BadRequestError && /workspace/i.test(e.message)) {
+          return 'API key is not scoped to a workspace: set ANTHROPIC_WORKSPACE_ID (wrkspc_...) or use a workspace API key; LLM agent not run';
+        }
+        if (e instanceof Anthropic.BadRequestError) return `Anthropic request rejected (400: ${e.message.split('\n')[0].slice(0, 160)}); LLM agent not run`;
         return null; // transient problems (network, 5xx, 429) surface per run as harness errors
       }
     },
@@ -157,6 +168,7 @@ function makeClaudeAgent(cfg: ClaudeAgentConfig): TradingAgent {
               system: SYSTEM,
               tools: TOOL_DEFS as unknown as Anthropic.Tool[],
               messages,
+              ...WORKSPACE,
             });
           } catch (e) {
             if (e instanceof Anthropic.APIError) throw new AgentHarnessError(`Anthropic API error ${e.status ?? ''}: ${e.message.split('\n')[0]}`.trim());

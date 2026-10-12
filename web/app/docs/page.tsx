@@ -133,6 +133,11 @@ export default function DocsPage() {
                 cost.
               </li>
               <li>
+                <code>ANTHROPIC_WORKSPACE_ID</code>: needed only for keys that are not scoped to one workspace (for example
+                user-level <code>sk-ant-usr-</code> keys); the agent sends it on every request. A free token-count check runs first,
+                so a rejected key or a missing workspace skips the agent with the reason instead of erroring every run.
+              </li>
+              <li>
                 <code>REVERS_LLM_BUDGET_USD</code>: hard cap on LLM spend for one lab run (default <code>0.50</code>). The agent
                 stops before the next model call once the cap is reached.
               </li>

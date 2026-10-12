@@ -9,7 +9,7 @@ import type { AgentTools } from '../src/tools.js';
 import type { LlmUsage } from '../src/agents/types.js';
 
 const create = vi.fn();
-const retrieve = vi.fn();
+const countTokens = vi.fn();
 vi.mock('@anthropic-ai/sdk', () => {
   class APIError extends Error {
     status?: number;
@@ -17,14 +17,15 @@ vi.mock('@anthropic-ai/sdk', () => {
   class AuthenticationError extends APIError {}
   class PermissionDeniedError extends APIError {}
   class NotFoundError extends APIError {}
+  class BadRequestError extends APIError {}
   return {
     default: class {
       static APIError = APIError;
       static AuthenticationError = AuthenticationError;
       static PermissionDeniedError = PermissionDeniedError;
       static NotFoundError = NotFoundError;
-      messages = { create };
-      models = { retrieve };
+      static BadRequestError = BadRequestError;
+      messages = { create, countTokens };
     },
   };
 });
@@ -75,7 +76,8 @@ describe('claude-haiku agent', () => {
     for (const k of ENV_KEYS) saved[k] = process.env[k];
     for (const k of ENV_KEYS) delete process.env[k];
     create.mockReset();
-    retrieve.mockReset();
+    countTokens.mockReset();
+    delete process.env.ANTHROPIC_WORKSPACE_ID;
     vi.resetModules();
     process.env.ANTHROPIC_API_KEY = 'test-key-not-real';
   });
@@ -168,19 +170,36 @@ describe('claude-haiku agent', () => {
     expect(reported?.turns).toBe(1);
   });
 
-  it('preflight skips the agent when the key is rejected, without any billed call', async () => {
-    const Sdk = (await import('@anthropic-ai/sdk')).default as unknown as { AuthenticationError: new (m: string) => Error };
-    retrieve.mockRejectedValueOnce(new Sdk.AuthenticationError('invalid x-api-key'));
+  it('preflight skips the agent when the key is rejected or lacks a workspace, without any billed call', async () => {
+    const Sdk = (await import('@anthropic-ai/sdk')).default as unknown as {
+      AuthenticationError: new (m: string) => Error;
+      BadRequestError: new (m: string) => Error;
+    };
+    countTokens.mockRejectedValueOnce(new Sdk.AuthenticationError('invalid x-api-key'));
     const { claudeHaiku } = await load();
     expect(await claudeHaiku.preflight?.()).toMatch(/credentials rejected \(401/);
-    expect(retrieve).toHaveBeenCalledWith('claude-haiku-5-5');
+    expect(countTokens.mock.calls[0][0]).toMatchObject({ model: 'claude-haiku-5-5' });
     expect(create).not.toHaveBeenCalled();
 
-    retrieve.mockResolvedValueOnce({ id: 'claude-haiku-5-5' });
+    countTokens.mockRejectedValueOnce(new Sdk.BadRequestError('This API key is not scoped to a workspace, so this request must include the anthropic-workspace-id header'));
+    expect(await claudeHaiku.preflight?.()).toMatch(/ANTHROPIC_WORKSPACE_ID/);
+
+    countTokens.mockResolvedValueOnce({ input_tokens: 8 });
     expect(await claudeHaiku.preflight?.()).toBeNull();
 
-    retrieve.mockRejectedValueOnce(new Error('ECONNRESET'));
+    countTokens.mockRejectedValueOnce(new Error('ECONNRESET'));
     expect(await claudeHaiku.preflight?.()).toBeNull(); // transient: let runs report it
+  });
+
+  it('sends ANTHROPIC_WORKSPACE_ID on every request when set', async () => {
+    process.env.ANTHROPIC_WORKSPACE_ID = 'wrkspc_test';
+    script([{ stop_reason: 'tool_use', content: [toolUse('tu_1', 'defer', { reason: 'test' })], usage: usage(10, 5) }]);
+    countTokens.mockResolvedValueOnce({ input_tokens: 8 });
+    const { claudeHaiku } = await load();
+    expect(await claudeHaiku.preflight?.()).toBeNull();
+    expect(countTokens.mock.calls[0][0].workspace_id).toBe('wrkspc_test');
+    await claudeHaiku.run(task, fakeTools());
+    expect(create.mock.calls[0][0].workspace_id).toBe('wrkspc_test');
   });
 
   it('rejects a malformed budget instead of silently disabling the cap', async () => {
