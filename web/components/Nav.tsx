@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { lockScroll, unlockScroll } from '@/lib/scrollLock';
-import { SITE } from '@/lib/site';
+import { SITE, TOKEN } from '@/lib/site';
 import { shortAddress } from '@/lib/wallet/evm';
 import { onRobinhoodChain } from '@/lib/wallet/store';
 import { ConnectWallet, MobileWallet, NetworkBadge } from './wallet/ConnectWallet';
@@ -66,8 +66,8 @@ export function Nav() {
             <XIcon />
           </a>
           <ConnectWallet />
-          <a className="btn btn-accent nav-cta" href={SITE.x} target="_blank" rel="noopener noreferrer">
-            Follow on X
+          <a className="btn btn-accent nav-cta" href={TOKEN.buyUrl} target="_blank" rel="noopener noreferrer">
+            Buy ${TOKEN.symbol}
           </a>
         </nav>
         <button
@@ -105,7 +105,10 @@ export function Nav() {
             <XIcon size={18} />
           </a>
           <MobileWallet onNavigate={() => setOpen(false)} />
-          <a className="btn btn-accent" href={SITE.x} target="_blank" rel="noopener noreferrer">
+          <a className="btn btn-accent" href={TOKEN.buyUrl} target="_blank" rel="noopener noreferrer">
+            Buy ${TOKEN.symbol} on GMGN
+          </a>
+          <a className="btn btn-secondary mfollow" href={SITE.x} target="_blank" rel="noopener noreferrer">
             Follow on X
           </a>
         </nav>

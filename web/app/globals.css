@@ -717,3 +717,20 @@ ul.term-body > li { margin: 0; }
   min-height: 44px; display: inline-flex; align-items: center; width: fit-content;
 }
 .tcard-link:hover { text-decoration: underline; }
+
+/* $REVERS token panel + copyable contract address */
+.token-panel { padding: 24px; }
+@media (min-width: 768px) { .token-panel { padding: 40px; } }
+.token-head { display: flex; align-items: center; gap: 16px; margin-bottom: 16px; }
+.token-logo { width: 56px; height: 56px; border-radius: 12px; flex: none; }
+.token-title { margin: 0; font-size: clamp(28px, 6vw, 44px); font-weight: 300; line-height: 1.05; }
+.token-copy { max-width: 62ch; margin: 0 0 14px; }
+.ca { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.ca-addr {
+  flex: 1 1 260px; min-width: 0; font-family: var(--font-mono); font-size: 13px; line-height: 1.4;
+  padding: 10px 12px; border: 1px solid var(--border); border-radius: var(--radius); background: var(--canvas);
+  overflow-wrap: anywhere; word-break: break-all; font-variant-ligatures: none; font-feature-settings: "calt" 0;
+}
+.ca-btn { min-height: 44px; flex: none; }
+.mobile-menu .btn.mfollow { margin-top: 10px; }
+.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }

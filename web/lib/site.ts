@@ -10,6 +10,15 @@ export const SITE = {
   source: 'https://github.com/shelbybrothers/revers-si',
 } as const;
 
+/** $REVERS on Robinhood Chain. Verified on chain 2026-10-12: name "Revers", symbol REVERS, 18 decimals, 1,000,000,000 supply. */
+export const TOKEN = {
+  symbol: 'REVERS',
+  name: 'Revers',
+  address: '0x326fcb91685d946529ac68031e95be7dc32e24cc',
+  buyUrl: 'https://gmgn.ai/robinhood/token/0x326fcb91685d946529ac68031e95be7dc32e24cc',
+  explorerUrl: 'https://robinhoodchain.blockscout.com/token/0x326fcb91685d946529ac68031e95be7dc32e24cc',
+} as const;
+
 export const SOURCES = {
   bitquery: 'https://bitquery.io/investigations/robinhood-chain-tokenized-stocks',
   sqd: 'https://sqd.dev/learn/erc-8056-tokenized-stock-splits/',

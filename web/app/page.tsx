@@ -2,7 +2,8 @@ import Link from 'next/link';
 import { SampleBadge } from '@/components/SampleBadge';
 import { XIcon } from '@/components/XIcon';
 import { CATEGORY_LABEL, formatGenerated, results, runKeyOf, TASK_LABEL, type LendingRow, type Run } from '@/lib/results';
-import { SITE, SOURCES } from '@/lib/site';
+import { CopyAddress } from '@/components/CopyAddress';
+import { SITE, SOURCES, TOKEN } from '@/lib/site';
 
 const STATS = [
   {
@@ -441,6 +442,40 @@ export default function Home() {
                 </code>
               </pre>
             </div>
+          </div>
+        </div>
+      </section>
+
+      {/* TOKEN */}
+      <section className="section" id="token">
+        <div className="wrap">
+          <div className="panel token-panel reveal">
+            <div className="token-head">
+              <img src="/brand/revers-128.png" alt="" width={56} height={56} className="token-logo" />
+              <div>
+                <div className="eyebrow" style={{ marginBottom: 6 }}>On Robinhood Chain</div>
+                <h2 className="token-title">
+                  ${TOKEN.symbol} <em className="accent">the revers.si coin</em>
+                </h2>
+              </div>
+            </div>
+            <p className="muted token-copy">
+              Copycat tokens reuse names and tickers, so check the contract address before you buy. This is the only ${TOKEN.symbol}{' '}
+              contract linked from revers.si:
+            </p>
+            <CopyAddress address={TOKEN.address} label={`Copy the ${TOKEN.symbol} contract address`} />
+            <div className="btn-row" style={{ marginTop: 20 }}>
+              <a className="btn btn-accent" href={TOKEN.buyUrl} target="_blank" rel="noopener noreferrer">
+                Buy ${TOKEN.symbol} on GMGN
+              </a>
+              <a className="btn btn-secondary" href={TOKEN.explorerUrl} target="_blank" rel="noopener noreferrer">
+                View on Blockscout
+              </a>
+            </div>
+            <p className="small muted" style={{ marginTop: 16, marginBottom: 0 }}>
+              ${TOKEN.symbol} is a community token, not a Stock Token. Crypto tokens are volatile and you can lose what you put in.
+              Nothing here is investment advice.
+            </p>
           </div>
         </div>
       </section>

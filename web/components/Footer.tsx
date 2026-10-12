@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { SITE } from '@/lib/site';
+import { SITE, TOKEN } from '@/lib/site';
 import { XIcon } from './XIcon';
 
 export function Footer() {
@@ -23,6 +23,9 @@ export function Footer() {
           <Link href="/lab">Lab</Link>
           <Link href="/wallet">Wallet check</Link>
           <Link href="/docs">Docs</Link>
+          <a href={TOKEN.buyUrl} target="_blank" rel="noopener noreferrer">
+            Buy ${TOKEN.symbol}
+          </a>
           <a href={SITE.source} target="_blank" rel="noopener noreferrer">
             Source
           </a>
